@@ -445,49 +445,49 @@
                 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-medium text-slate-300">Current Age</label>
-                        <input type="number" id="current_age" value="23" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                        <label class="block text-xs font-medium text-slate-300" for="current_age">Current Age</label>
+                        <input type="number" id="current_age" aria-label="Current age" value="23" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-slate-300">Retirement Age</label>
-                        <input type="number" id="retirement_age" value="58" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                        <label class="block text-xs font-medium text-slate-300" for="retirement_age">Retirement Age</label>
+                        <input type="number" id="retirement_age" aria-label="Retirement age" value="58" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-medium text-slate-300">Life Expectancy</label>
-                    <input type="number" id="life_expectancy" value="85" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                    <label class="block text-xs font-medium text-slate-300" for="life_expectancy">Life Expectancy</label>
+                    <input type="number" id="life_expectancy" aria-label="Life expectancy" value="85" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
                 </div>
 
                 <div>
-                    <label class="block text-xs font-medium text-slate-300">Current Annual Expenses (₹)</label>
-                    <input type="number" id="current_annual_expenses" value="600000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                    <label class="block text-xs font-medium text-slate-300" for="current_annual_expenses">Current Annual Expenses (₹)</label>
+                    <input type="number" id="current_annual_expenses" aria-label="Current annual expenses" value="600000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-medium text-slate-300">Inflation Rate</label>
-                        <input type="text" id="avg_inflation_rate" value="6.0%" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                        <label class="block text-xs font-medium text-slate-300" for="avg_inflation_rate">Inflation Rate</label>
+                        <input type="text" id="avg_inflation_rate" aria-label="Average inflation rate" value="6.0%" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-slate-300">Current Corpus (₹)</label>
-                        <input type="number" id="current_corpus" value="100000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                        <label class="block text-xs font-medium text-slate-300" for="current_corpus">Current Corpus (₹)</label>
+                        <input type="number" id="current_corpus" aria-label="Current corpus" value="100000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs font-medium text-slate-300">Annual Additional Contribution (₹)</label>
-                    <input type="number" id="annual_contribution" value="200000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                    <label class="block text-xs font-medium text-slate-300" for="annual_contribution">Annual Additional Contribution (₹)</label>
+                    <input type="number" id="annual_contribution" aria-label="Annual contribution" value="200000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-medium text-slate-300">Pre-Retire Return</label>
-                        <input type="text" id="pre_retirement_return" value="16.0%" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                        <label class="block text-xs font-medium text-slate-300" for="pre_retirement_return">Pre-Retire Return</label>
+                        <input type="text" id="pre_retirement_return" aria-label="Pre retirement return" value="16.0%" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-slate-300">Post-Retire Return</label>
-                        <input type="text" id="post_retirement_return" value="15.0%" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                        <label class="block text-xs font-medium text-slate-300" for="post_retirement_return">Post-Retire Return</label>
+                        <input type="text" id="post_retirement_return" aria-label="Post retirement return" value="15.0%" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
                     </div>
                 </div>
 
@@ -530,9 +530,10 @@
                     <div id="adhocExpenseRows" class="space-y-2"></div>
                 </div>
 
-                <button onclick="calculateMetrics()" class="primary-button w-full text-white font-semibold py-2.5 rounded-xl text-sm">
+                <button onclick="calculateMetrics()" class="primary-button w-full text-white font-semibold py-2.5 rounded-xl text-sm" aria-label="Run retirement simulation">
                     Run Simulation
                 </button>
+                <div id="formStatus" class="hidden mt-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700" role="alert"></div>
 
                 <div class="mt-5 flex justify-center">
                     <div class="flex h-40 w-full max-w-[260px] items-center justify-center rounded-3xl border border-slate-200/70 bg-white/80 p-3 shadow-sm backdrop-blur-sm">
@@ -831,7 +832,23 @@
             });
         }
 
+        function showCalculationError(message) {
+            const status = document.getElementById('formStatus');
+            if (!status) return;
+            status.textContent = message;
+            status.classList.remove('hidden');
+        }
+
+        function clearCalculationError() {
+            const status = document.getElementById('formStatus');
+            if (!status) return;
+            status.textContent = '';
+            status.classList.add('hidden');
+        }
+
         async function calculateMetrics() {
+            clearCalculationError();
+
             const payload = {
                 current_age: parseInt(document.getElementById('current_age').value),
                 retirement_age: parseInt(document.getElementById('retirement_age').value),
@@ -850,18 +867,48 @@
                 adhoc_expenses: getAdHocExpenses()
             };
 
-            const response = await fetch('/calculate', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const data = await response.json();
+            if (![payload.current_age, payload.retirement_age, payload.life_expectancy].every(Number.isFinite)) {
+                showCalculationError('Please enter valid numeric ages before running the simulation.');
+                return;
+            }
 
-            document.getElementById('kpi_retirement_corpus').innerText = fmt(data.metrics.corpus_at_retirement);
-            document.getElementById('kpi_final_corpus').innerText = fmt(data.metrics.final_corpus);
-            document.getElementById('kpi_peak_age').innerText = data.metrics.peak_age;
-            document.getElementById('kpi_minimum_corpus_required').innerText = fmt(data.metrics.minimum_corpus_required);
-            fitAllKpiValues();
+            if (payload.retirement_age <= payload.current_age) {
+                showCalculationError('Retirement age must be greater than the current age.');
+                return;
+            }
+
+            if (payload.life_expectancy < payload.retirement_age) {
+                showCalculationError('Life expectancy must be greater than or equal to the retirement age.');
+                return;
+            }
+
+            try {
+                const response = await fetch('/calculate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    let message = 'The calculation could not be completed.';
+                    try {
+                        const errorBody = await response.json();
+                        message = Array.isArray(errorBody.detail)
+                            ? errorBody.detail.map(item => item.msg).join(' | ')
+                            : (errorBody.detail || message);
+                    } catch (error) {
+                        // Ignore JSON parsing failures and keep the default message.
+                    }
+                    throw new Error(message);
+                }
+
+                const data = await response.json();
+
+                document.getElementById('kpi_retirement_corpus').innerText = fmt(data.metrics.corpus_at_retirement);
+                document.getElementById('kpi_final_corpus').innerText = fmt(data.metrics.final_corpus);
+                document.getElementById('kpi_peak_age').innerText = data.metrics.peak_age;
+                document.getElementById('kpi_minimum_corpus_required').innerText = fmt(data.metrics.minimum_corpus_required);
+                fitAllKpiValues();
 
             const ages = data.projections.map(row => row.age);
             const opening = data.projections.map(row => row.opening);
@@ -934,6 +981,9 @@
                 pointRadius: 0,
                 pointHoverRadius: 5
             }]);
+            } catch (error) {
+                showCalculationError(error.message || 'Unexpected error while calculating retirement metrics.');
+            }
         }
 
         function applyTheme(theme) {

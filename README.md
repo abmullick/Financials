@@ -75,9 +75,8 @@ Open this URL in your browser to access the interactive dashboard.
 
 ```bash
 cd /home/abmul/projects/financials/retirals
-# Activate your virtual environment
-source ~/spark_venv/bin/activate  # or source ../.venv/bin/activate
-python -m unittest -v tests/test_retirement.py
+source ~/spark_venv/bin/activate
+PYTHONPATH=. python3 -m unittest -v tests/test_retirement.py
 ```
 
 Tests validate:
@@ -85,6 +84,24 @@ Tests validate:
 - Custom ad-hoc expense handling
 - Tax calculation accuracy
 - Minimum corpus requirement calculations
+- Invalid planner inputs are rejected before the projection engine runs
+
+## Example use case
+
+A typical planning scenario:
+
+```text
+Current age: 23
+Retirement age: 58
+Life expectancy: 85
+Current corpus: ₹100,000
+Annual contribution: ₹200,000
+Expense inflation: 6%
+Return pre-retirement: 16%
+Return post-retirement: 15%
+```
+
+This produces a yearly trajectory showing when the retirement corpus peaks, how much is required to sustain the lifestyle, and how stress scenarios affect long-term outcomes.
 
 ## Deployment
 

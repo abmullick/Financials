@@ -1,12 +1,20 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 import uvicorn
 import os
 from os import getenv
 
 app = FastAPI()
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.mount("/assets", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "..", "assets")), name="assets")
 
 class PlannerInputs(BaseModel):
@@ -26,8 +34,35 @@ class PlannerInputs(BaseModel):
     stress_scenario: str = "Normal"
     adhoc_expenses: list[dict] = [{"age": 58, "amount": 2500000.00}, {"age": 75, "amount": 1000000.00}]
 
+    @model_validator(mode="after")
+    def validate_plan(self):
+        if self.current_age <= 0:
+            raise ValueError("current_age must be greater than zero")
+        if self.retirement_age <= self.current_age:
+            raise ValueError("retirement_age must be greater than current_age")
+        if self.life_expectancy < self.retirement_age:
+            raise ValueError("life_expectancy must be greater than or equal to retirement_age")
+        if self.current_annual_expenses <= 0:
+            raise ValueError("current_annual_expenses must be positive")
+        if self.current_corpus < 0:
+            raise ValueError("current_corpus cannot be negative")
+        if self.annual_contribution < 0:
+            raise ValueError("annual_contribution cannot be negative")
+        if not 0 <= self.avg_inflation_rate < 1:
+            raise ValueError("avg_inflation_rate must be between 0 and 1")
+        if not 0 <= self.pre_retirement_return < 1:
+            raise ValueError("pre_retirement_return must be between 0 and 1")
+        if not 0 <= self.post_retirement_return < 1:
+            raise ValueError("post_retirement_return must be between 0 and 1")
+        if self.gain_ratio < 0 or self.gain_ratio > 1:
+            raise ValueError("gain_ratio must be between 0 and 1")
+        return self
+
 @app.post("/calculate")
 def calculate_retirement(inputs: PlannerInputs):
+    if not inputs:
+        raise HTTPException(status_code=400, detail="Request body is required")
+
     projections = []
     opening_corpus = inputs.current_corpus
     total_contributions = 0.0

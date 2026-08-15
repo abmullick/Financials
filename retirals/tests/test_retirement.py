@@ -39,6 +39,10 @@ class RetirementPlannerWorkbookParityTest(unittest.TestCase):
         self.assertAlmostEqual(retirement_row["ad_hoc"], expected_ad_hoc, places=2)
         self.assertGreater(result["metrics"]["minimum_corpus_required"], 0)
 
+    def test_rejects_invalid_age_configuration(self):
+        with self.assertRaises(ValueError):
+            calculate_retirement(PlannerInputs(current_age=60, retirement_age=58, life_expectancy=85))
+
 
 if __name__ == "__main__":
     unittest.main()
