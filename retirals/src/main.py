@@ -1,10 +1,12 @@
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import uvicorn
 import os
 
 app = FastAPI()
+app.mount("/assets", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "..", "assets")), name="assets")
 
 class PlannerInputs(BaseModel):
     current_age: int = 43
@@ -21,6 +23,7 @@ class PlannerInputs(BaseModel):
     ltcg_exemption: float = 125000.00
     gain_ratio: float = 0.60
     stress_scenario: str = "Normal"
+    adhoc_expenses: list[dict] = [{"age": 58, "amount": 2500000.00}, {"age": 75, "amount": 1000000.00}]
 
 @app.post("/calculate")
 def calculate_retirement(inputs: PlannerInputs):
@@ -28,9 +31,12 @@ def calculate_retirement(inputs: PlannerInputs):
     opening_corpus = inputs.current_corpus
     total_contributions = 0.0
 
-    # Workbook event table: ad-hoc expenses are keyed by the age of occurrence and then
-    # inflated by the same inflation applied to all retirement withdrawals.
-    ad_hoc_map = {58: 2500000.00, 75: 1000000.00}
+    adhoc_expenses = inputs.adhoc_expenses or []
+    ad_hoc_map = {
+        int(item["age"]): float(item["amount"])
+        for item in adhoc_expenses
+        if isinstance(item, dict) and item.get("age") is not None and item.get("amount") is not None
+    }
 
     for age in range(inputs.current_age, inputs.life_expectancy + 1):
         elapsed_years = age - inputs.current_age
