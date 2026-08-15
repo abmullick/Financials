@@ -491,6 +491,28 @@
                     </div>
                 </div>
 
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300">Annual Contribution Increase</label>
+                        <input type="text" id="contribution_increase" value="1.0%" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300">LTCG Tax Rate</label>
+                        <input type="text" id="ltcg_tax_rate" value="12.5%" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300">LTCG Exemption Limit (₹)</label>
+                        <input type="number" id="ltcg_exemption" value="125000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300">Estimated Gain Ratio</label>
+                        <input type="text" id="gain_ratio" value="60.0%" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                    </div>
+                </div>
+
                 <div>
                     <label class="block text-xs font-medium text-slate-300">Stress Test Scenario</label>
                     <select id="stress_scenario" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 bg-white">
@@ -820,10 +842,10 @@
                 annual_contribution: parseFloat(document.getElementById('annual_contribution').value),
                 pre_retirement_return: cleanPct(document.getElementById('pre_retirement_return').value),
                 post_retirement_return: cleanPct(document.getElementById('post_retirement_return').value),
-                contribution_increase: 0.01,
-                ltcg_tax_rate: 0.125,
-                ltcg_exemption: 125000,
-                gain_ratio: 0.60,
+                contribution_increase: cleanPct(document.getElementById('contribution_increase').value),
+                ltcg_tax_rate: cleanPct(document.getElementById('ltcg_tax_rate').value),
+                ltcg_exemption: parseFloat(document.getElementById('ltcg_exemption').value),
+                gain_ratio: cleanPct(document.getElementById('gain_ratio').value),
                 stress_scenario: document.getElementById('stress_scenario').value,
                 adhoc_expenses: getAdHocExpenses()
             };
