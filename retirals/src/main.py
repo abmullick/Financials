@@ -7,6 +7,8 @@ import uvicorn
 import os
 from os import getenv
 
+# Start the FastAPI application
+
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
