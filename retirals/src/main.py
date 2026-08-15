@@ -7,7 +7,7 @@ import uvicorn
 import os
 from os import getenv
 
-# Start the FastAPI application
+# Start the FastAPI application 
 
 app = FastAPI()
 app.add_middleware(
@@ -18,6 +18,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.mount("/assets", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "..", "assets")), name="assets")
+
+# Define the PlannerInputs model using Pydantic
 
 class PlannerInputs(BaseModel):
     current_age: int = 43
@@ -36,6 +38,7 @@ class PlannerInputs(BaseModel):
     stress_scenario: str = "Normal"
     adhoc_expenses: list[dict] = [{"age": 58, "amount": 2500000.00}, {"age": 75, "amount": 1000000.00}]
 
+# Validate the PlannerInputs model after initialization
     @model_validator(mode="after")
     def validate_plan(self):
         if self.current_age <= 0:
