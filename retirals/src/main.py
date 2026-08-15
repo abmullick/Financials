@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 import uvicorn
 import os
+from os import getenv
 
 app = FastAPI()
 app.mount("/assets", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "..", "assets")), name="assets")
@@ -149,5 +150,6 @@ async def read_index():
     return FileResponse(static_file)
 
 if __name__ == "__main__":
-    print("Starting Parity Retirement Planner Server at http://localhost:8000")
-    uvicorn.run(app, host="0.0.0.0", port=20080)
+    port = int(getenv("PORT", 20080))
+    print(f"Starting Parity Retirement Planner Server at http://localhost:{port}")
+    uvicorn.run(app, host="0.0.0.0", port=port)
