@@ -86,9 +86,26 @@ Tests validate:
 - Tax calculation accuracy
 - Minimum corpus requirement calculations
 
-## Public sharing
+## Deployment
 
-To expose the app over the internet temporarily, use ngrok:
+### Deploy on Render.com
+
+1. Push your repository to GitHub
+2. Connect your GitHub account to [Render.com](https://render.com)
+3. Create a new Web Service and select your GitHub repository
+4. Use the following settings:
+   - **Build Command:** `pip install -r requirements.txt`
+   - **Start Command:** `cd retirals && uvicorn src.main:app --host 0.0.0.0 --port 8080`
+   - **Environment:** Python 3.11+
+   - **Plan:** Free or Paid (Free tier has limitations)
+
+Alternatively, use the `render.yaml` file in the repository for Infrastructure as Code deployment.
+
+The application will be available at: `https://<your-render-app-name>.onrender.com`
+
+### Temporary public sharing with ngrok
+
+To expose the app over the internet temporarily:
 
 ```bash
 ngrok http 20080

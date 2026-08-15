@@ -31,3 +31,6 @@ INFO:     127.0.0.1:41412 - "GET / HTTP/1.1" 200 OK
 INFO:     127.0.0.1:41412 - "GET /assets/logo.png HTTP/1.1" 304 Not Modified
 INFO:     127.0.0.1:41412 - "POST /calculate HTTP/1.1" 200 OK
 INFO:     127.0.0.1:41412 - "GET /favicon.ico HTTP/1.1" 404 Not Found
+INFO:     2401:4900:1c85:a231:d893:abaf:22ca:f4f7:0 - "GET / HTTP/1.1" 200 OK
+INFO:     2401:4900:1c85:a231:d893:abaf:22ca:f4f7:0 - "GET /assets/logo.png HTTP/1.1" 304 Not Modified
+INFO:     2401:4900:1c85:a231:d893:abaf:22ca:f4f7:0 - "POST /calculate HTTP/1.1" 200 OK
