@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Retirement Corpus Planner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-1: #071521;
+            --bg-2: #0d1d2d;
+            --bg-3: #0f2438;
+            --bg-4: #132c42;
+            --panel: rgba(11, 22, 35, 0.72);
+            --panel-strong: rgba(15, 26, 39, 0.86);
+            --text-1: #f8fbff;
+            --text-2: #dfeafc;
+            --text-3: #b7c8dc;
+            --stroke: rgba(148, 163, 184, 0.18);
+            --primary: #cfe2ff;
+            --accent: #66a7ff;
+            --success: #32d296;
+            --warning: #f5b75c;
+            --danger: #ff6b6b;
+            --purple: #a78bfa;
+            --glass: rgba(255,255,255,0.04);
+            --input-bg: linear-gradient(180deg, rgba(12, 22, 33, 0.9), rgba(18, 31, 44, 0.88));
+            --input-text: #f8fbff;
+            --input-muted: #c7d7ee;
+            --header-bg: linear-gradient(135deg, rgba(9, 19, 30, 0.98), rgba(14, 31, 48, 0.96) 30%, rgba(29, 77, 125, 0.88));
+            --panel-bg: linear-gradient(180deg, rgba(17,28,39,0.9), rgba(12,19,30,0.76));
+            --kpi-bg: linear-gradient(180deg, rgba(19,31,45,0.9), rgba(13,21,31,0.82));
+            --chart-panel-bg: linear-gradient(180deg, rgba(17, 27, 38, 0.95), rgba(11, 17, 25, 0.88));
+            --table-head: rgba(248, 250, 252, 0.7);
+            --table-body: rgba(255,255,255,0.0);
+            --toggle-track: rgba(148, 163, 184, 0.25);
+            --toggle-thumb: #f8fafc;
+            --chart-grid: rgba(226, 232, 240, 0.18);
+            --chart-axis: #e2e8f0;
+            --chart-legend: #e2e8f0;
+            --muted-label: #e2e8f0;
+        }
+
+        body.theme-light {
+            --bg-1: #edf5ff;
+            --bg-2: #f8fbff;
+            --bg-3: #eff6ff;
+            --bg-4: #f3f8ff;
+            --panel: rgba(255, 255, 255, 0.82);
+            --panel-strong: rgba(255, 255, 255, 0.96);
+            --text-1: #0b1320;
+            --text-2: #1f2d3d;
+            --text-3: #53657c;
+            --stroke: rgba(148, 163, 184, 0.18);
+            --primary: #1d4ed8;
+            --accent: #2563eb;
+            --success: #0f9f6e;
+            --warning: #b7791f;
+            --danger: #dc2626;
+            --purple: #7c3aed;
+            --glass: rgba(255,255,255,0.52);
+            --input-bg: rgba(255,255,255,0.78);
+            --input-text: #0f172a;
+            --input-muted: #4b5d78;
+            --header-bg: linear-gradient(135deg, rgba(255,255,255,0.86), rgba(231,240,255,0.9) 34%, rgba(191,219,254,0.76));
+            --panel-bg: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(245,247,250,0.9));
+            --kpi-bg: linear-gradient(180deg, rgba(255,255,255,0.86), rgba(240,245,255,0.92));
+            --chart-panel-bg: linear-gradient(180deg, rgba(255,255,255,0.82), rgba(248,250,252,0.88));
+            --table-head: rgba(241,245,249,0.9);
+            --table-body: rgba(255,255,255,0.0);
+            --toggle-track: rgba(37, 99, 235, 0.12);
+            --toggle-thumb: #2563eb;
+            --chart-grid: rgba(15, 23, 42, 0.08);
+            --chart-axis: #334155;
+            --chart-legend: #334155;
+            --muted-label: #475569;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background:
+                radial-gradient(circle at top left, rgba(102, 167, 255, 0.18), transparent 22%),
+                radial-gradient(circle at top right, rgba(50, 210, 150, 0.10), transparent 26%),
+                linear-gradient(135deg, var(--bg-1), var(--bg-2) 45%, var(--bg-3));
+            color: var(--text-1);
+            font-family: Inter, "Segoe UI", sans-serif;
+            letter-spacing: -0.015em;
+            color-scheme: light;
+            transition: background 0.2s ease, color 0.2s ease;
+        }
+
+        body:not(.theme-light) {
+            color-scheme: dark;
+        }
+
+        h1, h2, h3, h4, p, label, th, td, button, input, select {
+            letter-spacing: -0.02em;
+        }
+
+        .panel-3d {
+            background: var(--panel-bg);
+            border: 1px solid var(--stroke);
+            box-shadow:
+                0 24px 42px rgba(2, 8, 18, 0.12),
+                inset 0 1px 0 rgba(255,255,255,0.06);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            transform: translateY(-1px);
+            color: var(--text-1);
+        }
+
+        .kpi-3d {
+            background: var(--kpi-bg);
+            border: 1px solid var(--stroke);
+            box-shadow:
+                0 14px 28px rgba(2, 8, 18, 0.14),
+                inset 0 1px 0 rgba(255,255,255,0.06);
+            min-height: 128px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-3d::after {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 42%;
+            background: linear-gradient(180deg, rgba(255,255,255,0.06), transparent);
+            pointer-events: none;
+        }
+
+        .kpi-value {
+            font-size: clamp(0.72rem, 1.15vw, 1.55rem);
+            line-height: 1.1;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+            transition: font-size 0.15s ease;
+            color: var(--text-1);
+            text-shadow: 0 0 0 rgba(0,0,0,0);
+        }
+
+        .kpi-value.text-emerald-600,
+        .kpi-value.text-blue-600,
+        .kpi-value.text-amber-600 {
+            color: inherit !important;
+        }
+
+        .input-shell {
+            background: var(--input-bg);
+            border: 1px solid var(--stroke);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.04), 0 8px 18px rgba(2,8,18,0.12);
+            color: var(--input-text);
+        }
+
+        .input-shell::placeholder {
+            color: var(--input-muted);
+        }
+
+        body .text-slate-300,
+        body .text-slate-400,
+        body .text-slate-500,
+        body .text-slate-700,
+        body .text-gray-500,
+        body .text-gray-600,
+        body .text-gray-700,
+        body .text-slate-200,
+        body .text-slate-100,
+        body label,
+        body h2,
+        body h3,
+        body th,
+        body td,
+        body p,
+        body span,
+        body select,
+        body input {
+            color: var(--muted-label) !important;
+        }
+
+        body .text-white,
+        body .text-slate-50,
+        body .kpi-value {
+            color: var(--text-1) !important;
+        }
+
+        .primary-button {
+            background: linear-gradient(135deg, #10263d, #183a5d 35%, #1d4d7d 72%, #2a6bb1);
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 12px 22px rgba(15, 23, 42, 0.32), inset 0 1px 0 rgba(255,255,255,0.12);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+            letter-spacing: 0.01em;
+        }
+
+        .ledger-table-wrap {
+            background: rgba(7, 15, 24, 0.9);
+            border: 1px solid rgba(148, 163, 184, 0.14);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+        }
+
+        body.theme-light .ledger-table-wrap {
+            background: rgba(255,255,255,0.7);
+            border: 1px solid rgba(148, 163, 184, 0.18);
+        }
+
+        .ledger-table {
+            color: #f8fafc;
+            border-collapse: collapse;
+            background: rgba(9, 18, 28, 0.9);
+        }
+
+        body.theme-light .ledger-table {
+            color: #0f172a;
+            background: rgba(248,250,252,0.9);
+        }
+
+        .ledger-table thead th {
+            background: rgba(15, 23, 42, 0.92);
+            color: #f8fafc !important;
+            border-bottom: 1px solid rgba(148,163,184,0.2);
+        }
+
+        body.theme-light .ledger-table thead th {
+            background: rgba(241,245,249,0.96);
+            color: #0f172a !important;
+            border-bottom: 1px solid rgba(148,163,184,0.2);
+        }
+
+        .ledger-table tbody td {
+            color: #f8fafc !important;
+            background: rgba(9, 18, 28, 0.8);
+            border-bottom: 1px solid rgba(148,163,184,0.12);
+        }
+
+        body.theme-light .ledger-table tbody td {
+            color: #0f172a !important;
+            background: rgba(255,255,255,0.6);
+        }
+
+        .ledger-table tbody tr:nth-child(even) td {
+            background: rgba(15, 23, 42, 0.7);
+        }
+
+        .ledger-table tbody tr:hover td {
+            background: rgba(30, 41, 59, 0.7);
+        }
+
+        .ledger-table .text-emerald-600,
+        .ledger-table .text-rose-600,
+        .ledger-table .text-purple-600,
+        .ledger-table .text-blue-600 {
+            color: inherit !important;
+        }
+
+        .primary-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 16px 28px rgba(15, 23, 42, 0.26), inset 0 1px 0 rgba(255,255,255,0.15);
+            filter: brightness(1.04);
+        }
+
+        .chart-panel {
+            background: var(--chart-panel-bg);
+            border: 1px solid var(--stroke);
+            box-shadow: 0 16px 30px rgba(2, 8, 18, 0.12), inset 0 1px 0 rgba(255,255,255,0.06);
+            position: relative;
+            overflow: hidden;
+            color: var(--text-1);
+        }
+
+        .chart-panel::before {
+            content: "";
+            position: absolute;
+            inset: 0 0 auto 0;
+            height: 110px;
+            background: linear-gradient(180deg, rgba(102, 167, 255, 0.08), transparent);
+            pointer-events: none;
+        }
+
+        .header-glow {
+            background: var(--header-bg);
+            border: 1px solid rgba(255,255,255,0.4);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.34), 0 18px 32px rgba(15, 23, 42, 0.08);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+        }
+
+        body.theme-light .header-glow {
+            border-color: rgba(148, 163, 184, 0.28);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.42), 0 24px 40px rgba(37, 99, 235, 0.08);
+        }
+
+        .theme-toggle {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            width: 58px;
+            height: 30px;
+            border-radius: 9999px;
+            background: var(--toggle-track);
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: background 0.2s ease;
+            box-shadow: inset 0 1px 2px rgba(15,23,42,0.12);
+        }
+
+        .theme-toggle::before {
+            content: "☀️";
+            position: absolute;
+            left: 7px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .theme-toggle::after {
+            content: "🌙";
+            position: absolute;
+            right: 7px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            opacity: 0.9;
+        }
+
+        .theme-toggle-thumb {
+            position: absolute;
+            left: 4px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--toggle-thumb);
+            box-shadow: 0 3px 8px rgba(2,8,18,0.2);
+            transition: transform 0.2s ease;
+        }
+
+        body.theme-light .theme-toggle-thumb {
+            transform: translateX(28px);
+        }
+
+        input, select {
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+            font-weight: 500;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: rgba(37, 99, 235, 0.55);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.09);
+        }
+
+        .app-layout {
+            min-width: 0;
+        }
+
+        .chart-grid {
+            min-width: 0;
+        }
+
+        .chart-panel {
+            min-width: 0;
+        }
+
+        .chart-panel canvas {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        @media (max-width: 767px) {
+            .app-layout {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .kpi-grid {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 0.75rem;
+            }
+
+            .chart-grid {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+
+            .chart-panel .h-64 {
+                height: 17rem;
+            }
+
+            .header-glow {
+                padding-left: 1rem;
+                padding-right: 1rem;
+                margin-bottom: 1rem;
+            }
+
+            .panel-3d {
+                padding: 1rem;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            .chart-panel .h-64 {
+                height: 22rem;
+            }
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans antialiased">
+    <div class="max-w-[1600px] mx-auto p-3 sm:p-6 lg:p-8">
+        <header class="header-glow mb-8 rounded-2xl px-6 py-5 text-white">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div class="flex items-center gap-4">
+                    <div class="flex h-16 w-16 items-center justify-center rounded-2xl border border-white/50 bg-white/12 p-2 shadow-lg backdrop-blur-sm">
+                        <img src="/assets/logo.png" alt="Logo" class="h-full w-full rounded-xl object-contain" />
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-black tracking-tight text-white">Dynamic Retirement Corpus Planner</h1>
+                        <p class="mt-2 text-sm text-slate-300">Intelligent Wealth Strategy • Precision Retirement Planning</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2 text-slate-200">
+                        <span class="text-[10px] font-semibold uppercase tracking-[0.18em]">Mode</span>
+                        <button id="themeToggleBtn" class="theme-toggle" type="button" aria-label="Toggle between dark and bright mode">
+                            <span class="theme-toggle-thumb"></span>
+                        </button>
+                    </div>
+                    <div class="text-left md:text-right">
+                        <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-300">Product Owner</p>
+                        <p class="mt-1 text-lg font-bold text-white">Abhisek Basu Mullick</p>
+                        <p class="text-sm text-slate-200">abmullick@gmail.com</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div class="app-layout grid grid-cols-1 lg:grid-cols-[360px_minmax(0,1fr)] gap-6 lg:gap-8">
+            <!-- Parameters Sidebar -->
+            <div class="panel-3d p-5 sm:p-6 rounded-2xl h-fit space-y-4">
+                <h2 class="text-xl font-semibold text-slate-100 mb-2">Planner Parameters</h2>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300">Current Age</label>
+                        <input type="number" id="current_age" value="23" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300">Retirement Age</label>
+                        <input type="number" id="retirement_age" value="58" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-300">Life Expectancy</label>
+                    <input type="number" id="life_expectancy" value="85" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-300">Current Annual Expenses (₹)</label>
+                    <input type="number" id="current_annual_expenses" value="600000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300">Inflation Rate</label>
+                        <input type="text" id="avg_inflation_rate" value="6.0%" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300">Current Corpus (₹)</label>
+                        <input type="number" id="current_corpus" value="100000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-300">Annual Additional Contribution (₹)</label>
+                    <input type="number" id="annual_contribution" value="200000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300">Pre-Retire Return</label>
+                        <input type="text" id="pre_retirement_return" value="16.0%" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300">Post-Retire Return</label>
+                        <input type="text" id="post_retirement_return" value="15.0%" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-300">Stress Test Scenario</label>
+                    <select id="stress_scenario" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 bg-white">
+                        <option value="Normal">Normal Scenario</option>
+                        <option value="Mild Crash (-10% for 2 yrs)">Mild Crash (-10% for 2 yrs)</option>
+                        <option value="Severe Crash (-20% for 2 yrs)">Severe Crash (-20% for 2 yrs)</option>
+                    </select>
+                </div>
+
+                <div class="pt-3 border-t border-slate-200">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm font-semibold text-slate-700">Ad-hoc Expenses</h3>
+                        <button id="addAdHocBtn" type="button" class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-lg font-bold text-white shadow-sm hover:bg-slate-700">+</button>
+                    </div>
+                    <div id="adhocExpenseRows" class="space-y-2"></div>
+                </div>
+
+                <button onclick="calculateMetrics()" class="primary-button w-full text-white font-semibold py-2.5 rounded-xl text-sm">
+                    Run Simulation
+                </button>
+
+                <div class="mt-5 flex justify-center">
+                    <div class="flex h-40 w-full max-w-[260px] items-center justify-center rounded-3xl border border-slate-200/70 bg-white/80 p-3 shadow-sm backdrop-blur-sm">
+                        <img src="/assets/logo.png" alt="Planner logo" class="h-full w-full rounded-2xl object-contain" />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dashboard Analytics View -->
+            <div class="lg:col-span-1 min-w-0 space-y-6">
+                <!-- KPI Blocks -->
+                <div class="kpi-grid grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="kpi-3d p-4 rounded-2xl">
+                        <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Corpus At Retirement</p>
+                        <p id="kpi_retirement_corpus" class="kpi-value mt-2 font-black text-white">₹0.00</p>
+                    </div>
+                    <div class="kpi-3d p-4 rounded-2xl">
+                        <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Final Terminal Corpus</p>
+                        <p id="kpi_final_corpus" class="kpi-value mt-2 font-black text-emerald-400">₹0.00</p>
+                    </div>
+                    <div class="kpi-3d p-4 rounded-2xl">
+                        <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Peak Asset Age</p>
+                        <p id="kpi_peak_age" class="kpi-value mt-2 font-black text-sky-300">0</p>
+                    </div>
+                    <div class="kpi-3d p-4 rounded-2xl">
+                        <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Min Corpus Required</p>
+                        <p id="kpi_minimum_corpus_required" class="kpi-value mt-2 font-black text-amber-300">₹0.00</p>
+                    </div>
+                </div>
+
+                <!-- Workbook-style Multi-Chart Dashboard -->
+                <div class="chart-grid grid grid-cols-1 xl:grid-cols-2 gap-4 xl:gap-6">
+                    <div class="chart-panel p-4 rounded-2xl">
+                        <h3 class="text-md font-semibold text-slate-700 mb-3">Wealth Growth &amp; Depletion</h3>
+                        <div class="h-64">
+                            <canvas id="trajectoryChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-panel p-4 rounded-2xl">
+                        <h3 class="text-md font-semibold text-slate-700 mb-3">Cash Flow Breakdown</h3>
+                        <div class="h-64">
+                            <canvas id="cashFlowChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-panel p-4 rounded-2xl">
+                        <h3 class="text-md font-semibold text-slate-700 mb-3">Annual Investment Returns</h3>
+                        <div class="h-64">
+                            <canvas id="returnChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-panel p-4 rounded-2xl">
+                        <h3 class="text-md font-semibold text-slate-700 mb-3">Annual Expenses</h3>
+                        <div class="h-64">
+                            <canvas id="expenseChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-panel p-4 rounded-2xl">
+                        <h3 class="text-md font-semibold text-slate-700 mb-3">Withdrawal vs Annual Return by Age</h3>
+                        <div class="h-64">
+                            <canvas id="withdrawalReturnChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-panel p-4 rounded-2xl">
+                        <h3 class="text-md font-semibold text-slate-700 mb-3">Projected Corpus Balance by Age</h3>
+                        <div class="h-64">
+                            <canvas id="projectedBalanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Projection Table Data -->
+                <div class="ledger-table-wrap panel-3d rounded-2xl overflow-hidden mt-6">
+                    <div class="px-6 py-4 border-b border-slate-200/80 bg-slate-900/60">
+                        <h3 class="text-md font-semibold text-white">Trajectory Projection Ledger</h3>
+                    </div>
+                    <div class="overflow-x-auto max-h-80">
+                        <table class="ledger-table min-w-full text-sm">
+                            <thead class="sticky top-0">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-medium uppercase">Age</th>
+                                    <th class="px-4 py-2 text-right text-xs font-medium uppercase">Opening</th>
+                                    <th class="px-4 py-2 text-right text-xs font-medium uppercase">Contribution</th>
+                                    <th class="px-4 py-2 text-right text-xs font-medium uppercase">Withdrawal</th>
+                                    <th class="px-4 py-2 text-right text-xs font-medium uppercase">Ad-Hoc</th>
+                                    <th class="px-4 py-2 text-right text-xs font-medium uppercase">Return</th>
+                                    <th class="px-4 py-2 text-right text-xs font-medium uppercase">Closing</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ledger_body">
+                                <!-- Generated Dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chartInstances = {};
+
+        function buildAdHocRow(age = '', amount = '') {
+            const row = document.createElement('div');
+            row.className = 'flex items-center gap-2 adhoc-row';
+            row.innerHTML = `
+                <input class="adhoc-age input-shell w-1/3 rounded-xl p-2 text-sm text-slate-700" type="number" min="1" placeholder="Age" value="${age}">
+                <input class="adhoc-amount input-shell flex-1 rounded-xl p-2 text-sm text-slate-700" type="number" min="0" step="1000" placeholder="Amount" value="${amount}">
+                <button type="button" class="remove-adhoc-btn inline-flex h-8 w-8 items-center justify-center rounded-full bg-rose-100 text-lg font-bold text-rose-700 hover:bg-rose-200">×</button>
+            `;
+            row.querySelector('.remove-adhoc-btn').addEventListener('click', () => row.remove());
+            return row;
+        }
+
+        function seedAdHocRows() {
+            const container = document.getElementById('adhocExpenseRows');
+            container.innerHTML = '';
+            const defaults = [
+                { age: 58, amount: 2500000 },
+                { age: 75, amount: 1000000 }
+            ];
+            defaults.forEach(item => container.appendChild(buildAdHocRow(item.age, item.amount)));
+        }
+
+        function getAdHocExpenses() {
+            return Array.from(document.querySelectorAll('.adhoc-row')).map(row => {
+                const age = parseInt(row.querySelector('.adhoc-age').value || '0', 10);
+                const amount = parseFloat(row.querySelector('.adhoc-amount').value || '0');
+                if ((!Number.isNaN(age) && age > 0) && (!Number.isNaN(amount) && amount >= 0)) {
+                    return { age, amount };
+                }
+                return null;
+            }).filter(Boolean);
+        }
+
+        function cleanPct(val) {
+            return parseFloat(val.replace('%','')) / 100.0;
+        }
+
+        function fmt(num) {
+            return '₹' + num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function fitKpiValue(element) {
+            const card = element.closest('.kpi-3d');
+            if (!card) return;
+
+            const maxWidth = card.clientWidth - 20;
+            const maxHeight = card.clientHeight - 42;
+            let size = 28;
+
+            element.style.fontSize = size + 'px';
+            element.style.lineHeight = '1.1';
+
+            while (size > 10) {
+                if (element.scrollWidth <= maxWidth && element.scrollHeight <= maxHeight) {
+                    break;
+                }
+                size -= 1;
+                element.style.fontSize = size + 'px';
+            }
+        }
+
+        function fitAllKpiValues() {
+            document.querySelectorAll('.kpi-value').forEach(fitKpiValue);
+        }
+
+        function withGradient(ctx, colorA, colorB) {
+            const gradient = ctx.createLinearGradient(0, 0, 0, 340);
+            gradient.addColorStop(0, colorA);
+            gradient.addColorStop(1, colorB);
+            return gradient;
+        }
+
+        function isLightTheme() {
+            return document.body.classList.contains('theme-light');
+        }
+
+        function makeLineChart(canvasId, labels, datasets, options = {}) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
+
+            const axisColor = isLightTheme() ? '#334155' : '#e2e8f0';
+            const gridColor = isLightTheme() ? 'rgba(15, 23, 42, 0.08)' : 'rgba(226, 232, 240, 0.18)';
+
+            const prepared = datasets.map(ds => ({
+                ...ds,
+                cubicInterpolationMode: 'monotone',
+                tension: ds.tension ?? 0.35,
+                borderWidth: ds.borderWidth ?? 3,
+                fill: ds.fill ?? false,
+                pointRadius: ds.pointRadius ?? 2.2,
+                pointHoverRadius: ds.pointHoverRadius ?? 5,
+                pointBackgroundColor: ds.pointBackgroundColor ?? '#fff',
+                pointBorderColor: ds.pointBorderColor ?? ds.borderColor,
+                pointBorderWidth: ds.pointBorderWidth ?? 1.5,
+                backgroundColor: ds.backgroundColor || 'rgba(148,163,184,0.12)'
+            }));
+
+            chartInstances[canvasId] = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets: prepared },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    animation: { duration: 800, easing: 'easeOutQuart' },
+                    elements: { line: { capBezierPoints: true } },
+                    plugins: {
+                        legend: {
+                            labels: { boxWidth: 12, usePointStyle: true, pointStyle: 'circle', color: axisColor, padding: 16, font: { weight: '600' } }
+                        },
+                        tooltip: {
+                            backgroundColor: isLightTheme() ? 'rgba(15, 23, 42, 0.92)' : 'rgba(15, 23, 42, 0.92)',
+                            titleColor: '#f8fafc',
+                            bodyColor: '#e2e8f0',
+                            borderWidth: 1,
+                            borderColor: 'rgba(148, 163, 184, 0.2)',
+                            padding: 10,
+                            displayColors: true
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: gridColor },
+                            border: { color: gridColor },
+                            ticks: { color: axisColor, maxTicksLimit: 8 }
+                        },
+                        y: {
+                            grid: { color: gridColor },
+                            border: { color: gridColor },
+                            ticks: { callback: value => typeof value === 'number' ? '₹' + value.toLocaleString('en-IN') : value, color: axisColor }
+                        }
+                    },
+                    ...options
+                }
+            });
+        }
+
+        function makeBarChart(canvasId, labels, datasets, options = {}) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
+
+            const axisColor = isLightTheme() ? '#334155' : '#e2e8f0';
+            const gridColor = isLightTheme() ? 'rgba(15, 23, 42, 0.08)' : 'rgba(226, 232, 240, 0.18)';
+
+            const prepared = datasets.map(ds => ({
+                ...ds,
+                borderRadius: ds.borderRadius ?? 8,
+                borderSkipped: false,
+                borderWidth: ds.borderWidth ?? 1,
+                maxBarThickness: ds.maxBarThickness ?? 26,
+                backgroundColor: ds.backgroundColor || 'rgba(148,163,184,0.72)'
+            }));
+
+            chartInstances[canvasId] = new Chart(ctx, {
+                type: 'bar',
+                data: { labels, datasets: prepared },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    animation: { duration: 800, easing: 'easeOutQuart' },
+                    plugins: {
+                        legend: {
+                            labels: { boxWidth: 12, usePointStyle: true, pointStyle: 'circle', color: axisColor, padding: 16, font: { weight: '600' } }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(15, 23, 42, 0.92)',
+                            titleColor: '#f8fafc',
+                            bodyColor: '#e2e8f0',
+                            borderWidth: 1,
+                            borderColor: 'rgba(148, 163, 184, 0.2)',
+                            padding: 10,
+                            displayColors: true
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { display: false },
+                            border: { color: gridColor },
+                            ticks: { color: axisColor, maxTicksLimit: 8 }
+                        },
+                        y: {
+                            grid: { color: gridColor },
+                            border: { color: gridColor },
+                            ticks: { callback: value => typeof value === 'number' ? '₹' + value.toLocaleString('en-IN') : value, color: axisColor }
+                        }
+                    },
+                    ...options
+                }
+            });
+        }
+
+        async function calculateMetrics() {
+            const payload = {
+                current_age: parseInt(document.getElementById('current_age').value),
+                retirement_age: parseInt(document.getElementById('retirement_age').value),
+                life_expectancy: parseInt(document.getElementById('life_expectancy').value),
+                current_annual_expenses: parseFloat(document.getElementById('current_annual_expenses').value),
+                avg_inflation_rate: cleanPct(document.getElementById('avg_inflation_rate').value),
+                current_corpus: parseFloat(document.getElementById('current_corpus').value),
+                annual_contribution: parseFloat(document.getElementById('annual_contribution').value),
+                pre_retirement_return: cleanPct(document.getElementById('pre_retirement_return').value),
+                post_retirement_return: cleanPct(document.getElementById('post_retirement_return').value),
+                contribution_increase: 0.01,
+                ltcg_tax_rate: 0.125,
+                ltcg_exemption: 125000,
+                gain_ratio: 0.60,
+                stress_scenario: document.getElementById('stress_scenario').value,
+                adhoc_expenses: getAdHocExpenses()
+            };
+
+            const response = await fetch('/calculate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+
+            document.getElementById('kpi_retirement_corpus').innerText = fmt(data.metrics.corpus_at_retirement);
+            document.getElementById('kpi_final_corpus').innerText = fmt(data.metrics.final_corpus);
+            document.getElementById('kpi_peak_age').innerText = data.metrics.peak_age;
+            document.getElementById('kpi_minimum_corpus_required').innerText = fmt(data.metrics.minimum_corpus_required);
+            fitAllKpiValues();
+
+            const ages = data.projections.map(row => row.age);
+            const opening = data.projections.map(row => row.opening);
+            const contribution = data.projections.map(row => row.contribution);
+            const withdrawal = data.projections.map(row => row.withdrawal);
+            const adHoc = data.projections.map(row => row.ad_hoc);
+            const returns = data.projections.map(row => row.return);
+            const closing = data.projections.map(row => row.closing);
+
+            const tbody = document.getElementById('ledger_body');
+            tbody.innerHTML = '';
+
+            data.projections.forEach(row => {
+                const tr = document.createElement('tr');
+                if (row.age === payload.retirement_age) tr.className = 'bg-amber-50/70 font-medium';
+                tr.innerHTML = `
+                    <td class="px-4 py-2 font-medium">${row.age}</td>
+                    <td class="px-4 py-2 text-right">${fmt(row.opening)}</td>
+                    <td class="px-4 py-2 text-right text-emerald-600">+${fmt(row.contribution)}</td>
+                    <td class="px-4 py-2 text-right text-rose-600">-${fmt(row.withdrawal)}</td>
+                    <td class="px-4 py-2 text-right text-purple-600">-${fmt(row.ad_hoc)}</td>
+                    <td class="px-4 py-2 text-right text-blue-600">${fmt(row.return)}</td>
+                    <td class="px-4 py-2 text-right font-medium">${fmt(row.closing)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            makeLineChart('trajectoryChart', ages, [{
+                label: 'Net Closing Assets (₹)',
+                data: closing,
+                borderColor: '#0f172a',
+                backgroundColor: 'rgba(15, 23, 42, 0.12)',
+                fill: true,
+                pointRadius: 0,
+                pointHoverRadius: 5
+            }]);
+
+            makeBarChart('cashFlowChart', ages, [
+                { label: 'Contribution', data: contribution, backgroundColor: 'rgba(16, 185, 129, 0.78)', borderColor: 'rgba(16, 185, 129, 1)', borderWidth: 1 },
+                { label: 'Withdrawal', data: withdrawal, backgroundColor: 'rgba(239, 68, 68, 0.78)', borderColor: 'rgba(239, 68, 68, 1)', borderWidth: 1 },
+                { label: 'Ad-Hoc', data: adHoc, backgroundColor: 'rgba(139, 92, 246, 0.78)', borderColor: 'rgba(139, 92, 246, 1)', borderWidth: 1 }
+            ]);
+
+            makeLineChart('returnChart', ages, [{
+                label: 'Annual Return',
+                data: returns,
+                borderColor: '#2563eb',
+                backgroundColor: 'rgba(37,99,235,0.18)',
+                fill: true,
+                pointRadius: 0,
+                pointHoverRadius: 5
+            }]);
+
+            makeBarChart('expenseChart', ages, [
+                { label: 'Withdrawal', data: withdrawal, backgroundColor: 'rgba(239, 68, 68, 0.76)', borderColor: 'rgba(239, 68, 68, 1)', borderWidth: 1 },
+                { label: 'Ad-Hoc', data: adHoc, backgroundColor: 'rgba(124, 58, 237, 0.76)', borderColor: 'rgba(124, 58, 237, 1)', borderWidth: 1 }
+            ]);
+
+            makeLineChart('withdrawalReturnChart', ages, [
+                { label: 'Withdrawal', data: withdrawal, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.08)', fill: false, pointRadius: 0 },
+                { label: 'Annual Return', data: returns, borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.08)', fill: false, pointRadius: 0 }
+            ]);
+
+            makeLineChart('projectedBalanceChart', ages, [{
+                label: 'Projected Corpus Balance',
+                data: closing,
+                borderColor: '#0f766e',
+                backgroundColor: 'rgba(15,118,110,0.18)',
+                fill: true,
+                pointRadius: 0,
+                pointHoverRadius: 5
+            }]);
+        }
+
+        function applyTheme(theme) {
+            const lightMode = theme === 'light';
+            document.body.classList.toggle('theme-light', lightMode);
+            localStorage.setItem('retirement-theme', theme);
+        }
+
+        function initializeTheme() {
+            const savedTheme = localStorage.getItem('retirement-theme') || 'dark';
+            applyTheme(savedTheme);
+            const toggle = document.getElementById('themeToggleBtn');
+            if (toggle) {
+                toggle.setAttribute('aria-pressed', String(savedTheme === 'light'));
+            }
+        }
+
+        document.getElementById('themeToggleBtn').addEventListener('click', () => {
+            const nextTheme = document.body.classList.contains('theme-light') ? 'dark' : 'light';
+            applyTheme(nextTheme);
+            document.getElementById('themeToggleBtn').setAttribute('aria-pressed', String(nextTheme === 'light'));
+            calculateMetrics();
+            fitAllKpiValues();
+            if (window.Chart && chartInstances) {
+                Object.keys(chartInstances).forEach(chartId => {
+                    const chart = chartInstances[chartId];
+                    if (chart) chart.update();
+                });
+            }
+        });
+
+        document.getElementById('addAdHocBtn').addEventListener('click', () => {
+            document.getElementById('adhocExpenseRows').appendChild(buildAdHocRow());
+        });
+
+        seedAdHocRows();
+        initializeTheme();
+        window.addEventListener('resize', fitAllKpiValues);
+        window.onload = function() {
+            calculateMetrics();
+            fitAllKpiValues();
+        };
+    </script>
+</body>
+</html>
