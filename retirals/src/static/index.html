@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dynamic Retirement Corpus Planner</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-1: #edf3ff;
+            --bg-2: #f7f9ff;
+            --bg-3: #eef9f6;
+            --panel: rgba(255, 255, 255, 0.78);
+            --panel-strong: rgba(255, 255, 255, 0.92);
+            --text-1: #0f172a;
+            --text-2: #475569;
+            --stroke: rgba(148, 163, 184, 0.18);
+            --primary: #0f172a;
+            --accent: #2563eb;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --purple: #8b5cf6;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            background:
+                radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 26%),
+                radial-gradient(circle at bottom right, rgba(16, 185, 129, 0.12), transparent 24%),
+                linear-gradient(135deg, var(--bg-1), var(--bg-2) 45%, var(--bg-3));
+            color: var(--text-1);
+            font-family: Inter, "Segoe UI", sans-serif;
+        }
+
+        .panel-3d {
+            background: linear-gradient(180deg, rgba(255,255,255,0.92), rgba(248,250,252,0.82));
+            border: 1px solid var(--stroke);
+            box-shadow:
+                0 18px 45px rgba(15, 23, 42, 0.09),
+                0 7px 18px rgba(15, 23, 42, 0.06),
+                inset 0 1px 0 rgba(255,255,255,0.9);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transform: translateY(-1px);
+        }
+
+        .kpi-3d {
+            background: linear-gradient(145deg, rgba(255,255,255,0.97), rgba(239,246,255,0.82));
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            box-shadow:
+                0 14px 28px rgba(37, 99, 235, 0.08),
+                inset 0 1px 0 rgba(255,255,255,0.85);
+        }
+
+        .input-shell {
+            background: linear-gradient(180deg, rgba(248,250,252,0.96), rgba(255,255,255,0.82));
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            box-shadow: inset 0 1px 1px rgba(255,255,255,0.7), 0 4px 10px rgba(15,23,42,0.04);
+        }
+
+        .primary-button {
+            background: linear-gradient(135deg, #0f172a, #1e293b 32%, #334155);
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 12px 22px rgba(15, 23, 42, 0.22), inset 0 1px 0 rgba(255,255,255,0.12);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .primary-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 16px 28px rgba(15, 23, 42, 0.26), inset 0 1px 0 rgba(255,255,255,0.15);
+        }
+
+        .chart-panel {
+            background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(248,250,252,0.8));
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            box-shadow: 0 14px 28px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255,255,255,0.8);
+        }
+
+        .header-glow {
+            background: linear-gradient(135deg, rgba(37,99,235,0.12), rgba(16,185,129,0.08), rgba(255,255,255,0.4));
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+        }
+
+        input, select {
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: rgba(37, 99, 235, 0.55);
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans antialiased">
+    <div class="max-w-7xl mx-auto p-6 lg:p-8">
+        <header class="header-glow mb-8 rounded-2xl px-6 py-5">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div>
+                    <h1 class="text-3xl font-black tracking-tight text-slate-900">Dynamic Retirement Corpus Planner</h1>
+                    <p class="mt-2 text-sm text-slate-500">WSL Engine Backend Engine v6 • Parity Check Enabled</p>
+                </div>
+                <div class="text-left md:text-right">
+                    <p class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">Product Owner</p>
+                    <p class="mt-1 text-lg font-bold text-slate-800">Abhisek Basu Mullick</p>
+                    <p class="text-sm text-slate-600">abmullick@gmail.com</p>
+                </div>
+            </div>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Parameters Sidebar -->
+            <div class="panel-3d p-6 rounded-2xl h-fit space-y-4">
+                <h2 class="text-xl font-semibold text-slate-800 mb-2">Planner Parameters</h2>
+                
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500">Current Age</label>
+                        <input type="number" id="current_age" value="43" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500">Retirement Age</label>
+                        <input type="number" id="retirement_age" value="54" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-gray-500">Life Expectancy</label>
+                    <input type="number" id="life_expectancy" value="90" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-gray-500">Current Annual Expenses ($)</label>
+                    <input type="number" id="current_annual_expenses" value="1200000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500">Inflation Rate</label>
+                        <input type="text" id="avg_inflation_rate" value="6.0%" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500">Current Corpus ($)</label>
+                        <input type="number" id="current_corpus" value="4000000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-gray-500">Annual Additional Contribution ($)</label>
+                    <input type="number" id="annual_contribution" value="700000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500">Pre-Retire Return</label>
+                        <input type="text" id="pre_retirement_return" value="16.0%" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-gray-500">Post-Retire Return</label>
+                        <input type="text" id="post_retirement_return" value="15.0%" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-gray-500">Stress Test Scenario</label>
+                    <select id="stress_scenario" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 bg-white">
+                        <option value="Normal">Normal Scenario</option>
+                        <option value="Mild Crash (-10% for 2 yrs)">Mild Crash (-10% for 2 yrs)</option>
+                        <option value="Severe Crash (-20% for 2 yrs)">Severe Crash (-20% for 2 yrs)</option>
+                    </select>
+                </div>
+
+                <button onclick="calculateMetrics()" class="primary-button w-full text-white font-semibold py-2.5 rounded-xl text-sm">
+                    Run Simulation
+                </button>
+            </div>
+
+            <!-- Dashboard Analytics View -->
+            <div class="lg:col-span-2 space-y-6">
+                <!-- KPI Blocks -->
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div class="kpi-3d p-4 rounded-2xl">
+                        <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Corpus At Retirement</p>
+                        <p id="kpi_retirement_corpus" class="mt-3 text-2xl font-black text-slate-900">$0.00</p>
+                    </div>
+                    <div class="kpi-3d p-4 rounded-2xl">
+                        <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Final Terminal Corpus</p>
+                        <p id="kpi_final_corpus" class="mt-3 text-2xl font-black text-emerald-600">$0.00</p>
+                    </div>
+                    <div class="kpi-3d p-4 rounded-2xl">
+                        <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Peak Asset Age</p>
+                        <p id="kpi_peak_age" class="mt-3 text-2xl font-black text-blue-600">0</p>
+                    </div>
+                </div>
+
+                <!-- Workbook-style Multi-Chart Dashboard -->
+                <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                    <div class="chart-panel p-4 rounded-2xl">
+                        <h3 class="text-md font-semibold text-slate-700 mb-3">Wealth Growth &amp; Depletion</h3>
+                        <div class="h-64">
+                            <canvas id="trajectoryChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-panel p-4 rounded-2xl">
+                        <h3 class="text-md font-semibold text-slate-700 mb-3">Cash Flow Breakdown</h3>
+                        <div class="h-64">
+                            <canvas id="cashFlowChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-panel p-4 rounded-2xl">
+                        <h3 class="text-md font-semibold text-slate-700 mb-3">Annual Investment Returns</h3>
+                        <div class="h-64">
+                            <canvas id="returnChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-panel p-4 rounded-2xl">
+                        <h3 class="text-md font-semibold text-slate-700 mb-3">Annual Expenses</h3>
+                        <div class="h-64">
+                            <canvas id="expenseChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-panel p-4 rounded-2xl">
+                        <h3 class="text-md font-semibold text-slate-700 mb-3">Withdrawal vs Annual Return by Age</h3>
+                        <div class="h-64">
+                            <canvas id="withdrawalReturnChart"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-panel p-4 rounded-2xl">
+                        <h3 class="text-md font-semibold text-slate-700 mb-3">Projected Corpus Balance by Age</h3>
+                        <div class="h-64">
+                            <canvas id="projectedBalanceChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Projection Table Data -->
+                <div class="panel-3d rounded-2xl overflow-hidden mt-6">
+                    <div class="px-6 py-4 border-b border-slate-200/80 bg-slate-50/70">
+                        <h3 class="text-md font-semibold text-slate-700">Trajectory Projection Ledger</h3>
+                    </div>
+                    <div class="overflow-x-auto max-h-80">
+                        <table class="min-w-full divide-y divide-gray-200 text-sm">
+                            <thead class="bg-gray-50 sticky top-0">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Age</th>
+                                    <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Opening</th>
+                                    <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Contribution</th>
+                                    <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Withdrawal</th>
+                                    <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Ad-Hoc</th>
+                                    <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Return</th>
+                                    <th class="px-4 py-2 text-right text-xs font-medium text-gray-500 uppercase">Closing</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ledger_body" class="divide-y divide-gray-100 bg-white">
+                                <!-- Generated Dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const chartInstances = {};
+
+        function cleanPct(val) {
+            return parseFloat(val.replace('%','')) / 100.0;
+        }
+
+        function fmt(num) {
+            return '$' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function makeLineChart(canvasId, labels, datasets, options = {}) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
+
+            chartInstances[canvasId] = new Chart(ctx, {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: {
+                            labels: { boxWidth: 10, usePointStyle: true, pointStyle: 'circle', color: '#475569' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(148, 163, 184, 0.15)' },
+                            ticks: { color: '#475569' }
+                        },
+                        y: {
+                            grid: { color: 'rgba(148, 163, 184, 0.15)' },
+                            ticks: { callback: value => typeof value === 'number' ? '$' + value.toLocaleString() : value, color: '#475569' }
+                        }
+                    },
+                    ...options
+                }
+            });
+        }
+
+        function makeBarChart(canvasId, labels, datasets, options = {}) {
+            const ctx = document.getElementById(canvasId).getContext('2d');
+            if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
+
+            chartInstances[canvasId] = new Chart(ctx, {
+                type: 'bar',
+                data: { labels, datasets },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: {
+                            labels: { boxWidth: 10, usePointStyle: true, pointStyle: 'circle', color: '#475569' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(148, 163, 184, 0.15)' },
+                            ticks: { color: '#475569' }
+                        },
+                        y: {
+                            grid: { color: 'rgba(148, 163, 184, 0.15)' },
+                            ticks: { callback: value => typeof value === 'number' ? '$' + value.toLocaleString() : value, color: '#475569' }
+                        }
+                    },
+                    ...options
+                }
+            });
+        }
+
+        async function calculateMetrics() {
+            const payload = {
+                current_age: parseInt(document.getElementById('current_age').value),
+                retirement_age: parseInt(document.getElementById('retirement_age').value),
+                life_expectancy: parseInt(document.getElementById('life_expectancy').value),
+                current_annual_expenses: parseFloat(document.getElementById('current_annual_expenses').value),
+                avg_inflation_rate: cleanPct(document.getElementById('avg_inflation_rate').value),
+                current_corpus: parseFloat(document.getElementById('current_corpus').value),
+                annual_contribution: parseFloat(document.getElementById('annual_contribution').value),
+                pre_retirement_return: cleanPct(document.getElementById('pre_retirement_return').value),
+                post_retirement_return: cleanPct(document.getElementById('post_retirement_return').value),
+                contribution_increase: 0.01,
+                ltcg_tax_rate: 0.125,
+                ltcg_exemption: 125000,
+                gain_ratio: 0.60,
+                stress_scenario: document.getElementById('stress_scenario').value
+            };
+
+            const response = await fetch('/calculate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+
+            document.getElementById('kpi_retirement_corpus').innerText = fmt(data.metrics.corpus_at_retirement);
+            document.getElementById('kpi_final_corpus').innerText = fmt(data.metrics.final_corpus);
+            document.getElementById('kpi_peak_age').innerText = data.metrics.peak_age;
+
+            const ages = data.projections.map(row => row.age);
+            const opening = data.projections.map(row => row.opening);
+            const contribution = data.projections.map(row => row.contribution);
+            const withdrawal = data.projections.map(row => row.withdrawal);
+            const adHoc = data.projections.map(row => row.ad_hoc);
+            const returns = data.projections.map(row => row.return);
+            const closing = data.projections.map(row => row.closing);
+
+            const tbody = document.getElementById('ledger_body');
+            tbody.innerHTML = '';
+
+            data.projections.forEach(row => {
+                const tr = document.createElement('tr');
+                if (row.age === payload.retirement_age) tr.className = 'bg-amber-50/70 font-medium';
+                tr.innerHTML = `
+                    <td class="px-4 py-2 font-medium">${row.age}</td>
+                    <td class="px-4 py-2 text-right">${fmt(row.opening)}</td>
+                    <td class="px-4 py-2 text-right text-emerald-600">+${fmt(row.contribution)}</td>
+                    <td class="px-4 py-2 text-right text-rose-600">-${fmt(row.withdrawal)}</td>
+                    <td class="px-4 py-2 text-right text-purple-600">-${fmt(row.ad_hoc)}</td>
+                    <td class="px-4 py-2 text-right text-blue-600">${fmt(row.return)}</td>
+                    <td class="px-4 py-2 text-right font-medium">${fmt(row.closing)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            makeLineChart('trajectoryChart', ages, [{
+                label: 'Net Closing Assets ($)',
+                data: closing,
+                borderColor: '#0f172a',
+                backgroundColor: 'rgba(15, 23, 42, 0.08)',
+                borderWidth: 2.5,
+                fill: false,
+                tension: 0.15
+            }]);
+
+            makeLineChart('cashFlowChart', ages, [
+                { label: 'Contribution', data: contribution, borderColor: '#16a34a', backgroundColor: 'rgba(34,197,94,0.15)', fill: false, tension: 0.15 },
+                { label: 'Withdrawal', data: withdrawal, borderColor: '#dc2626', backgroundColor: 'rgba(239,68,68,0.15)', fill: false, tension: 0.15 },
+                { label: 'Ad-Hoc', data: adHoc, borderColor: '#7c3aed', backgroundColor: 'rgba(124,58,237,0.15)', fill: false, tension: 0.15 }
+            ]);
+
+            makeLineChart('returnChart', ages, [{
+                label: 'Annual Return',
+                data: returns,
+                borderColor: '#2563eb',
+                backgroundColor: 'rgba(37,99,235,0.15)',
+                fill: false,
+                tension: 0.15
+            }]);
+
+            makeBarChart('expenseChart', ages, [
+                { label: 'Withdrawal', data: withdrawal, backgroundColor: 'rgba(220, 38, 38, 0.65)' },
+                { label: 'Ad-Hoc', data: adHoc, backgroundColor: 'rgba(124, 58, 237, 0.65)' }
+            ]);
+
+            makeLineChart('withdrawalReturnChart', ages, [
+                { label: 'Withdrawal', data: withdrawal, borderColor: '#dc2626', fill: false, tension: 0.15 },
+                { label: 'Annual Return', data: returns, borderColor: '#2563eb', fill: false, tension: 0.15 }
+            ]);
+
+            makeLineChart('projectedBalanceChart', ages, [{
+                label: 'Projected Corpus Balance',
+                data: closing,
+                borderColor: '#0f766e',
+                backgroundColor: 'rgba(13,148,136,0.15)',
+                fill: false,
+                tension: 0.2
+            }]);
+        }
+
+        window.onload = calculateMetrics;
+    </script>
+</body>
+</html>
