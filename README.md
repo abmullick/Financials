@@ -1,19 +1,38 @@
 # Parity Retirement Planner
 
-A FastAPI-based retirement planning application that models annual corpus growth, retirement withdrawals, tax effects, and stress scenarios. The application logic mirrors a spreadsheet-based planner and provides a comprehensive web dashboard for scenario analysis and visualization.
+A sophisticated, FastAPI-based retirement planning application designed to model and visualize long-term financial trajectories. It meticulously simulates annual corpus growth, inflation-adjusted retirement withdrawals, complex tax implications, and market stress scenarios. The application's core logic is engineered for parity with detailed spreadsheet-based financial models, offering users a powerful and intuitive web dashboard for comprehensive scenario analysis.
 
 ## Features
 
-- Real-time retirement corpus projection year-by-year
-- Pre-retirement and post-retirement investment return modeling
-- Inflation-adjusted annual withdrawal calculations
-- Ad-hoc expense event handling
-- LTCG (Long-Term Capital Gains) tax estimation with exemption logic
-- Stress test scenarios (mild and severe market crashes)
-- Minimum corpus requirement calculation using present value analysis
-- Interactive web dashboard with retirement trajectory visualization
-- Comprehensive annual ledger with detailed cash flow breakdowns
-- Fully tested with workbook parity validation
+The planner is packed with features to provide a holistic view of your financial future:
+
+### Core Planning & Projection
+- **Year-by-Year Trajectory**: Generates a detailed annual projection of your wealth from your current age to life expectancy.
+- **Accumulation & Depletion Phases**: Models distinct financial behaviors for pre-retirement (accumulation) and post-retirement (depletion) periods.
+- **Inflation-Adjusted Expenses**: Automatically calculates the future cost of your current lifestyle by adjusting annual expenses for inflation.
+- **Dynamic Contributions**: Supports modeling for annual increases in contributions during the accumulation phase.
+- **Ad-Hoc Life Events**: Allows for planning one-time major expenses (e.g., a wedding, home purchase) at specific ages, adjusted for inflation.
+
+### Advanced Financial Modeling
+- **Sophisticated Tax Engine**: Calculates a blended effective tax rate based on a detailed portfolio allocation (Equity, Debt, Arbitrage) and equity sub-types (LTCG/STCG). It then computes the required **gross (pre-tax) withdrawal** to meet your **net (after-tax)** lifestyle expenses.
+- **Stress Testing**: Simulates the impact of market downturns on your portfolio with "Mild Crash" (-10% returns) and "Severe Crash" (-20% returns) scenarios applied for the first two years of retirement.
+- **Minimum Corpus Requirement**: Calculates the precise corpus needed at retirement to sustain your lifestyle until life expectancy, using a reverse present value analysis that accounts for all withdrawals, taxes, and market returns.
+
+### Interactive Dashboard & Visualization
+- **Intuitive UI**: A sleek, modern interface with light and dark modes for comfortable viewing.
+- **Real-Time Simulation**: Instantly recalculates and updates all metrics and charts as you adjust input parameters.
+- **Key Performance Indicators (KPIs)**: At-a-glance view of critical metrics like *Corpus at Retirement*, *Final Terminal Corpus*, *Peak Asset Age*, and *Minimum Corpus Required*.
+- **Multi-Chart Visualization**: A rich dashboard with multiple charts to analyze:
+    - **Wealth Growth & Depletion**: The complete trajectory of your net worth.
+    - **Cash Flow Breakdown**: Annual contributions, withdrawals, and taxes.
+    - **Portfolio & Tax Allocation**: Doughnut charts visualizing your asset mix and its contribution to the effective tax rate.
+    - **Returns & Expenses**: Detailed line and bar charts for annual returns and expenses over time.
+- **Detailed Ledger**: A comprehensive, scrollable table presenting the year-by-year financial breakdown, including opening/closing balances, contributions, withdrawals, and returns.
+
+### Technical Excellence
+- **API-Driven**: Built on a robust FastAPI backend that handles all complex calculations.
+- **Pydantic Validation**: Ensures all user inputs are valid and logical before running a simulation, providing clear error feedback.
+- **Workbook Parity Tested**: The calculation engine is rigorously tested against an equivalent spreadsheet model to ensure accuracy and reliability.
 
 ## Project structure
 
@@ -97,8 +116,8 @@ Life expectancy: 85
 Current corpus: ₹100,000
 Annual contribution: ₹200,000
 Expense inflation: 6%
-Return pre-retirement: 16%
-Return post-retirement: 15%
+Return pre-retirement: 9%
+Return post-retirement: 8%
 ```
 
 This produces a yearly trajectory showing when the retirement corpus peaks, how much is required to sustain the lifestyle, and how stress scenarios affect long-term outcomes.
@@ -147,13 +166,23 @@ This will generate a public URL that forwards to your local app.
 
 ### Calculation Engine
 
-The core calculation logic:
-1. Iterates through each year from current age to life expectancy
-2. Applies contribution growth during pre-retirement phase
-3. Calculates inflation-adjusted expenses during retirement
-4. Applies LTCG tax on investment gains with exemption logic
-5. Models stress scenarios with market crash simulations
-6. Computes minimum corpus requirement using present value analysis
+The core calculation logic is a year-by-year simulation from the current age to life expectancy:
+
+1.  **Initialization**: Starts with the current corpus and a map of all future ad-hoc expenses.
+2.  **Annual Loop (Pre-Retirement)**:
+    -   Calculates the annual contribution, factoring in the specified growth rate.
+    -   Applies the pre-retirement return rate to the corpus after adding the contribution.
+3.  **Annual Loop (Post-Retirement)**:
+    -   **Calculate Net Withdrawal**: Determines the required after-tax withdrawal for the year by applying the inflation rate to the base annual expenses.
+    -   **Calculate Blended Tax Rate**: Computes a single effective tax rate based on the defined portfolio allocation (Equity, Debt, Arbitrage) and their respective tax rates.
+    -   **Calculate Gross Withdrawal**: "Grosses up" the net withdrawal amount to determine the pre-tax amount that must be withdrawn from the corpus to cover both the expenses and the taxes.
+        -   `Gross Withdrawal = Net Withdrawal / (1 - Blended Tax Rate)`
+    -   **Factor in Ad-Hoc Expenses**: Adds any inflation-adjusted ad-hoc expenses planned for the current year to the total outflow.
+    -   **Apply Market Returns**:
+        -   Applies the post-retirement return rate (or a negative stress-test rate for the first two years of retirement, if selected).
+        -   The return is calculated on the corpus balance *after* all contributions and withdrawals for the year.
+4.  **Closing Balance**: The closing corpus for one year becomes the opening corpus for the next.
+5.  **Minimum Corpus Calculation**: After the main projection, the engine performs a reverse calculation. It starts from zero at life expectancy and works backward to the retirement age, determining the present value of all future outflows (grossed-up expenses and ad-hoc costs) to find the minimum corpus required at the start of retirement.
 
 ### Dashboard Features
 
@@ -162,7 +191,7 @@ The core calculation logic:
 - Multi-chart visualization of retirement trajectory
 - Detailed year-by-year ledger table
 - Key metrics summary (corpus at retirement, peak age, final corpus)
-- Responsive design with light/dark theme support
+- Fully responsive design with light/dark theme support.
 
 ## Notes
 

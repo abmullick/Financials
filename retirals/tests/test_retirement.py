@@ -4,7 +4,12 @@ from src.main import PlannerInputs, calculate_retirement
 
 class RetirementPlannerWorkbookParityTest(unittest.TestCase):
     def test_matches_default_workbook_behavior(self):
-        result = calculate_retirement(PlannerInputs())
+        # This test validates the original workbook parity values.
+        # We explicitly set the old default returns to ensure the test is not
+        # broken by changes to the PlannerInputs defaults.
+        inputs = PlannerInputs(pre_retirement_return=0.16, post_retirement_return=0.15)
+        result = calculate_retirement(inputs)
+
         metrics = result["metrics"]
 
         # Updated expected values based on new tax-aware withdrawal logic

@@ -29,8 +29,8 @@ class PlannerInputs(BaseModel):
     avg_inflation_rate: float = Field(0.06, ge=0, lt=1)
     current_corpus: float = Field(4000000.00, ge=0)
     annual_contribution: float = Field(700000.00, ge=0)
-    pre_retirement_return: float = Field(0.16, ge=0, lt=1)
-    post_retirement_return: float = Field(0.15, ge=0, lt=1)
+    pre_retirement_return: float = Field(0.09, ge=0, lt=1)
+    post_retirement_return: float = Field(0.08, ge=0, lt=1)
     contribution_increase: float = Field(0.01, ge=0, lt=1)
     ltcg_exemption: float = Field(125000.00, ge=0)
     stress_scenario: str = "Normal"
