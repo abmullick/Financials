@@ -9,14 +9,14 @@ A sophisticated, FastAPI-based retirement planning application designed to model
 | **Core Projection** | Year-by-Year Simulation | Generates a detailed annual projection of wealth from current age to life expectancy. |
 | | Inflation-Adjusted Expenses | Automatically calculates the future cost of your current lifestyle. |
 | | Dynamic Contributions | Models annual increases in contributions during the accumulation phase. |
-| | Ad-Hoc Life Events | Plans for one-time major expenses (e.g., wedding, home purchase) at specific ages. |
+| | Ad-Hoc Life Events | Plans for one-time major expenses (e.g., wedding, home purchase) at specific ages, entered in today's money. |
 | **Advanced Modeling** | Sophisticated Tax Engine | Calculates a blended effective tax rate and the required gross withdrawal to meet net expenses. |
 | | Market Stress Testing | Simulates the impact of market downturns on the portfolio at the start of retirement. |
 | | Minimum Corpus Calculation | Determines the precise corpus needed at retirement using a reverse present value analysis. |
 | **Advisory & Goal Seek** | Retirement Readiness Score | Instantly shows readiness as a percentage (Projected Corpus vs. Minimum Required). |
 | | Target Contribution Analysis | Calculates the exact annual contribution needed to achieve 100% readiness. |
 | | Required Return Analysis | Solves for the pre- or post-retirement return rates needed to close any retirement gap. |
-| **Visualization** | Interactive Dashboard | A sleek, modern UI with real-time updates and light/dark modes. |
+| **Visualization** | Interactive Dashboard | A sleek, modern UI with real-time updates, conditional coloring for key metrics, and light/dark modes. |
 | | Multi-Chart Visualization | Includes charts for wealth trajectory, cash flow, portfolio allocation, and more. |
 | | Detailed Ledger | A comprehensive, scrollable table presenting the year-by-year financial breakdown. |
 
@@ -26,7 +26,7 @@ The application is built with a clean, API-driven architecture.
 
 1.  **Frontend**: A single, dynamic `index.html` file provides an interactive user interface for inputting financial parameters.
 2.  **Backend**: A FastAPI server exposes a `/calculate` endpoint.
-3.  **Data Flow**: When the user runs a simulation, the frontend sends a JSON payload to the backend. The backend validates this data using Pydantic models and passes it to the `retirement_engine`.
+4.  **Data Flow**: When the user runs a simulation, the frontend sends a JSON payload to the backend. The backend validates this data using Pydantic models (including `AdHocExpense` for ad-hoc expenses) and passes it to the `retirement_engine`.
 4.  **Calculation Engine**: The engine performs a year-by-year simulation, calculates all metrics, and returns the complete projection and analysis back to the frontend.
 5.  **Visualization**: The frontend uses Chart.js to render the received data into a rich, multi-chart dashboard and a detailed ledger table.
 
@@ -104,14 +104,20 @@ PYTHONPATH=. python3 -m unittest -v tests/test_retirement.py
 
 Tests validate:
 - Workbook parity for default scenarios
-- Custom ad-hoc expense handling
+- Custom ad-hoc expense handling and inflation
+- Market stress scenarios (mild and severe crashes)
+- Zero return and zero inflation edge cases
 - Tax calculation accuracy
+- LTCG exemption logic
 - Minimum corpus requirement calculations
+- Peak asset age and final corpus calculations
 - Invalid planner inputs are rejected before the projection engine runs
+- Correctness of retirement duration and projection points
 
 ## Example use case
 
 A typical planning scenario:
+
 
 ```text
 Current age: 23
@@ -181,10 +187,10 @@ The core calculation logic is a year-by-year simulation from the current age to 
     -   **Calculate Net Withdrawal**: Determines the required after-tax withdrawal for the year by applying the inflation rate to the base annual expenses.
     -   **Calculate Blended Tax Rate**: Computes a single effective tax rate based on the defined portfolio allocation (Equity, Debt, Arbitrage) and their respective tax rates.
     -   **Calculate Gross Withdrawal**: "Grosses up" the net withdrawal amount to determine the pre-tax amount that must be withdrawn from the corpus to cover both the expenses and the taxes.
-        -   `Gross Withdrawal = Net Withdrawal / (1 - Blended Tax Rate)`
+	    -   `Gross Withdrawal = Net Withdrawal / (1 - Blended Tax Rate)` (correctly applying the LTCG exemption)
     -   **Factor in Ad-Hoc Expenses**: Adds any inflation-adjusted ad-hoc expenses planned for the current year to the total outflow.
     -   **Apply Market Returns**:
-        -   Applies the post-retirement return rate (or a negative stress-test rate for the first two years of retirement, if selected).
+	        -   Applies the post-retirement return rate (or a negative stress-test rate for the first two years of retirement, if selected). The peak asset age is calculated as the age with the highest corpus.
         -   The return is calculated on the corpus balance *after* all contributions and withdrawals for the year.
 4.  **Closing Balance**: The closing corpus for one year becomes the opening corpus for the next.
 5.  **Minimum Corpus Calculation**: After the main projection, the engine performs a reverse calculation. It starts from zero at life expectancy and works backward to the retirement age, determining the present value of all future outflows (grossed-up expenses and ad-hoc costs) to find the minimum corpus required at the start of retirement.
@@ -192,11 +198,11 @@ The core calculation logic is a year-by-year simulation from the current age to 
 ### Dashboard Features
 
 - Real-time calculation results display
-- Interactive parameter adjustment
+- Interactive parameter adjustment, with clear labels for ad-hoc expenses (in today's money).
 - Multi-chart visualization of retirement trajectory
 - Detailed year-by-year ledger table
-- Key metrics summary (corpus at retirement, peak age, final corpus)
-- Fully responsive design with light/dark theme support.
+- Key metrics summary (corpus at retirement, peak asset age, retirement span, final corpus) with conditional green/amber/red coloring for goal-oriented feedback.
+- Fully responsive design with light/dark theme support (defaulting to light mode).
 
 ## Notes
 
