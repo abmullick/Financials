@@ -146,6 +146,10 @@
             text-shadow: 0 0 0 rgba(0,0,0,0);
         }
 
+        .text-success { color: var(--success) !important; }
+        .text-warning { color: var(--warning) !important; }
+        .text-danger  { color: var(--danger) !important; }
+
         .kpi-value.text-emerald-600,
         .kpi-value.text-blue-600,
         .kpi-value.text-amber-600 {
@@ -182,12 +186,6 @@
         body select,
         body input {
             color: var(--muted-label) !important;
-        }
-
-        body .text-white,
-        body .text-slate-50,
-        body .kpi-value {
-            color: var(--text-1) !important;
         }
 
         .primary-button {
@@ -712,7 +710,10 @@
 
                 <div class="pt-3 border-t border-slate-200">
                     <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-sm font-semibold text-slate-700">Ad-hoc Expenses</h3>
+                        <div>
+                            <h3 class="text-sm font-semibold text-slate-700">Ad-hoc Expenses</h3>
+                            <p class="text-xs text-slate-400">(in today's money)</p>
+                        </div>
                         <button id="addAdHocBtn" type="button" class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-lg font-bold text-white shadow-sm hover:bg-slate-700">+</button>
                     </div>
                     <div id="adhocExpenseRows" class="space-y-2"></div>
@@ -738,19 +739,23 @@
                     <div class="kpi-grid grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div class="kpi-3d p-4 rounded-2xl">
                             <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Corpus At Retirement</p>
-                            <p id="kpi_retirement_corpus" class="kpi-value mt-2 font-black text-white">₹0.00</p>
+                            <p id="kpi_retirement_corpus" class="kpi-value mt-2 font-black">₹0.00</p>
                         </div>
                         <div class="kpi-3d p-4 rounded-2xl">
                             <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Final Terminal Corpus</p>
-                            <p id="kpi_final_corpus" class="kpi-value mt-2 font-black text-emerald-400">₹0.00</p>
+                            <p id="kpi_final_corpus" class="kpi-value mt-2 font-black">₹0.00</p>
                         </div>
                         <div class="kpi-3d p-4 rounded-2xl">
                             <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Peak Asset Age</p>
-                            <p id="kpi_peak_age" class="kpi-value mt-2 font-black text-sky-300">0</p>
+                            <p id="kpi_peak_age" class="kpi-value mt-2 font-black">0</p>
+                        </div>
+                        <div class="kpi-3d p-4 rounded-2xl">
+                            <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Retirement Span</p>
+                            <p id="kpi_retirement_span" class="kpi-value mt-2 font-black">0 yrs</p>
                         </div>
                         <div class="kpi-3d p-4 rounded-2xl">
                             <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Retirement Readiness</p>
-                            <p id="kpi_readiness_percent" class="kpi-value mt-2 font-black text-teal-300">0%</p>
+                            <p id="kpi_readiness_percent" class="kpi-value mt-2 font-black">0%</p>
                         </div>
                     </div>
                 </div>
@@ -761,19 +766,19 @@
                     <div class="kpi-grid grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div class="kpi-3d p-4 rounded-2xl">
                             <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Min Corpus Required</p>
-                            <p id="kpi_minimum_corpus_required" class="kpi-value mt-2 font-black text-amber-300">₹0.00</p>
+                            <p id="kpi_minimum_corpus_required" class="kpi-value mt-2 font-black">₹0.00</p>
                         </div>
                         <div class="kpi-3d p-4 rounded-2xl">
                             <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Target Annual Contribution for 100%</p>
-                            <p id="kpi_target_annual_contribution" class="kpi-value mt-2 font-black text-rose-400">₹0.00</p>
+                            <p id="kpi_target_annual_contribution" class="kpi-value mt-2 font-black">₹0.00</p>
                         </div>
                         <div class="kpi-3d p-4 rounded-2xl">
                             <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Required Pre-Retire Return for 100%</p>
-                            <p id="kpi_req_pre_ret_return" class="kpi-value mt-2 font-black text-cyan-300">0.00%</p>
+                            <p id="kpi_req_pre_ret_return" class="kpi-value mt-2 font-black">0.00%</p>
                         </div>
                         <div class="kpi-3d p-4 rounded-2xl">
                             <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Required Post-Retire Return for 100%</p>
-                            <p id="kpi_req_post_ret_return" class="kpi-value mt-2 font-black text-fuchsia-300">0.00%</p>
+                            <p id="kpi_req_post_ret_return" class="kpi-value mt-2 font-black">0.00%</p>
                         </div>
                     </div>
                 </div>
@@ -1204,14 +1209,48 @@
 
                 const data = await response.json();
 
-                document.getElementById('kpi_retirement_corpus').innerText = fmt(data.metrics.corpus_at_retirement);
-                document.getElementById('kpi_final_corpus').innerText = fmt(data.metrics.final_corpus);
-                document.getElementById('kpi_peak_age').innerText = data.metrics.peak_age;
-                document.getElementById('kpi_minimum_corpus_required').innerText = fmt(data.metrics.minimum_corpus_required);
-                
-                document.getElementById('kpi_readiness_percent').innerText = `${data.metrics.readiness_percent.toFixed(2)}%`;
-                document.getElementById('kpi_target_annual_contribution').innerText = fmt(data.metrics.target_annual_contribution_for_gap);
+                // --- Update KPIs with conditional coloring ---
+                const finalCorpusEl = document.getElementById('kpi_final_corpus');
+                finalCorpusEl.innerText = fmt(data.metrics.final_corpus);
+                finalCorpusEl.classList.remove('text-success', 'text-danger');
+                if (data.metrics.readiness_percent >= 100 || data.metrics.final_corpus >= 0) {
+                    finalCorpusEl.classList.add('text-success');
+                } else {
+                    finalCorpusEl.classList.add('text-danger');
+                }
 
+                const readinessEl = document.getElementById('kpi_readiness_percent');
+                readinessEl.innerText = `${data.metrics.readiness_percent.toFixed(2)}%`;
+                readinessEl.classList.remove('text-success', 'text-warning', 'text-danger');
+                if (data.metrics.readiness_percent >= 100) {
+                    readinessEl.classList.add('text-success');
+                } else if (data.metrics.readiness_percent >= 75) {
+                    readinessEl.classList.add('text-warning');
+                } else {
+                    readinessEl.classList.add('text-danger');
+                }
+
+                const targetContributionEl = document.getElementById('kpi_target_annual_contribution');
+                targetContributionEl.innerText = fmt(data.metrics.target_annual_contribution_for_gap);
+                targetContributionEl.classList.remove('text-success', 'text-danger', 'text-warning');
+                if (data.metrics.readiness_percent >= 100) {
+                    targetContributionEl.classList.add('text-success');
+                } else {
+                    targetContributionEl.classList.add('text-danger');
+                }
+
+                const minCorpusEl = document.getElementById('kpi_minimum_corpus_required');
+                minCorpusEl.innerText = fmt(data.metrics.minimum_corpus_required);
+                minCorpusEl.classList.remove('text-success', 'text-warning');
+                if (data.metrics.readiness_percent >= 100) {
+                    minCorpusEl.classList.add('text-success');
+                } else {
+                    minCorpusEl.classList.add('text-warning');
+                }
+                // --- Update other KPIs ---
+                document.getElementById('kpi_retirement_corpus').innerText = fmt(data.metrics.corpus_at_retirement);
+                document.getElementById('kpi_peak_age').innerText = data.metrics.peak_age;
+                document.getElementById('kpi_retirement_span').innerHTML = `${data.metrics.years_in_retirement} yrs <span style="font-size: 0.6em; color: var(--text-3); display: block; margin-top: 4px;">(${data.metrics.retirement_projection_points} data points)</span>`;
                 document.getElementById('kpi_req_pre_ret_return').innerText = `${data.metrics.required_pre_retirement_return.toFixed(2)}%`;
                 document.getElementById('kpi_req_post_ret_return').innerText = `${data.metrics.required_post_retirement_return.toFixed(2)}%`;
 
@@ -1336,7 +1375,7 @@
         }
 
         function initializeTheme() {
-            const savedTheme = localStorage.getItem('retirement-theme') || 'dark';
+            const savedTheme = localStorage.getItem('retirement-theme') || 'light';
             applyTheme(savedTheme);
             const toggle = document.getElementById('themeToggleBtn');
             if (toggle) {
