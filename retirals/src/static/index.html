@@ -358,6 +358,66 @@
             min-width: 0;
         }
 
+        .landing-screen {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background:
+                radial-gradient(circle at top left, rgba(102, 167, 255, 0.18), transparent 24%),
+                radial-gradient(circle at bottom right, rgba(50, 210, 150, 0.12), transparent 28%),
+                linear-gradient(135deg, var(--bg-1), var(--bg-2) 45%, var(--bg-3));
+        }
+
+        .landing-card {
+            max-width: 980px;
+            width: 100%;
+            background: rgba(15, 23, 42, 0.72);
+            border: 1px solid rgba(148, 163, 184, 0.20);
+            box-shadow: 0 30px 60px rgba(2, 8, 18, 0.28);
+            border-radius: 32px;
+            padding: clamp(2rem, 4vw, 3.6rem);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+        }
+
+        .landing-badge {
+            display: inline-flex;
+            padding: 0.45rem 0.85rem;
+            border-radius: 9999px;
+            background: rgba(37, 99, 235, 0.16);
+            border: 1px solid rgba(147, 197, 253, 0.22);
+            color: #dbeafe;
+            font-size: 0.68rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            font-weight: 700;
+        }
+
+        .landing-stat {
+            background: linear-gradient(180deg, rgba(15,23,42,0.82), rgba(15,23,42,0.62));
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            border-radius: 20px;
+            padding: 1rem;
+        }
+
+        .landing-cta {
+            background: linear-gradient(135deg, #1d4ed8, #2563eb 35%, #3b82f6 100%);
+            border: 1px solid rgba(255,255,255,0.14);
+            box-shadow: 0 18px 26px rgba(37, 99, 235, 0.28);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .landing-cta:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 20px 30px rgba(37, 99, 235, 0.34);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
         .chart-grid {
             min-width: 0;
         }
@@ -410,7 +470,56 @@
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans antialiased">
-    <div class="max-w-[1600px] mx-auto p-3 sm:p-6 lg:p-8">
+    <div id="landingScreen" class="landing-screen">
+        <div class="landing-card text-slate-100">
+            <div class="landing-badge">Retirement planning</div>
+            <h1 class="mt-6 text-4xl font-black tracking-tight sm:text-5xl lg:text-6xl">Plan retirement with clarity.</h1>
+            <p class="mt-5 max-w-3xl text-lg text-slate-300 sm:text-xl">
+                Model your current wealth, annual contributions, inflation, taxes, withdrawals, and market stress to understand whether your portfolio can support the life you want later.
+            </p>
+
+            <div class="mt-8 flex flex-wrap items-center gap-4">
+                <button id="launchPlannerBtn" type="button" class="landing-cta rounded-xl px-6 py-3 text-sm font-semibold text-white">Open planner</button>
+                <div class="rounded-xl border border-slate-700 bg-slate-900/40 px-4 py-3 text-sm text-slate-300">
+                    Built for long-term investors and advisors who want a faster, clearer view of retirement readiness.
+                </div>
+            </div>
+
+            <div class="mt-10 grid gap-4 md:grid-cols-3">
+                <div class="landing-stat">
+                    <p class="text-[10px] uppercase tracking-[0.16em] text-slate-400">Forecast</p>
+                    <p class="mt-2 text-xl font-bold text-white">Projection engine</p>
+                    <p class="mt-2 text-sm text-slate-300">Year-by-year wealth trajectory from today to retirement.</p>
+                </div>
+                <div class="landing-stat">
+                    <p class="text-[10px] uppercase tracking-[0.16em] text-slate-400">Stress</p>
+                    <p class="mt-2 text-xl font-bold text-white">Scenario testing</p>
+                    <p class="mt-2 text-sm text-slate-300">Measure the effect of mild and severe market downturns.</p>
+                </div>
+                <div class="landing-stat">
+                    <p class="text-[10px] uppercase tracking-[0.16em] text-slate-400">Advisory</p>
+                    <p class="mt-2 text-xl font-bold text-white">Actionable insight</p>
+                    <p class="mt-2 text-sm text-slate-300">See corpus gaps, inflation impacts, and required savings levels.</p>
+                </div>
+            </div>
+
+            <div class="mt-10 border-t border-slate-700/80 pt-5">
+                <div class="flex flex-col gap-3 text-sm text-slate-300 sm:flex-row sm:items-end sm:justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.16em] text-slate-400">Product owner</p>
+                        <p class="mt-1 font-semibold text-white">Abhisek Basu Mullick</p>
+                        <a href="mailto:abmullick@gmail.com" class="mt-1 inline-block text-sky-300 hover:text-sky-200">abmullick@gmail.com</a>
+                    </div>
+                    <div class="text-left sm:text-right">
+                        <p class="text-[10px] uppercase tracking-[0.16em] text-slate-400">Copyright</p>
+                        <p class="mt-1 font-medium text-white">© 2026 Abhisek Basu Mullick</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="plannerApp" class="hidden max-w-[1600px] mx-auto p-3 sm:p-6 lg:p-8">
         <header class="header-glow mb-8 rounded-2xl px-6 py-5 text-white">
             <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                 <div class="flex items-center gap-4">
@@ -491,27 +600,35 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300">Annual Contribution Increase</label>
-                        <input type="text" id="contribution_increase" value="1.0%" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300">LTCG Tax Rate</label>
-                        <input type="text" id="ltcg_tax_rate" value="12.5%" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
-                    </div>
-                </div>
+                <details class="group rounded-xl border border-slate-200/70 bg-slate-900/10">
+                    <summary class="flex cursor-pointer list-none items-center justify-between px-3 py-2.5 text-sm font-semibold text-slate-200">
+                        <span>Advanced assumptions</span>
+                        <span class="text-xs text-slate-400 transition-transform group-open:rotate-180">▾</span>
+                    </summary>
+                    <div class="space-y-3 border-t border-slate-200/70 px-3 pb-3 pt-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300">Annual Contribution Increase</label>
+                                <input type="text" id="contribution_increase" value="1.0%" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300">LTCG Tax Rate</label>
+                                <input type="text" id="ltcg_tax_rate" value="12.5%" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                            </div>
+                        </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300">LTCG Exemption Limit (₹)</label>
-                        <input type="number" id="ltcg_exemption" value="125000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300">LTCG Exemption Limit (₹)</label>
+                                <input type="number" id="ltcg_exemption" value="125000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300">Estimated Gain Ratio</label>
+                                <input type="text" id="gain_ratio" value="60.0%" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                            </div>
+                        </div>
                     </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300">Estimated Gain Ratio</label>
-                        <input type="text" id="gain_ratio" value="60.0%" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
-                    </div>
-                </div>
+                </details>
 
                 <div>
                     <label class="block text-xs font-medium text-slate-300">Stress Test Scenario</label>
@@ -635,6 +752,7 @@
                 </div>
             </div>
         </div>
+    </div>
     </div>
 
     <script>
@@ -999,6 +1117,19 @@
             if (toggle) {
                 toggle.setAttribute('aria-pressed', String(savedTheme === 'light'));
             }
+        }
+
+        const launchPlannerBtn = document.getElementById('launchPlannerBtn');
+        const landingScreen = document.getElementById('landingScreen');
+        const plannerApp = document.getElementById('plannerApp');
+
+        if (launchPlannerBtn && landingScreen && plannerApp) {
+            launchPlannerBtn.addEventListener('click', () => {
+                landingScreen.classList.add('hidden');
+                plannerApp.classList.remove('hidden');
+                calculateMetrics();
+                fitAllKpiValues();
+            });
         }
 
         document.getElementById('themeToggleBtn').addEventListener('click', () => {
