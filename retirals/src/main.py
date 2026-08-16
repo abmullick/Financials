@@ -3,7 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, model_validator, Field
-import uvicorn
+from enum import Enum
+import uvicorn 
 import os
 from os import getenv
 
@@ -19,34 +20,46 @@ app.add_middleware(
 )
 app.mount("/assets", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "..", "assets")), name="assets")
 
+class AdHocExpense(BaseModel):
+    age: int = Field(..., gt=0, le=120, description="Age for the ad-hoc expense")
+    amount: float = Field(..., ge=0, description="Amount of the ad-hoc expense")
+
+class StressScenario(str, Enum):
+    NORMAL = "Normal"
+    MILD_CRASH = "Mild Crash (-10% for 2 yrs)"
+    SEVERE_CRASH = "Severe Crash (-20% for 2 yrs)"
+
 # Define the PlannerInputs model using Pydantic
 
 class PlannerInputs(BaseModel):
-    current_age: int = Field(43, gt=0)
-    retirement_age: int = 54
-    life_expectancy: int = 90
-    current_annual_expenses: float = Field(1200000.00, gt=0)
-    avg_inflation_rate: float = Field(0.06, ge=0, lt=1)
-    current_corpus: float = Field(4000000.00, ge=0)
-    annual_contribution: float = Field(700000.00, ge=0)
-    pre_retirement_return: float = Field(0.09, ge=0, lt=1)
-    post_retirement_return: float = Field(0.08, ge=0, lt=1)
-    contribution_increase: float = Field(0.01, ge=0, lt=1)
-    ltcg_exemption: float = Field(125000.00, ge=0)
-    stress_scenario: str = "Normal"
-    adhoc_expenses: list[dict] = [{"age": 58, "amount": 2500000.00}, {"age": 75, "amount": 1000000.00}]
+    current_age: int = Field(43, gt=0, le=120)
+    retirement_age: int = Field(54, gt=0, le=120)
+    life_expectancy: int = Field(90, gt=0, le=120)
+    current_annual_expenses: float = Field(1200000.00, gt=0, le=1e9)
+    avg_inflation_rate: float = Field(0.06, ge=0, le=0.5)
+    current_corpus: float = Field(4000000.00, ge=0, le=1e12)
+    annual_contribution: float = Field(700000.00, ge=0, le=1e9)
+    pre_retirement_return: float = Field(0.09, ge=-0.5, le=0.5)
+    post_retirement_return: float = Field(0.08, ge=-0.5, le=0.5)
+    contribution_increase: float = Field(0.01, ge=0, le=0.5)
+    ltcg_exemption: float = Field(125000.00, ge=0, le=1e7)
+    stress_scenario: StressScenario = StressScenario.NORMAL
+    adhoc_expenses: list[AdHocExpense] = Field(default_factory=lambda: [
+        AdHocExpense(age=58, amount=2500000.00),
+        AdHocExpense(age=75, amount=1000000.00)
+    ])
     # Portfolio Allocation
-    allocation_equity: float = Field(0.60, ge=0, le=1)
-    allocation_debt: float = Field(0.30, ge=0, le=1)
-    allocation_arbitrage: float = Field(0.10, ge=0, le=1)
+    allocation_equity: float = Field(0.60, ge=0, le=1.0)
+    allocation_debt: float = Field(0.30, ge=0, le=1.0)
+    allocation_arbitrage: float = Field(0.10, ge=0, le=1.0)
     # Equity sub-allocation (LTCG/STCG split)
-    equity_ltcg_split: float = Field(0.70, ge=0, le=1)
-    equity_stcg_split: float = Field(0.30, ge=0, le=1)
+    equity_ltcg_split: float = Field(0.70, ge=0, le=1.0)
+    equity_stcg_split: float = Field(0.30, ge=0, le=1.0)
     # Tax rates by asset class
-    tax_ltcg: float = Field(0.125, ge=0, le=1)
-    tax_stcg: float = Field(0.20, ge=0, le=1)
-    tax_debt: float = Field(0.20, ge=0, le=1)
-    tax_arbitrage: float = Field(0.20, ge=0, le=1)
+    tax_ltcg: float = Field(0.125, ge=0, le=1.0)
+    tax_stcg: float = Field(0.20, ge=0, le=1.0)
+    tax_debt: float = Field(0.20, ge=0, le=1.0)
+    tax_arbitrage: float = Field(0.20, ge=0, le=1.0)
 
     @model_validator(mode="after")
     def validate_plan(self):
@@ -54,7 +67,15 @@ class PlannerInputs(BaseModel):
             raise ValueError("retirement_age must be greater than current_age")
         if self.life_expectancy < self.retirement_age:
             raise ValueError("life_expectancy must be greater than or equal to retirement_age")
-        
+
+        adhoc_ages = []
+        for expense in self.adhoc_expenses:
+            if not (self.current_age <= expense.age <= self.life_expectancy):
+                raise ValueError(f"Ad-hoc expense age {expense.age} must be between current age and life expectancy.")
+            if expense.age in adhoc_ages:
+                raise ValueError(f"Duplicate ad-hoc expense age found: {expense.age}.")
+            adhoc_ages.append(expense.age)
+
         # Validate portfolio allocation sums to ~1.0 (allow small rounding tolerance)
         allocation_total = self.allocation_equity + self.allocation_debt + self.allocation_arbitrage
         if abs(allocation_total - 1.0) > 0.01:
@@ -86,9 +107,9 @@ def _calculate_retirement_logic(inputs: PlannerInputs):
 
     adhoc_expenses = inputs.adhoc_expenses or []
     ad_hoc_map = {
-        int(item["age"]): float(item["amount"])
+        item.age: item.amount
         for item in adhoc_expenses
-        if isinstance(item, dict) and item.get("age") is not None and item.get("amount") is not None
+        if item.age is not None and item.amount is not None
     }
 
     for age in range(inputs.current_age, inputs.life_expectancy + 1):
@@ -130,9 +151,9 @@ def _calculate_retirement_logic(inputs: PlannerInputs):
         if not is_retired:
             return_rate = inputs.pre_retirement_return
         elif age < inputs.retirement_age + 2:
-            if inputs.stress_scenario == "Mild Crash (-10% for 2 yrs)":
+            if inputs.stress_scenario == StressScenario.MILD_CRASH:
                 return_rate = -0.10
-            elif inputs.stress_scenario == "Severe Crash (-20% for 2 yrs)":
+            elif inputs.stress_scenario == StressScenario.SEVERE_CRASH:
                 return_rate = -0.20
             else:
                 return_rate = inputs.post_retirement_return
@@ -164,16 +185,12 @@ def _calculate_retirement_logic(inputs: PlannerInputs):
     )
     final_corpus = round(projections[-1]["closing"]) if projections else 0
     
-    peak_age = inputs.retirement_age
     if projections:
-        try:
-            peak_age = next(
-                row["age"]
-                for row in projections
-                if row["age"] >= inputs.retirement_age and row["closing"] < row["opening"]
-            )
-        except StopIteration:
-            peak_age = inputs.life_expectancy
+        # Find the age corresponding to the maximum closing corpus value
+        peak_row = max(projections, key=lambda row: row["closing"])
+        peak_age = peak_row["age"]
+    else:
+        peak_age = inputs.retirement_age
 
     retirement_ages = list(range(inputs.retirement_age, inputs.life_expectancy + 1))
     retirement_outflows = []
@@ -195,9 +212,9 @@ def _calculate_retirement_logic(inputs: PlannerInputs):
     for age in reversed(range(inputs.retirement_age, inputs.life_expectancy + 1)):
         # Determine the correct return rate for this age, mirroring the forward projection
         if age < inputs.retirement_age + 2:
-            if inputs.stress_scenario == "Mild Crash (-10% for 2 yrs)":
+            if inputs.stress_scenario == StressScenario.MILD_CRASH:
                 return_rate = -0.10
-            elif inputs.stress_scenario == "Severe Crash (-20% for 2 yrs)":
+            elif inputs.stress_scenario == StressScenario.SEVERE_CRASH:
                 return_rate = -0.20
             else:
                 return_rate = inputs.post_retirement_return
