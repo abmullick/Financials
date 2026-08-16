@@ -732,50 +732,51 @@
 
             <!-- Dashboard Analytics View -->
             <div class="lg:col-span-1 min-w-0 space-y-6">
-                <!-- KPI Blocks -->
-                <div class="kpi-grid grid grid-cols-2 md:grid-cols-4 gap-4">
-                    <div class="kpi-3d p-4 rounded-2xl">
-                        <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Corpus At Retirement</p>
-                        <p id="kpi_retirement_corpus" class="kpi-value mt-2 font-black text-white">₹0.00</p>
-                    </div>
-                    <div class="kpi-3d p-4 rounded-2xl">
-                        <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Final Terminal Corpus</p>
-                        <p id="kpi_final_corpus" class="kpi-value mt-2 font-black text-emerald-400">₹0.00</p>
-                    </div>
-                    <div class="kpi-3d p-4 rounded-2xl">
-                        <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Peak Asset Age</p>
-                        <p id="kpi_peak_age" class="kpi-value mt-2 font-black text-sky-300">0</p>
-                    </div>
-                    <div class="kpi-3d p-4 rounded-2xl">
-                        <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Min Corpus Required</p>
-                        <p id="kpi_minimum_corpus_required" class="kpi-value mt-2 font-black text-amber-300">₹0.00</p>
-                    </div>
-                </div>
-
-                <!-- Gap Analysis KPIs -->
-                <div class="kpi-grid grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="kpi-3d p-4 rounded-2xl">
-                        <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Retirement Readiness</p>
-                        <p id="kpi_readiness_percent" class="kpi-value mt-2 font-black text-teal-300">0%</p>
-                    </div>
-                    <div class="kpi-3d p-4 rounded-2xl">
-                        <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Target Annual Contribution for 100% Readiness</p>
-                        <p id="kpi_target_annual_contribution" class="kpi-value mt-2 font-black text-rose-400">₹0.00</p>
+                <!-- Projection Summary KPIs -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-semibold text-slate-200">Projection Summary</h3>
+                    <div class="kpi-grid grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="kpi-3d p-4 rounded-2xl">
+                            <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Corpus At Retirement</p>
+                            <p id="kpi_retirement_corpus" class="kpi-value mt-2 font-black text-white">₹0.00</p>
+                        </div>
+                        <div class="kpi-3d p-4 rounded-2xl">
+                            <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Final Terminal Corpus</p>
+                            <p id="kpi_final_corpus" class="kpi-value mt-2 font-black text-emerald-400">₹0.00</p>
+                        </div>
+                        <div class="kpi-3d p-4 rounded-2xl">
+                            <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Peak Asset Age</p>
+                            <p id="kpi_peak_age" class="kpi-value mt-2 font-black text-sky-300">0</p>
+                        </div>
+                        <div class="kpi-3d p-4 rounded-2xl">
+                            <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Retirement Readiness</p>
+                            <p id="kpi_readiness_percent" class="kpi-value mt-2 font-black text-teal-300">0%</p>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Goal Seek KPIs -->
-                <div class="kpi-grid grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div class="kpi-3d p-4 rounded-2xl">
-                        <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Required Pre-Retire Return for 100%</p>
-                        <p id="kpi_req_pre_ret_return" class="kpi-value mt-2 font-black text-cyan-300">0.00%</p>
-                    </div>
-                    <div class="kpi-3d p-4 rounded-2xl">
-                        <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Required Post-Retire Return for 100%</p>
-                        <p id="kpi_req_post_ret_return" class="kpi-value mt-2 font-black text-fuchsia-300">0.00%</p>
+                <!-- Advisory & Goal Seek KPIs -->
+                <div class="space-y-4">
+                    <h3 class="text-lg font-semibold text-slate-200">Advisory & Goal Seek</h3>
+                    <div class="kpi-grid grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="kpi-3d p-4 rounded-2xl">
+                            <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Min Corpus Required</p>
+                            <p id="kpi_minimum_corpus_required" class="kpi-value mt-2 font-black text-amber-300">₹0.00</p>
+                        </div>
+                        <div class="kpi-3d p-4 rounded-2xl">
+                            <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Target Annual Contribution for 100%</p>
+                            <p id="kpi_target_annual_contribution" class="kpi-value mt-2 font-black text-rose-400">₹0.00</p>
+                        </div>
+                        <div class="kpi-3d p-4 rounded-2xl">
+                            <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Required Pre-Retire Return for 100%</p>
+                            <p id="kpi_req_pre_ret_return" class="kpi-value mt-2 font-black text-cyan-300">0.00%</p>
+                        </div>
+                        <div class="kpi-3d p-4 rounded-2xl">
+                            <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Required Post-Retire Return for 100%</p>
+                            <p id="kpi_req_post_ret_return" class="kpi-value mt-2 font-black text-fuchsia-300">0.00%</p>
+                        </div>
                     </div>
                 </div>
-
 
                 <!-- Workbook-style Multi-Chart Dashboard -->
                 <div class="chart-grid grid grid-cols-1 xl:grid-cols-2 gap-4 xl:gap-6">
