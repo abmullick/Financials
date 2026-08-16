@@ -32,13 +32,22 @@ class PlannerInputs(BaseModel):
     pre_retirement_return: float = 0.16
     post_retirement_return: float = 0.15
     contribution_increase: float = 0.01
-    ltcg_tax_rate: float = 0.125
     ltcg_exemption: float = 125000.00
-    gain_ratio: float = 0.60
     stress_scenario: str = "Normal"
     adhoc_expenses: list[dict] = [{"age": 58, "amount": 2500000.00}, {"age": 75, "amount": 1000000.00}]
+    # Portfolio Allocation
+    allocation_equity: float = 0.60
+    allocation_debt: float = 0.30
+    allocation_arbitrage: float = 0.10
+    # Equity sub-allocation (LTCG/STCG split)
+    equity_ltcg_split: float = 0.70
+    equity_stcg_split: float = 0.30
+    # Tax rates by asset class
+    tax_ltcg: float = 0.125
+    tax_stcg: float = 0.20
+    tax_debt: float = 0.20
+    tax_arbitrage: float = 0.20
 
-# Validate the PlannerInputs model after initialization
     @model_validator(mode="after")
     def validate_plan(self):
         if self.current_age <= 0:
@@ -59,14 +68,36 @@ class PlannerInputs(BaseModel):
             raise ValueError("pre_retirement_return must be between 0 and 1")
         if not 0 <= self.post_retirement_return < 1:
             raise ValueError("post_retirement_return must be between 0 and 1")
-        if self.gain_ratio < 0 or self.gain_ratio > 1:
-            raise ValueError("gain_ratio must be between 0 and 1")
+        # Validate portfolio allocation sums to ~1.0 (allow small rounding tolerance)
+        allocation_total = self.allocation_equity + self.allocation_debt + self.allocation_arbitrage
+        if abs(allocation_total - 1.0) > 0.01:
+            raise ValueError("portfolio allocation (equity + debt + arbitrage) must sum to approximately 100%")
+        # Validate equity sub-allocation
+        equity_split_total = self.equity_ltcg_split + self.equity_stcg_split
+        if abs(equity_split_total - 1.0) > 0.01:
+            raise ValueError("equity sub-allocation (LTCG + STCG) must sum to approximately 100%")
+        # Validate tax rates are between 0 and 1
+        for tax_rate_value in [self.tax_ltcg, self.tax_stcg, self.tax_debt, self.tax_arbitrage]:
+            if not 0 <= tax_rate_value <= 1:
+                raise ValueError("all tax rates must be between 0 and 1")
         return self
 
 @app.post("/calculate")
 def calculate_retirement(inputs: PlannerInputs):
     if not inputs:
         raise HTTPException(status_code=400, detail="Request body is required")
+
+    # Calculate blended effective tax rate based on portfolio allocation
+    # Equity is split between LTCG and STCG
+    equity_ltcg_portion = inputs.allocation_equity * inputs.equity_ltcg_split
+    equity_stcg_portion = inputs.allocation_equity * inputs.equity_stcg_split
+    
+    blended_tax_rate = (
+        equity_ltcg_portion * inputs.tax_ltcg +
+        equity_stcg_portion * inputs.tax_stcg +
+        inputs.allocation_debt * inputs.tax_debt +
+        inputs.allocation_arbitrage * inputs.tax_arbitrage
+    )
 
     projections = []
     opening_corpus = inputs.current_corpus
@@ -89,22 +120,38 @@ def calculate_retirement(inputs: PlannerInputs):
         else:
             contribution = 0.0
 
+        # Calculate required withdrawal amount (pre-tax)
         if is_retired:
-            withdrawal = inputs.current_annual_expenses * ((1 + inputs.avg_inflation_rate) ** elapsed_years)
+            required_after_tax_withdrawal = inputs.current_annual_expenses * ((1 + inputs.avg_inflation_rate) ** elapsed_years)
         else:
-            withdrawal = 0.0
+            required_after_tax_withdrawal = 0.0
 
         ad_hoc = 0.0
         for event_age, event_amount in ad_hoc_map.items():
             if age == event_age:
                 ad_hoc += event_amount * ((1 + inputs.avg_inflation_rate) ** (age - inputs.current_age))
 
-        if is_retired and withdrawal > 0:
-            estimated_gains = withdrawal * inputs.gain_ratio
-            taxable_gain = max(0.0, estimated_gains - inputs.ltcg_exemption)
-            ltcg_tax = taxable_gain * inputs.ltcg_tax_rate
+        # Calculate gross withdrawal and tax deduction
+        if is_retired and required_after_tax_withdrawal > 0:
+            # Gross withdrawal = required_after_tax / (1 - effective_tax_rate)
+            # This ensures: gross_withdrawal * (1 - tax_rate) = required_after_tax_withdrawal
+            if blended_tax_rate < 1.0:
+                gross_withdrawal = required_after_tax_withdrawal / (1.0 - blended_tax_rate)
+                total_tax = gross_withdrawal - required_after_tax_withdrawal
+            else:
+                # Edge case: if tax rate is 100%, withdrawal cannot meet requirement
+                gross_withdrawal = required_after_tax_withdrawal
+                total_tax = 0.0
+            
+            # Break down tax by asset class for reporting (optional, for transparency)
+            tax_by_ltcg = gross_withdrawal * equity_ltcg_portion * inputs.tax_ltcg
+            tax_by_stcg = gross_withdrawal * equity_stcg_portion * inputs.tax_stcg
+            tax_by_debt = gross_withdrawal * inputs.allocation_debt * inputs.tax_debt
+            tax_by_arbitrage = gross_withdrawal * inputs.allocation_arbitrage * inputs.tax_arbitrage
         else:
-            ltcg_tax = 0.0
+            gross_withdrawal = 0.0
+            total_tax = 0.0
+            required_after_tax_withdrawal = 0.0
 
         if not is_retired:
             return_rate = inputs.pre_retirement_return
@@ -118,18 +165,20 @@ def calculate_retirement(inputs: PlannerInputs):
         else:
             return_rate = inputs.post_retirement_return
 
-        net_for_return = opening_corpus + contribution - withdrawal - ad_hoc - ltcg_tax
+        # Net amount available for returns calculation after all outflows
+        net_for_return = opening_corpus + contribution - gross_withdrawal - ad_hoc
         returns = net_for_return * return_rate
-        closing_corpus = opening_corpus + contribution - withdrawal - ad_hoc - ltcg_tax + returns
+        closing_corpus = opening_corpus + contribution - gross_withdrawal - ad_hoc + returns
 
         projections.append({
             "year": elapsed_years + 1,
             "age": age,
             "opening": round(opening_corpus, 2),
             "contribution": round(contribution, 2),
-            "withdrawal": round(withdrawal, 2),
+            "withdrawal": round(gross_withdrawal, 2),  # Gross withdrawal
+            "withdrawal_tax": round(total_tax, 2),  # Tax deducted
+            "withdrawal_after_tax": round(required_after_tax_withdrawal, 2),  # Net to client
             "ad_hoc": round(ad_hoc, 2),
-            "ltcg_tax": round(ltcg_tax, 2),
             "return": round(returns, 2),
             "closing": round(closing_corpus, 2)
         })
@@ -152,13 +201,18 @@ def calculate_retirement(inputs: PlannerInputs):
     retirement_ages = list(range(inputs.retirement_age, inputs.life_expectancy + 1))
     retirement_outflows = []
     for age in retirement_ages:
-        annual_expense = inputs.current_annual_expenses * ((1 + inputs.avg_inflation_rate) ** (age - inputs.current_age))
+        # Calculate required after-tax withdrawal
+        required_after_tax = inputs.current_annual_expenses * ((1 + inputs.avg_inflation_rate) ** (age - inputs.current_age))
+        
+        # Add adhoc expenses
         event_cost = sum(
             amount * ((1 + inputs.avg_inflation_rate) ** (age - inputs.current_age))
             for event_age, amount in ad_hoc_map.items()
             if event_age == age
         )
-        retirement_outflows.append(annual_expense + event_cost)
+        
+        total_after_tax_needed = required_after_tax + event_cost
+        retirement_outflows.append(total_after_tax_needed)
 
     if retirement_ages:
         pv_outflows = sum(

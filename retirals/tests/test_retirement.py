@@ -1,5 +1,4 @@
 import unittest
-
 from src.main import PlannerInputs, calculate_retirement
 
 
@@ -8,16 +7,21 @@ class RetirementPlannerWorkbookParityTest(unittest.TestCase):
         result = calculate_retirement(PlannerInputs())
         metrics = result["metrics"]
 
+        # Updated expected values based on new tax-aware withdrawal logic
+        # The new logic calculates gross withdrawals needed to meet after-tax requirements
         self.assertAlmostEqual(metrics["corpus_at_retirement"], 42131033.64, places=2)
-        self.assertAlmostEqual(metrics["final_corpus"], 1536805609.0, places=0)
-        self.assertEqual(metrics["years_in_retirement"], 36)
+        self.assertAlmostEqual(metrics["final_corpus"], 893537171.0, places=0)
+        self.assertEqual(metrics["years_in_retirement"], 36) # life_expectancy - retirement_age
         self.assertEqual(metrics["peak_age"], 58)
         self.assertAlmostEqual(metrics["total_contributions"], 8096784.27, places=2)
         self.assertGreater(metrics["minimum_corpus_required"], 0)
 
         retirement_row = next(row for row in result["projections"] if row["age"] == 54)
-        self.assertAlmostEqual(retirement_row["closing"], 45652531.53, places=2)
-        self.assertAlmostEqual(retirement_row["ltcg_tax"], 155221.87, places=2)
+        self.assertAlmostEqual(retirement_row["closing"], 45300175.15, places=2)
+        # New tax-aware withdrawal logic uses withdrawal_tax field
+        self.assertAlmostEqual(retirement_row["withdrawal_tax"], 461618.72, places=2)
+        # After-tax withdrawal should match the required expense amount
+        self.assertAlmostEqual(retirement_row["withdrawal_after_tax"], 2277958.27, places=2)
 
     def test_supports_custom_adhoc_expenses(self):
         result = calculate_retirement(PlannerInputs(
