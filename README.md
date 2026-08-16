@@ -1,56 +1,53 @@
 # Parity Retirement Planner
 
-A sophisticated, FastAPI-based retirement planning application designed to model and visualize long-term financial trajectories. It meticulously simulates annual corpus growth, inflation-adjusted retirement withdrawals, complex tax implications, and market stress scenarios. The application's core logic is engineered for parity with detailed spreadsheet-based financial models, offering users a powerful and intuitive web dashboard for comprehensive scenario analysis.
+A sophisticated, FastAPI-based retirement planning application designed to model and visualize long-term financial trajectories. It meticulously simulates annual corpus growth, inflation-adjusted retirement withdrawals, complex tax implications, and market stress scenarios. The application's core logic is engineered for parity with detailed spreadsheet-based financial models, offering users a powerful and intuitive web dashboard for comprehensive scenario analysis. This tool is ideal for financial advisors and individuals seeking a clear, data-driven understanding of their retirement readiness.
 
-## Features
+## Key Features at a Glance
 
-The planner is packed with features to provide a holistic view of your financial future:
+| Category | Feature | Description |
+| :--- | :--- | :--- |
+| **Core Projection** | Year-by-Year Simulation | Generates a detailed annual projection of wealth from current age to life expectancy. |
+| | Inflation-Adjusted Expenses | Automatically calculates the future cost of your current lifestyle. |
+| | Dynamic Contributions | Models annual increases in contributions during the accumulation phase. |
+| | Ad-Hoc Life Events | Plans for one-time major expenses (e.g., wedding, home purchase) at specific ages. |
+| **Advanced Modeling** | Sophisticated Tax Engine | Calculates a blended effective tax rate and the required gross withdrawal to meet net expenses. |
+| | Market Stress Testing | Simulates the impact of market downturns on the portfolio at the start of retirement. |
+| | Minimum Corpus Calculation | Determines the precise corpus needed at retirement using a reverse present value analysis. |
+| **Advisory & Goal Seek** | Retirement Readiness Score | Instantly shows readiness as a percentage (Projected Corpus vs. Minimum Required). |
+| | Target Contribution Analysis | Calculates the exact annual contribution needed to achieve 100% readiness. |
+| | Required Return Analysis | Solves for the pre- or post-retirement return rates needed to close any retirement gap. |
+| **Visualization** | Interactive Dashboard | A sleek, modern UI with real-time updates and light/dark modes. |
+| | Multi-Chart Visualization | Includes charts for wealth trajectory, cash flow, portfolio allocation, and more. |
+| | Detailed Ledger | A comprehensive, scrollable table presenting the year-by-year financial breakdown. |
 
-### Core Planning & Projection
-- **Year-by-Year Trajectory**: Generates a detailed annual projection of your wealth from your current age to life expectancy.
-- **Accumulation & Depletion Phases**: Models distinct financial behaviors for pre-retirement (accumulation) and post-retirement (depletion) periods.
-- **Inflation-Adjusted Expenses**: Automatically calculates the future cost of your current lifestyle by adjusting annual expenses for inflation.
-- **Dynamic Contributions**: Supports modeling for annual increases in contributions during the accumulation phase.
-- **Ad-Hoc Life Events**: Allows for planning one-time major expenses (e.g., a wedding, home purchase) at specific ages, adjusted for inflation.
+## How It Works
 
-### Advanced Financial Modeling
-- **Sophisticated Tax Engine**: Calculates a blended effective tax rate based on a detailed portfolio allocation (Equity, Debt, Arbitrage) and equity sub-types (LTCG/STCG). It then computes the required **gross (pre-tax) withdrawal** to meet your **net (after-tax)** lifestyle expenses.
-- **Stress Testing**: Simulates the impact of market downturns on your portfolio with "Mild Crash" (-10% returns) and "Severe Crash" (-20% returns) scenarios applied for the first two years of retirement.
-- **Minimum Corpus Requirement**: Calculates the precise corpus needed at retirement to sustain your lifestyle until life expectancy, using a reverse present value analysis that accounts for all withdrawals, taxes, and market returns.
+The application is built with a clean, API-driven architecture.
 
-### Gap Analysis & Goal Seeking
-- **Retirement Readiness Score**: Instantly see your readiness as a percentage, comparing your projected corpus to the minimum required amount.
-- **Target Contribution Analysis**: If a gap exists, the planner calculates the exact total annual contribution needed to achieve 100% readiness.
-- **Required Return Analysis**: Alternatively, it performs a goal-seek to show you the required pre- or post-retirement return rates needed to close the gap without increasing contributions.
+1.  **Frontend**: A single, dynamic `index.html` file provides an interactive user interface for inputting financial parameters.
+2.  **Backend**: A FastAPI server exposes a `/calculate` endpoint.
+3.  **Data Flow**: When the user runs a simulation, the frontend sends a JSON payload to the backend. The backend validates this data using Pydantic models and passes it to the `retirement_engine`.
+4.  **Calculation Engine**: The engine performs a year-by-year simulation, calculates all metrics, and returns the complete projection and analysis back to the frontend.
+5.  **Visualization**: The frontend uses Chart.js to render the received data into a rich, multi-chart dashboard and a detailed ledger table.
 
-### Interactive Dashboard & Visualization
-- **Intuitive UI**: A sleek, modern interface with light and dark modes for comfortable viewing.
-- **Real-Time Simulation**: Instantly recalculates and updates all metrics and charts as you adjust input parameters.
-- **Key Performance Indicators (KPIs)**: At-a-glance view of critical metrics like *Corpus at Retirement*, *Final Terminal Corpus*, *Peak Asset Age*, and *Minimum Corpus Required*.
-- **Multi-Chart Visualization**: A rich dashboard with multiple charts to analyze:
-    - **Wealth Growth & Depletion**: The complete trajectory of your net worth.
-    - **Cash Flow Breakdown**: Annual contributions, withdrawals, and taxes.
-    - **Portfolio & Tax Allocation**: Doughnut charts visualizing your asset mix and its contribution to the effective tax rate.
-    - **Returns & Expenses**: Detailed line and bar charts for annual returns and expenses over time.
-- **Detailed Ledger**: A comprehensive, scrollable table presenting the year-by-year financial breakdown, including opening/closing balances, contributions, withdrawals, and returns.
-
-### Technical Excellence
-- **API-Driven**: Built on a robust FastAPI backend that handles all complex calculations.
-- **Pydantic Validation**: Ensures all user inputs are valid and logical before running a simulation, providing clear error feedback.
-- **Workbook Parity Tested**: The calculation engine is rigorously tested against an equivalent spreadsheet model to ensure accuracy and reliability.
-
-## Project structure
+## Project Structure
 
 ```text
 financials/
 ├── README.md
+├── render.yaml
+├── requirements.txt
+├── start.sh
 └── retirals/
-    ├── assets/
-    │   └── logo.png
     ├── src/
-    │   ├── main.py              # FastAPI application with retirement calculation engine
+    │   ├── __init__.py
+    │   ├── main.py              # FastAPI application entrypoint
+    │   ├── models.py            # Pydantic data models and validation
+    │   ├── retirement_engine.py # Core projection, gap, and goal-seek logic
+    │   ├── stress_engine.py     # Logic for applying market stress scenarios
+    │   ├── tax_engine.py        # Blended tax rate calculation logic
     │   └── static/
-    │       └── index.html       # Interactive web dashboard
+    │       └── index.html       # Single-page interactive web dashboard
     └── tests/
         └── test_retirement.py   # Unit tests with workbook parity validation
 ```
