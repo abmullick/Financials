@@ -1,0 +1,66 @@
+from pydantic import BaseModel, model_validator, Field
+from enum import Enum
+
+class AdHocExpense(BaseModel):
+    age: int = Field(..., gt=0, le=120, description="Age for the ad-hoc expense")
+    amount: float = Field(..., ge=0, description="Amount of the ad-hoc expense")
+
+class StressScenario(str, Enum):
+    NORMAL = "Normal"
+    MILD_CRASH = "Mild Crash (-10% for 2 yrs)"
+    SEVERE_CRASH = "Severe Crash (-20% for 2 yrs)"
+
+class PlannerInputs(BaseModel):
+    current_age: int = Field(43, gt=0, le=120)
+    retirement_age: int = Field(54, gt=0, le=120)
+    life_expectancy: int = Field(90, gt=0, le=120)
+    current_annual_expenses: float = Field(1200000.00, gt=0, le=1e9)
+    avg_inflation_rate: float = Field(0.06, ge=0, le=0.5)
+    current_corpus: float = Field(4000000.00, ge=0, le=1e12)
+    annual_contribution: float = Field(700000.00, ge=0, le=1e9)
+    pre_retirement_return: float = Field(0.09, ge=-0.5, le=0.5)
+    post_retirement_return: float = Field(0.08, ge=-0.5, le=0.5)
+    contribution_increase: float = Field(0.01, ge=0, le=0.5)
+    ltcg_exemption: float = Field(125000.00, ge=0, le=1e7)
+    stress_scenario: StressScenario = StressScenario.NORMAL
+    adhoc_expenses: list[AdHocExpense] = Field(default_factory=lambda: [
+        AdHocExpense(age=58, amount=2500000.00),
+        AdHocExpense(age=75, amount=1000000.00)
+    ])
+    # Portfolio Allocation
+    allocation_equity: float = Field(0.60, ge=0, le=1.0)
+    allocation_debt: float = Field(0.30, ge=0, le=1.0)
+    allocation_arbitrage: float = Field(0.10, ge=0, le=1.0)
+    # Equity sub-allocation (LTCG/STCG split)
+    equity_ltcg_split: float = Field(0.70, ge=0, le=1.0)
+    equity_stcg_split: float = Field(0.30, ge=0, le=1.0)
+    # Tax rates by asset class
+    tax_ltcg: float = Field(0.125, ge=0, le=1.0)
+    tax_stcg: float = Field(0.20, ge=0, le=1.0)
+    tax_debt: float = Field(0.20, ge=0, le=1.0)
+    tax_arbitrage: float = Field(0.20, ge=0, le=1.0)
+
+    @model_validator(mode="after")
+    def validate_plan(self):
+        if self.retirement_age <= self.current_age:
+            raise ValueError("retirement_age must be greater than current_age")
+        if self.life_expectancy < self.retirement_age:
+            raise ValueError("life_expectancy must be greater than or equal to retirement_age")
+
+        adhoc_ages = []
+        for expense in self.adhoc_expenses:
+            if not (self.current_age <= expense.age <= self.life_expectancy):
+                raise ValueError(f"Ad-hoc expense age {expense.age} must be between current age and life expectancy.")
+            if expense.age in adhoc_ages:
+                raise ValueError(f"Duplicate ad-hoc expense age found: {expense.age}.")
+            adhoc_ages.append(expense.age)
+
+        allocation_total = self.allocation_equity + self.allocation_debt + self.allocation_arbitrage
+        if abs(allocation_total - 1.0) > 0.01:
+            raise ValueError("portfolio allocation (equity + debt + arbitrage) must sum to approximately 100%")
+        
+        equity_split_total = self.equity_ltcg_split + self.equity_stcg_split
+        if abs(equity_split_total - 1.0) > 0.01:
+            raise ValueError("equity sub-allocation (LTCG + STCG) must sum to approximately 100%")
+        
+        return self

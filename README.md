@@ -18,6 +18,11 @@ The planner is packed with features to provide a holistic view of your financial
 - **Stress Testing**: Simulates the impact of market downturns on your portfolio with "Mild Crash" (-10% returns) and "Severe Crash" (-20% returns) scenarios applied for the first two years of retirement.
 - **Minimum Corpus Requirement**: Calculates the precise corpus needed at retirement to sustain your lifestyle until life expectancy, using a reverse present value analysis that accounts for all withdrawals, taxes, and market returns.
 
+### Gap Analysis & Goal Seeking
+- **Retirement Readiness Score**: Instantly see your readiness as a percentage, comparing your projected corpus to the minimum required amount.
+- **Target Contribution Analysis**: If a gap exists, the planner calculates the exact total annual contribution needed to achieve 100% readiness.
+- **Required Return Analysis**: Alternatively, it performs a goal-seek to show you the required pre- or post-retirement return rates needed to close the gap without increasing contributions.
+
 ### Interactive Dashboard & Visualization
 - **Intuitive UI**: A sleek, modern interface with light and dark modes for comfortable viewing.
 - **Real-Time Simulation**: Instantly recalculates and updates all metrics and charts as you adjust input parameters.
@@ -75,11 +80,13 @@ pip install fastapi uvicorn pydantic
 
 ## Run the app
 
+To run the application, navigate to the `retirals` directory and use `uvicorn`. This is the standard method for running ASGI applications like FastAPI and correctly handles Python's package structure.
+
 ```bash
 cd /home/abmul/projects/financials/retirals
 # Activate your virtual environment
 source ~/spark_venv/bin/activate  # or source ../.venv/bin/activate
-python src/main.py
+uvicorn src.main:app --reload --port 20080
 ```
 
 The application will start at:
@@ -131,10 +138,11 @@ This produces a yearly trajectory showing when the retirement corpus peaks, how 
 3. Create a new Web Service and select your GitHub repository
 4. Use the following settings:
    - **Build Command:** `pip install -r requirements.txt`
-   - **Start Command:** `cd retirals && uvicorn src.main:app --host 0.0.0.0 --port 8080`
+   - **Start Command:** `bash start.sh`
    - **Environment:** Python 3.11+
    - **Plan:** Free or Paid (Free tier has limitations)
 
+Make sure your `start.sh` script is executable (`chmod +x start.sh`) before pushing to GitHub.
 Alternatively, use the `render.yaml` file in the repository for Infrastructure as Code deployment.
 
 The application will be available at: `https://<your-render-app-name>.onrender.com`

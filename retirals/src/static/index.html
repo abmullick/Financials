@@ -752,6 +752,31 @@
                     </div>
                 </div>
 
+                <!-- Gap Analysis KPIs -->
+                <div class="kpi-grid grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="kpi-3d p-4 rounded-2xl">
+                        <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Retirement Readiness</p>
+                        <p id="kpi_readiness_percent" class="kpi-value mt-2 font-black text-teal-300">0%</p>
+                    </div>
+                    <div class="kpi-3d p-4 rounded-2xl">
+                        <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Target Annual Contribution for 100% Readiness</p>
+                        <p id="kpi_target_annual_contribution" class="kpi-value mt-2 font-black text-rose-400">₹0.00</p>
+                    </div>
+                </div>
+
+                <!-- Goal Seek KPIs -->
+                <div class="kpi-grid grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="kpi-3d p-4 rounded-2xl">
+                        <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Required Pre-Retire Return for 100%</p>
+                        <p id="kpi_req_pre_ret_return" class="kpi-value mt-2 font-black text-cyan-300">0.00%</p>
+                    </div>
+                    <div class="kpi-3d p-4 rounded-2xl">
+                        <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Required Post-Retire Return for 100%</p>
+                        <p id="kpi_req_post_ret_return" class="kpi-value mt-2 font-black text-fuchsia-300">0.00%</p>
+                    </div>
+                </div>
+
+
                 <!-- Workbook-style Multi-Chart Dashboard -->
                 <div class="chart-grid grid grid-cols-1 xl:grid-cols-2 gap-4 xl:gap-6">
                     <div class="chart-panel p-4 rounded-2xl">
@@ -1110,6 +1135,8 @@
         async function calculateMetrics() {
             clearCalculationError();
 
+            console.log("calculateMetrics invoked."); // Debugging: Confirm function call
+
             const payload = {
                 current_age: parseInt(document.getElementById('current_age').value),
                 retirement_age: parseInt(document.getElementById('retirement_age').value),
@@ -1154,6 +1181,7 @@
             }
 
             try {
+                console.log("Sending payload:", payload); // Debugging: Log the payload being sent
                 const response = await fetch('/calculate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1179,6 +1207,13 @@
                 document.getElementById('kpi_final_corpus').innerText = fmt(data.metrics.final_corpus);
                 document.getElementById('kpi_peak_age').innerText = data.metrics.peak_age;
                 document.getElementById('kpi_minimum_corpus_required').innerText = fmt(data.metrics.minimum_corpus_required);
+                
+                document.getElementById('kpi_readiness_percent').innerText = `${data.metrics.readiness_percent.toFixed(2)}%`;
+                document.getElementById('kpi_target_annual_contribution').innerText = fmt(data.metrics.target_annual_contribution_for_gap);
+
+                document.getElementById('kpi_req_pre_ret_return').innerText = `${data.metrics.required_pre_retirement_return.toFixed(2)}%`;
+                document.getElementById('kpi_req_post_ret_return').innerText = `${data.metrics.required_post_retirement_return.toFixed(2)}%`;
+
                 fitAllKpiValues();
 
                 const ages = data.projections.map(row => row.age);
