@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, model_validator, Field
+from pydantic import BaseModel, model_validator
 import uvicorn
 import os
 from os import getenv
@@ -22,52 +22,71 @@ app.mount("/assets", StaticFiles(directory=os.path.join(os.path.dirname(__file__
 # Define the PlannerInputs model using Pydantic
 
 class PlannerInputs(BaseModel):
-    current_age: int = Field(43, gt=0)
+    current_age: int = 43
     retirement_age: int = 54
     life_expectancy: int = 90
-    current_annual_expenses: float = Field(1200000.00, gt=0)
-    avg_inflation_rate: float = Field(0.06, ge=0, lt=1)
-    current_corpus: float = Field(4000000.00, ge=0)
-    annual_contribution: float = Field(700000.00, ge=0)
-    pre_retirement_return: float = Field(0.16, ge=0, lt=1)
-    post_retirement_return: float = Field(0.15, ge=0, lt=1)
-    contribution_increase: float = Field(0.01, ge=0, lt=1)
-    ltcg_exemption: float = Field(125000.00, ge=0)
+    current_annual_expenses: float = 1200000.00
+    avg_inflation_rate: float = 0.06
+    current_corpus: float = 4000000.00
+    annual_contribution: float = 700000.00
+    pre_retirement_return: float = 0.16
+    post_retirement_return: float = 0.15
+    contribution_increase: float = 0.01
+    ltcg_exemption: float = 125000.00
     stress_scenario: str = "Normal"
     adhoc_expenses: list[dict] = [{"age": 58, "amount": 2500000.00}, {"age": 75, "amount": 1000000.00}]
     # Portfolio Allocation
-    allocation_equity: float = Field(0.60, ge=0, le=1)
-    allocation_debt: float = Field(0.30, ge=0, le=1)
-    allocation_arbitrage: float = Field(0.10, ge=0, le=1)
+    allocation_equity: float = 0.60
+    allocation_debt: float = 0.30
+    allocation_arbitrage: float = 0.10
     # Equity sub-allocation (LTCG/STCG split)
-    equity_ltcg_split: float = Field(0.70, ge=0, le=1)
-    equity_stcg_split: float = Field(0.30, ge=0, le=1)
+    equity_ltcg_split: float = 0.70
+    equity_stcg_split: float = 0.30
     # Tax rates by asset class
-    tax_ltcg: float = Field(0.125, ge=0, le=1)
-    tax_stcg: float = Field(0.20, ge=0, le=1)
-    tax_debt: float = Field(0.20, ge=0, le=1)
-    tax_arbitrage: float = Field(0.20, ge=0, le=1)
+    tax_ltcg: float = 0.125
+    tax_stcg: float = 0.20
+    tax_debt: float = 0.20
+    tax_arbitrage: float = 0.20
 
     @model_validator(mode="after")
     def validate_plan(self):
+        if self.current_age <= 0:
+            raise ValueError("current_age must be greater than zero")
         if self.retirement_age <= self.current_age:
             raise ValueError("retirement_age must be greater than current_age")
         if self.life_expectancy < self.retirement_age:
             raise ValueError("life_expectancy must be greater than or equal to retirement_age")
-        
+        if self.current_annual_expenses <= 0:
+            raise ValueError("current_annual_expenses must be positive")
+        if self.current_corpus < 0:
+            raise ValueError("current_corpus cannot be negative")
+        if self.annual_contribution < 0:
+            raise ValueError("annual_contribution cannot be negative")
+        if not 0 <= self.avg_inflation_rate < 1:
+            raise ValueError("avg_inflation_rate must be between 0 and 1")
+        if not 0 <= self.pre_retirement_return < 1:
+            raise ValueError("pre_retirement_return must be between 0 and 1")
+        if not 0 <= self.post_retirement_return < 1:
+            raise ValueError("post_retirement_return must be between 0 and 1")
         # Validate portfolio allocation sums to ~1.0 (allow small rounding tolerance)
         allocation_total = self.allocation_equity + self.allocation_debt + self.allocation_arbitrage
         if abs(allocation_total - 1.0) > 0.01:
             raise ValueError("portfolio allocation (equity + debt + arbitrage) must sum to approximately 100%")
-        
         # Validate equity sub-allocation
         equity_split_total = self.equity_ltcg_split + self.equity_stcg_split
         if abs(equity_split_total - 1.0) > 0.01:
             raise ValueError("equity sub-allocation (LTCG + STCG) must sum to approximately 100%")
-        
+        # Validate tax rates are between 0 and 1
+        for tax_rate_value in [self.tax_ltcg, self.tax_stcg, self.tax_debt, self.tax_arbitrage]:
+            if not 0 <= tax_rate_value <= 1:
+                raise ValueError("all tax rates must be between 0 and 1")
         return self
 
-def _calculate_retirement_logic(inputs: PlannerInputs):
+@app.post("/calculate")
+def calculate_retirement(inputs: PlannerInputs):
+    if not inputs:
+        raise HTTPException(status_code=400, detail="Request body is required")
+
     # Calculate blended effective tax rate based on portfolio allocation
     # Equity is split between LTCG and STCG
     equity_ltcg_portion = inputs.allocation_equity * inputs.equity_ltcg_split
@@ -108,8 +127,9 @@ def _calculate_retirement_logic(inputs: PlannerInputs):
             required_after_tax_withdrawal = 0.0
 
         ad_hoc = 0.0
-        if age in ad_hoc_map:
-            ad_hoc = ad_hoc_map[age] * ((1 + inputs.avg_inflation_rate) ** (age - inputs.current_age))
+        for event_age, event_amount in ad_hoc_map.items():
+            if age == event_age:
+                ad_hoc += event_amount * ((1 + inputs.avg_inflation_rate) ** (age - inputs.current_age))
 
         # Calculate gross withdrawal and tax deduction
         if is_retired and required_after_tax_withdrawal > 0:
@@ -122,6 +142,12 @@ def _calculate_retirement_logic(inputs: PlannerInputs):
                 # Edge case: if tax rate is 100%, withdrawal cannot meet requirement
                 gross_withdrawal = required_after_tax_withdrawal
                 total_tax = 0.0
+            
+            # Break down tax by asset class for reporting (optional, for transparency)
+            tax_by_ltcg = gross_withdrawal * equity_ltcg_portion * inputs.tax_ltcg
+            tax_by_stcg = gross_withdrawal * equity_stcg_portion * inputs.tax_stcg
+            tax_by_debt = gross_withdrawal * inputs.allocation_debt * inputs.tax_debt
+            tax_by_arbitrage = gross_withdrawal * inputs.allocation_arbitrage * inputs.tax_arbitrage
         else:
             gross_withdrawal = 0.0
             total_tax = 0.0
@@ -160,20 +186,17 @@ def _calculate_retirement_logic(inputs: PlannerInputs):
         opening_corpus = closing_corpus
 
     corpus_at_retirement = next(
-        (row["opening"] for row in projections if row["age"] == inputs.retirement_age), 0
+        row["opening"] for row in projections if row["age"] == inputs.retirement_age
     )
-    final_corpus = round(projections[-1]["closing"]) if projections else 0
-    
-    peak_age = inputs.retirement_age
-    if projections:
-        try:
-            peak_age = next(
-                row["age"]
-                for row in projections
-                if row["age"] >= inputs.retirement_age and row["closing"] < row["opening"]
-            )
-        except StopIteration:
-            peak_age = inputs.life_expectancy
+    final_corpus = round(projections[-1]["closing"])
+    peak_age = next(
+        (
+            row["age"]
+            for row in projections
+            if row["age"] >= inputs.retirement_age and row["closing"] < row["opening"]
+        ),
+        inputs.life_expectancy,
+    )
 
     retirement_ages = list(range(inputs.retirement_age, inputs.life_expectancy + 1))
     retirement_outflows = []
@@ -182,43 +205,26 @@ def _calculate_retirement_logic(inputs: PlannerInputs):
         required_after_tax = inputs.current_annual_expenses * ((1 + inputs.avg_inflation_rate) ** (age - inputs.current_age))
         
         # Add adhoc expenses
-        event_cost = 0
-        if age in ad_hoc_map:
-            event_cost = ad_hoc_map[age] * ((1 + inputs.avg_inflation_rate) ** (age - inputs.current_age))
+        event_cost = sum(
+            amount * ((1 + inputs.avg_inflation_rate) ** (age - inputs.current_age))
+            for event_age, amount in ad_hoc_map.items()
+            if event_age == age
+        )
         
         total_after_tax_needed = required_after_tax + event_cost
         retirement_outflows.append(total_after_tax_needed)
 
-    # Calculate minimum corpus required by working backwards from life expectancy.
-    # This ensures the final corpus is >= 0.
-    minimum_corpus_required = 0.0
-    for age in reversed(range(inputs.retirement_age, inputs.life_expectancy + 1)):
-        # Determine the correct return rate for this age, mirroring the forward projection
-        if age < inputs.retirement_age + 2:
-            if inputs.stress_scenario == "Mild Crash (-10% for 2 yrs)":
-                return_rate = -0.10
-            elif inputs.stress_scenario == "Severe Crash (-20% for 2 yrs)":
-                return_rate = -0.20
-            else:
-                return_rate = inputs.post_retirement_return
-        else:
-            return_rate = inputs.post_retirement_return
-
-        # Calculate this year's outflows, including ad-hoc expenses, exactly as in the forward projection
-        elapsed_years = age - inputs.current_age
-        required_after_tax_withdrawal = inputs.current_annual_expenses * ((1 + inputs.avg_inflation_rate) ** elapsed_years)
-        ad_hoc = ad_hoc_map.get(age, 0.0) * ((1 + inputs.avg_inflation_rate) ** elapsed_years)
-
-        # Calculate gross (pre-tax) withdrawal for regular expenses
-        gross_withdrawal = required_after_tax_withdrawal / (1.0 - blended_tax_rate) if blended_tax_rate < 1.0 else required_after_tax_withdrawal
-
-        # Total outflow for the year is the sum of grossed-up expenses and ad-hoc costs
-        total_outflow_for_year = gross_withdrawal + ad_hoc
-
-        # The corpus required at the start of the year is the sum of:
-        # 1. The total outflow for the current year.
-        # 2. The present value of the corpus required at the start of the *next* year.
-        minimum_corpus_required = total_outflow_for_year + (minimum_corpus_required / (1 + return_rate))
+    if retirement_ages:
+        pv_outflows = sum(
+            outflow / ((1 + inputs.post_retirement_return) ** (age - inputs.retirement_age))
+            for age, outflow in zip(retirement_ages, retirement_outflows)
+        )
+        last_outflow = retirement_outflows[-1]
+        terminal_value = last_outflow * (1 + inputs.post_retirement_return) / inputs.post_retirement_return
+        pv_terminal = terminal_value / ((1 + inputs.post_retirement_return) ** (inputs.life_expectancy - inputs.retirement_age + 1))
+        minimum_corpus_required = pv_outflows + pv_terminal
+    else:
+        minimum_corpus_required = 0.0
 
     return {
         "metrics": {
@@ -232,23 +238,12 @@ def _calculate_retirement_logic(inputs: PlannerInputs):
         "projections": projections
     }
 
-@app.post("/calculate")
-def calculate_retirement(inputs: PlannerInputs):
-    try:
-        return _calculate_retirement_logic(inputs)
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {e}")
-
 @app.get("/")
 async def read_index():
     static_file = os.path.join(os.path.dirname(__file__), 'static', 'index.html')
     return FileResponse(static_file)
 
-
 if __name__ == "__main__":
     port = int(getenv("PORT", 20080))
-    print(f"Starting Parity Retirement Planner Server...")
-    print(f"  - Access the planner at http://localhost:{port}/")
+    print(f"Starting Parity Retirement Planner Server at http://localhost:{port}")
     uvicorn.run(app, host="0.0.0.0", port=port)

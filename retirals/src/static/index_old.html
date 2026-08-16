@@ -772,20 +772,6 @@
                     </div>
 
                     <div class="chart-panel p-4 rounded-2xl">
-                        <h3 class="text-md font-semibold text-slate-700 mb-3">Portfolio Allocation</h3>
-                        <div class="h-64">
-                            <canvas id="allocationChart"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="chart-panel p-4 rounded-2xl">
-                        <h3 class="text-md font-semibold text-slate-700 mb-3">Effective Tax Contribution</h3>
-                        <div class="h-64">
-                            <canvas id="taxAllocationChart"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="chart-panel p-4 rounded-2xl">
                         <h3 class="text-md font-semibold text-slate-700 mb-3">Annual Investment Returns</h3>
                         <div class="h-64">
                             <canvas id="returnChart"></canvas>
@@ -932,7 +918,7 @@
             const prepared = datasets.map(ds => ({
                 ...ds,
                 cubicInterpolationMode: 'monotone',
-                tension: ds.tension ?? 0.4,
+                tension: ds.tension ?? 0.35,
                 borderWidth: ds.borderWidth ?? 3,
                 fill: ds.fill ?? false,
                 pointRadius: ds.pointRadius ?? 2.2,
@@ -940,11 +926,7 @@
                 pointBackgroundColor: ds.pointBackgroundColor ?? '#fff',
                 pointBorderColor: ds.pointBorderColor ?? ds.borderColor,
                 pointBorderWidth: ds.pointBorderWidth ?? 1.5,
-                backgroundColor: ds.backgroundColor || 'rgba(148,163,184,0.12)',
-                shadowOffsetX: 2,
-                shadowOffsetY: 2,
-                shadowBlur: 5,
-                shadowColor: 'rgba(0, 0, 0, 0.2)'
+                backgroundColor: ds.backgroundColor || 'rgba(148,163,184,0.12)'
             }));
 
             chartInstances[canvasId] = new Chart(ctx, {
@@ -998,8 +980,8 @@
                 ...ds,
                 borderRadius: ds.borderRadius ?? 8,
                 borderSkipped: false,
-                borderWidth: ds.borderWidth ?? 2,
-                borderColor: ds.borderColor ?? 'rgba(0,0,0,0.2)',
+                borderWidth: ds.borderWidth ?? 1,
+                maxBarThickness: ds.maxBarThickness ?? 26,
                 backgroundColor: ds.backgroundColor || 'rgba(148,163,184,0.72)'
             }));
 
@@ -1027,62 +1009,14 @@
                     },
                     scales: {
                         x: {
-                            stacked: true,
                             grid: { display: false },
                             border: { color: gridColor },
                             ticks: { color: axisColor, maxTicksLimit: 8 }
                         },
                         y: {
-                            stacked: true,
                             grid: { color: gridColor },
                             border: { color: gridColor },
                             ticks: { callback: value => typeof value === 'number' ? '₹' + value.toLocaleString('en-IN') : value, color: axisColor }
-                        }
-                    },
-                    ...options
-                }
-            });
-        }
-
-        function makeDoughnutChart(canvasId, labels, data, options = {}) {
-            const ctx = document.getElementById(canvasId).getContext('2d');
-            if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
-
-            const axisColor = isLightTheme() ? 'var(--text-2)' : 'var(--text-2)';
-            const defaultColors = [
-                'rgba(59, 130, 246, 0.85)',   // blue-500
-                'rgba(16, 185, 129, 0.85)',   // emerald-500
-                'rgba(245, 158, 11, 0.85)',   // amber-500
-                'rgba(139, 92, 246, 0.85)',   // violet-500
-                'rgba(236, 72, 153, 0.85)',   // pink-500
-                'rgba(22, 163, 74, 0.85)'     // green-600
-            ];
-
-            chartInstances[canvasId] = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: data,
-                        backgroundColor: options.colors || defaultColors,
-                        borderColor: isLightTheme() ? 'rgba(248,250,252,0.88)' : 'rgba(11, 17, 25, 0.88)', // Match chart panel bg
-                        borderWidth: 4,
-                        hoverOffset: 12
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    cutout: '60%',
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: { boxWidth: 12, usePointStyle: true, pointStyle: 'circle', color: axisColor, padding: 16, font: { weight: '600' } }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: (context) => `${context.label}: ${context.raw.toFixed(1)}%`
-                            }
                         }
                     },
                     ...options
@@ -1178,113 +1112,77 @@
                 document.getElementById('kpi_minimum_corpus_required').innerText = fmt(data.metrics.minimum_corpus_required);
                 fitAllKpiValues();
 
-                const ages = data.projections.map(row => row.age);
-                const opening = data.projections.map(row => row.opening);
-                const contribution = data.projections.map(row => row.contribution);
-                const withdrawal = data.projections.map(row => row.withdrawal);
-                const withdrawalAfterTax = data.projections.map(row => row.withdrawal_after_tax);
-                const withdrawalTax = data.projections.map(row => row.withdrawal_tax);
-                const adHoc = data.projections.map(row => row.ad_hoc);
-                const returns = data.projections.map(row => row.return);
-                const closing = data.projections.map(row => row.closing);
+            const ages = data.projections.map(row => row.age);
+            const opening = data.projections.map(row => row.opening);
+            const contribution = data.projections.map(row => row.contribution);
+            const withdrawal = data.projections.map(row => row.withdrawal);
+            const adHoc = data.projections.map(row => row.ad_hoc);
+            const returns = data.projections.map(row => row.return);
+            const closing = data.projections.map(row => row.closing);
 
-                const tbody = document.getElementById('ledger_body');
-                tbody.innerHTML = '';
+            const tbody = document.getElementById('ledger_body');
+            tbody.innerHTML = '';
 
-                data.projections.forEach(row => {
-                    const tr = document.createElement('tr');
-                    if (row.age === payload.retirement_age) tr.className = 'bg-amber-50/70 font-medium';
-                    tr.innerHTML = `
-                        <td class="px-4 py-2 font-medium">${row.age}</td>
-                        <td class="px-4 py-2 text-right">${fmt(row.opening)}</td>
-                        <td class="px-4 py-2 text-right text-emerald-600">+${fmt(row.contribution)}</td>
-                        <td class="px-4 py-2 text-right text-rose-600">-${fmt(row.withdrawal)}</td>
-                        <td class="px-4 py-2 text-right text-purple-600">-${fmt(row.ad_hoc)}</td>
-                        <td class="px-4 py-2 text-right text-blue-600">${fmt(row.return)}</td>
-                        <td class="px-4 py-2 text-right font-medium">${fmt(row.closing)}</td>
-                    `;
-                    tbody.appendChild(tr);
-                });
+            data.projections.forEach(row => {
+                const tr = document.createElement('tr');
+                if (row.age === payload.retirement_age) tr.className = 'bg-amber-50/70 font-medium';
+                tr.innerHTML = `
+                    <td class="px-4 py-2 font-medium">${row.age}</td>
+                    <td class="px-4 py-2 text-right">${fmt(row.opening)}</td>
+                    <td class="px-4 py-2 text-right text-emerald-600">+${fmt(row.contribution)}</td>
+                    <td class="px-4 py-2 text-right text-rose-600">-${fmt(row.withdrawal)}</td>
+                    <td class="px-4 py-2 text-right text-purple-600">-${fmt(row.ad_hoc)}</td>
+                    <td class="px-4 py-2 text-right text-blue-600">${fmt(row.return)}</td>
+                    <td class="px-4 py-2 text-right font-medium">${fmt(row.closing)}</td>
+                `;
+                tbody.appendChild(tr);
+            });
 
-                makeLineChart('trajectoryChart', ages, [{
-                    label: 'Net Closing Assets (₹)',
-                    data: closing,
-                    borderColor: '#facc15',
-                    backgroundColor: withGradient(document.getElementById('trajectoryChart').getContext('2d'), 'rgba(250, 204, 21, 0.2)', 'rgba(250, 204, 21, 0.01)'),
-                    fill: true,
-                    pointRadius: 0,
-                    pointHoverRadius: 5
-                }]);
+            makeLineChart('trajectoryChart', ages, [{
+                label: 'Net Closing Assets (₹)',
+                data: closing,
+                borderColor: '#0f172a',
+                backgroundColor: 'rgba(15, 23, 42, 0.12)',
+                fill: true,
+                pointRadius: 0,
+                pointHoverRadius: 5
+            }]);
 
-                makeBarChart('cashFlowChart', ages, [
-                    { label: 'Contribution', data: contribution, backgroundColor: 'rgba(16, 185, 129, 0.78)', borderColor: 'rgba(16, 185, 129, 1)', borderWidth: 1 },
-                    { label: 'Net Withdrawal', data: withdrawalAfterTax, backgroundColor: 'rgba(239, 68, 68, 0.78)', borderColor: 'rgba(239, 68, 68, 1)', borderWidth: 1  },
-                    { label: 'Tax on Withdrawal', data: withdrawalTax, backgroundColor: 'rgba(245, 158, 11, 0.78)', borderColor: 'rgba(245, 158, 11, 1)', borderWidth: 1 },
-                    { label: 'Ad-Hoc', data: adHoc, backgroundColor: 'rgba(139, 92, 246, 0.78)', borderColor: 'rgba(139, 92, 246, 1)', borderWidth: 1 }
-                ]);
+            makeBarChart('cashFlowChart', ages, [
+                { label: 'Contribution', data: contribution, backgroundColor: 'rgba(16, 185, 129, 0.78)', borderColor: 'rgba(16, 185, 129, 1)', borderWidth: 1 },
+                { label: 'Withdrawal', data: withdrawal, backgroundColor: 'rgba(239, 68, 68, 0.78)', borderColor: 'rgba(239, 68, 68, 1)', borderWidth: 1 },
+                { label: 'Ad-Hoc', data: adHoc, backgroundColor: 'rgba(139, 92, 246, 0.78)', borderColor: 'rgba(139, 92, 246, 1)', borderWidth: 1 }
+            ]);
 
-                makeLineChart('returnChart', ages, [{
-                    label: 'Annual Return',
-                    data: returns,
-                    borderColor: '#60a5fa',
-                    backgroundColor: withGradient(document.getElementById('returnChart').getContext('2d'), 'rgba(96, 165, 250, 0.2)', 'rgba(96, 165, 250, 0.01)'),
-                    fill: true,
-                    pointRadius: 0,
-                    pointHoverRadius: 5
-                }]);
+            makeLineChart('returnChart', ages, [{
+                label: 'Annual Return',
+                data: returns,
+                borderColor: '#2563eb',
+                backgroundColor: 'rgba(37,99,235,0.18)',
+                fill: true,
+                pointRadius: 0,
+                pointHoverRadius: 5
+            }]);
 
-                makeBarChart('expenseChart', ages, [
-                    { label: 'Annual Expenses', data: withdrawalAfterTax, backgroundColor: 'rgba(239, 68, 68, 0.76)', borderColor: 'rgba(239, 68, 68, 1)', borderWidth: 1 },
-                    { label: 'Ad-Hoc', data: adHoc, backgroundColor: 'rgba(124, 58, 237, 0.76)', borderColor: 'rgba(124, 58, 237, 1)', borderWidth: 1 }
-                ], { scales: { x: { stacked: false }, y: { stacked: false } } });
+            makeBarChart('expenseChart', ages, [
+                { label: 'Withdrawal', data: withdrawal, backgroundColor: 'rgba(239, 68, 68, 0.76)', borderColor: 'rgba(239, 68, 68, 1)', borderWidth: 1 },
+                { label: 'Ad-Hoc', data: adHoc, backgroundColor: 'rgba(124, 58, 237, 0.76)', borderColor: 'rgba(124, 58, 237, 1)', borderWidth: 1 }
+            ]);
 
-                makeLineChart('withdrawalReturnChart', ages, [
-                    { label: 'Withdrawal', data: withdrawal, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.08)', fill: false, pointRadius: 0 },
-                    { label: 'Annual Return', data: returns, borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.08)', fill: false, pointRadius: 0 }
-                ]);
+            makeLineChart('withdrawalReturnChart', ages, [
+                { label: 'Withdrawal', data: withdrawal, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.08)', fill: false, pointRadius: 0 },
+                { label: 'Annual Return', data: returns, borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.08)', fill: false, pointRadius: 0 }
+            ]);
 
-                makeLineChart('projectedBalanceChart', ages, [{
-                    label: 'Projected Corpus Balance',
-                    data: closing,
-                    borderColor: '#34d399',
-                    backgroundColor: withGradient(document.getElementById('projectedBalanceChart').getContext('2d'), 'rgba(52, 211, 153, 0.2)', 'rgba(52, 211, 153, 0.01)'),
-                    fill: true,
-                    pointRadius: 0,
-                    pointHoverRadius: 5
-                }]);
-
-                makeDoughnutChart('allocationChart',
-                    ['Equity', 'Debt', 'Arbitrage'],
-                    [
-                        payload.allocation_equity * 100,
-                        payload.allocation_debt * 100,
-                        payload.allocation_arbitrage * 100
-                    ]
-                );
-
-                const taxEquityLTCG = payload.allocation_equity * payload.equity_ltcg_split * payload.tax_ltcg;
-                const taxEquitySTCG = payload.allocation_equity * payload.equity_stcg_split * payload.tax_stcg;
-                const taxDebt = payload.allocation_debt * payload.tax_debt;
-                const taxArbitrage = payload.allocation_arbitrage * payload.tax_arbitrage;
-                const totalTaxRate = taxEquityLTCG + taxEquitySTCG + taxDebt + taxArbitrage;
-
-                makeDoughnutChart('taxAllocationChart',
-                    ['Equity LTCG', 'Equity STCG', 'Debt', 'Arbitrage'],
-                    totalTaxRate > 0 ? [
-                        (taxEquityLTCG / totalTaxRate) * 100,
-                        (taxEquitySTCG / totalTaxRate) * 100,
-                        (taxDebt / totalTaxRate) * 100,
-                        (taxArbitrage / totalTaxRate) * 100
-                    ] : [0, 0, 0, 0],
-                    {
-                        colors: [
-                            'rgba(59, 130, 246, 0.8)',   // blue-500
-                            'rgba(96, 165, 250, 0.8)',   // blue-400
-                            'rgba(16, 185, 129, 0.8)',   // emerald-500
-                            'rgba(245, 158, 11, 0.8)'    // amber-500
-                        ]
-                    }
-                );
+            makeLineChart('projectedBalanceChart', ages, [{
+                label: 'Projected Corpus Balance',
+                data: closing,
+                borderColor: '#0f766e',
+                backgroundColor: 'rgba(15,118,110,0.18)',
+                fill: true,
+                pointRadius: 0,
+                pointHoverRadius: 5
+            }]);
             } catch (error) {
                 showCalculationError(error.message || 'Unexpected error while calculating retirement metrics.');
             }
@@ -1313,9 +1211,7 @@
             launchPlannerBtn.addEventListener('click', () => {
                 landingScreen.classList.add('hidden');
                 plannerApp.classList.remove('hidden');
-                if (Object.keys(chartInstances).length === 0) {
-                    calculateMetrics();
-                }
+                calculateMetrics();
                 fitAllKpiValues();
             });
         }
@@ -1324,10 +1220,13 @@
             const nextTheme = document.body.classList.contains('theme-light') ? 'dark' : 'light';
             applyTheme(nextTheme);
             document.getElementById('themeToggleBtn').setAttribute('aria-pressed', String(nextTheme === 'light'));
-            
-            if (!plannerApp.classList.contains('hidden')) {
-                calculateMetrics();
-                fitAllKpiValues();
+            calculateMetrics();
+            fitAllKpiValues();
+            if (window.Chart && chartInstances) {
+                Object.keys(chartInstances).forEach(chartId => {
+                    const chart = chartInstances[chartId];
+                    if (chart) chart.update();
+                });
             }
         });
 
@@ -1338,13 +1237,9 @@
         seedAdHocRows();
         initializeTheme();
         window.addEventListener('resize', fitAllKpiValues);
-        
-        // Run calculation only if planner is visible on load (e.g. after a refresh)
         window.onload = function() {
-            if (plannerApp && !plannerApp.classList.contains('hidden')) {
-                calculateMetrics();
-                fitAllKpiValues();
-            }
+            calculateMetrics();
+            fitAllKpiValues();
         };
     </script>
 </body>
