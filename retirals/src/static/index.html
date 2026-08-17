@@ -446,6 +446,27 @@
             height: 100% !important;
         }
 
+        @media print {
+            body {
+                background: white !important;
+            }
+            #landingScreen, button, .header-glow {
+                display: none !important;
+            }
+            #plannerApp {
+                display: block !important;
+                max-width: none !important;
+                padding: 0 !important;
+            }
+            .app-layout {
+                display: block !important;
+            }
+            .ledger-table-wrap .overflow-x-auto {
+                max-height: none !important;
+                overflow: visible !important;
+            }
+        }
+
         @media (max-width: 767px) {
             .app-layout {
                 grid-template-columns: 1fr;
@@ -1136,7 +1157,47 @@
         }
 
         function downloadReport(type) {
-            alert(`The ${type.toUpperCase()} download feature is not yet implemented.`);
+            if (type === 'pdf') {
+                window.print();
+                return;
+            }
+
+            if (type === 'html') {
+                const clone = document.documentElement.cloneNode(true);
+
+                // Preserve the current light/dark theme
+                clone.querySelector('body').className = document.body.className;
+
+                // Replace charts with images
+                const originalCanvases = document.querySelectorAll('canvas');
+                const clonedCanvases = clone.querySelectorAll('canvas');
+
+                originalCanvases.forEach((canvas, index) => {
+                    const img = document.createElement('img');
+                    img.src = canvas.toDataURL('image/png');
+                    img.style.width = '100%';
+                    img.style.height = 'auto';
+                    if (clonedCanvases[index]) {
+                        clonedCanvases[index].replaceWith(img);
+                    }
+                });
+
+                const html = '<!DOCTYPE html>\n' + clone.outerHTML;
+
+                const blob = new Blob(
+                    [html],
+                    { type: 'text/html;charset=utf-8' }
+                );
+
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'retirement-plan.html';
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                URL.revokeObjectURL(url);
+            }
         }
 
         function showCalculationError(message) {
