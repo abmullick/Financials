@@ -24,7 +24,7 @@ class RetirementPlannerTest(unittest.TestCase):
         # Key metric validation
         self.assertAlmostEqual(metrics["corpus_at_retirement"], 42131033.64, places=2)
         self.assertAlmostEqual(metrics["final_corpus"], 893537171.0, places=0, msg="Final corpus should match workbook.")
-        self.assertEqual(metrics["retirement_duration_years"], 36)
+        self.assertEqual(metrics["years_in_retirement"], 36)
         self.assertEqual(metrics["peak_age"], 58)
         self.assertAlmostEqual(metrics["total_contributions"], 8096784.27, places=2)
         self.assertGreater(metrics["minimum_corpus_required"], 0, "Minimum corpus must be calculated.")
@@ -59,17 +59,17 @@ class RetirementPlannerTest(unittest.TestCase):
         
         # First year of retirement (age 60)
         row1 = next(p for p in result["projections"] if p["age"] == 60)
-        expected_return1 = (row1["opening"] + row1["contribution"] - row1["withdrawal"] - row1["ad_hoc"]) * -0.10
+        expected_return1 = (row1["opening"] + row1["contribution"] - row1["withdrawal"]) * -0.10
         self.assertAlmostEqual(row1["return"], expected_return1, places=2)
 
         # Second year of retirement (age 61)
         row2 = next(p for p in result["projections"] if p["age"] == 61)
-        expected_return2 = (row2["opening"] + row2["contribution"] - row2["withdrawal"] - row2["ad_hoc"]) * -0.10
+        expected_return2 = (row2["opening"] + row2["contribution"] - row2["withdrawal"]) * -0.10
         self.assertAlmostEqual(row2["return"], expected_return2, places=2)
 
         # Third year should revert to normal post-retirement return
         row3 = next(p for p in result["projections"] if p["age"] == 62)
-        expected_return3 = (row3["opening"] + row3["contribution"] - row3["withdrawal"] - row3["ad_hoc"]) * inputs.post_retirement_return
+        expected_return3 = (row3["opening"] + row3["contribution"] - row3["withdrawal"]) * inputs.post_retirement_return
         self.assertAlmostEqual(row3["return"], expected_return3, places=2)
 
     def test_severe_crash_scenario(self):
@@ -154,6 +154,34 @@ class RetirementPlannerTest(unittest.TestCase):
         # Verify the math: G = (Net - Exempt*Tax) / (1 - BlendedRate)
         gross_with_exempt = (1000000 - (100000 * 0.10)) / (1 - 0.10)
         self.assertAlmostEqual(result_with_exempt["projections"][0]["withdrawal"], gross_with_exempt, places=2)
+
+    def test_tax_exemption_logic_small_withdrawal(self):
+        """
+        Verifies the LTCG exemption logic for a small withdrawal where the
+        LTCG component is *below* the exemption threshold (Case 1).
+        """
+        inputs = PlannerInputs(
+            retirement_age=60, life_expectancy=61,
+            current_annual_expenses=100000, # Small withdrawal
+            allocation_equity=0.60,
+            allocation_debt=0.40,
+            allocation_arbitrage=0.0,
+            equity_ltcg_split=0.70, # LTCG portion is 42%
+            equity_stcg_split=0.30,
+            tax_ltcg=0.125,
+            tax_stcg=0.20,
+            tax_debt=0.20,
+            ltcg_exemption=125000,
+            adhoc_expenses=[]
+        )
+        result = calculate_retirement(inputs)
+        tax = result["projections"][0]["withdrawal_tax"]
+        gross_withdrawal = result["projections"][0]["withdrawal"]
+        # In this case, LTCG tax should be zero. Tax is only from STCG and Debt.
+        # other_tax_rate = (0.6*0.3*0.2) + (0.4*0.2) = 0.036 + 0.08 = 0.116
+        # expected_gross = 100000 / (1 - 0.116) = 113122.17
+        expected_tax = (gross_withdrawal * (0.6*0.3*0.2)) + (gross_withdrawal * (0.4*0.2))
+        self.assertAlmostEqual(tax, expected_tax, places=2, msg="Tax should only apply to non-LTCG portions")
 
     def test_peak_age_and_final_corpus(self):
         """Tests calculation of peak asset age and final corpus."""

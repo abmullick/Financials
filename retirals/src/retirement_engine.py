@@ -1,6 +1,53 @@
 from models import PlannerInputs
-from tax_engine import calculate_blended_tax_rate
 from stress_engine import get_return_rate
+
+def _calculate_gross_withdrawal(net_required: float, inputs: PlannerInputs, tax_portions: dict) -> tuple[float, float]:
+    """
+    Calculates the gross withdrawal required to meet a net (after-tax) amount.
+
+    This function implements a piecewise calculation to correctly handle the annual
+    LTCG exemption, which applies only to gains exceeding the threshold.
+
+    Args:
+        net_required: The after-tax amount needed.
+        inputs: The PlannerInputs object.
+        tax_portions: A dictionary with pre-calculated tax portions.
+
+    Returns:
+        A tuple containing (gross_withdrawal, total_tax).
+    """
+    if net_required <= 0:
+        return 0.0, 0.0
+
+    # Case 1: Withdrawal is small, LTCG component is below the exemption limit.
+    # Tax is calculated only on non-LTCG portions of the withdrawal.
+    # G = N / (1 - other_tax_rate)
+    other_tax_rate = tax_portions["other_blended_rate"]
+    gross_withdrawal_case1 = net_required / (1.0 - other_tax_rate) if other_tax_rate < 1.0 else float('inf')
+
+    # Determine if we need to consider Case 2 (where LTCG tax applies).
+    # This happens if the LTCG component of the withdrawal exceeds the exemption.
+    ltcg_portion_of_withdrawal = gross_withdrawal_case1 * tax_portions["equity_ltcg_portion"]
+
+    if ltcg_portion_of_withdrawal <= inputs.ltcg_exemption:
+        # We are in Case 1. The LTCG component is fully exempt.
+        gross_withdrawal = gross_withdrawal_case1
+    else:
+        # Case 2: Withdrawal is large, LTCG component exceeds the exemption limit.
+        # The full blended tax rate applies, but we get a fixed tax credit from the exemption.
+        # G = (N - (Exemption * LTCG_Tax_Rate)) / (1 - Full_Blended_Rate)
+        blended_rate_no_exemption = tax_portions["blended_rate_no_exemption"]
+        ltcg_tax_impact_from_exemption = inputs.ltcg_exemption * inputs.tax_ltcg
+
+        if blended_rate_no_exemption < 1.0:
+            gross_withdrawal = (net_required - ltcg_tax_impact_from_exemption) / (1.0 - blended_rate_no_exemption)
+        else:
+            gross_withdrawal = float('inf')
+
+    gross_withdrawal = max(0, gross_withdrawal)
+    total_tax = gross_withdrawal - net_required
+    return gross_withdrawal, total_tax
+
 
 def run_projection(inputs: PlannerInputs):
 
@@ -15,6 +62,12 @@ def run_projection(inputs: PlannerInputs):
     equity_stcg_portion = inputs.allocation_equity * inputs.equity_stcg_split
     debt_portion = inputs.allocation_debt
     arbitrage_portion = inputs.allocation_arbitrage
+
+    tax_portions = {
+        "equity_ltcg_portion": equity_ltcg_portion,
+        "blended_rate_no_exemption": (equity_ltcg_portion * inputs.tax_ltcg) + (equity_stcg_portion * inputs.tax_stcg) + (debt_portion * inputs.tax_debt) + (arbitrage_portion * inputs.tax_arbitrage),
+        "other_blended_rate": (equity_stcg_portion * inputs.tax_stcg) + (debt_portion * inputs.tax_debt) + (arbitrage_portion * inputs.tax_arbitrage)
+    }
 
     for age in range(inputs.current_age, inputs.life_expectancy + 1):
         elapsed_years = age - inputs.current_age
@@ -36,24 +89,8 @@ def run_projection(inputs: PlannerInputs):
         gross_withdrawal = 0.0
         total_tax = 0.0
         if is_retired and (required_after_tax_withdrawal > 0 or ad_hoc > 0):
-            # This logic calculates the gross withdrawal needed to cover both after-tax expenses and taxes.
-            # It correctly accounts for the LTCG exemption.
-            # Let G = Gross Withdrawal.
-            # G = Net_Required + Tax
-            # Tax = (G * ltcg_pct - exemption) * ltcg_tax + (G * stcg_pct) * stcg_tax + ...
-            # G = Net_Required + G * (ltcg_pct*ltcg_tax + stcg_pct*stcg_tax + ...) - (exemption * ltcg_tax)
-            # G * (1 - blended_rate_no_exemption) = Net_Required - (exemption * ltcg_tax)
-            # G = (Net_Required - (exemption * ltcg_tax)) / (1 - blended_rate_no_exemption)
-            
             net_required = required_after_tax_withdrawal + ad_hoc
-            
-            blended_rate_no_exemption = (equity_ltcg_portion * inputs.tax_ltcg) + (equity_stcg_portion * inputs.tax_stcg) + (debt_portion * inputs.tax_debt) + (arbitrage_portion * inputs.tax_arbitrage)
-            ltcg_tax_impact_from_exemption = inputs.ltcg_exemption * inputs.tax_ltcg
-
-            if blended_rate_no_exemption < 1.0:
-                gross_withdrawal = (net_required - ltcg_tax_impact_from_exemption) / (1.0 - blended_rate_no_exemption)
-                gross_withdrawal = max(0, gross_withdrawal) # Ensure it's not negative if net_required is small
-                total_tax = gross_withdrawal - net_required
+            gross_withdrawal, total_tax = _calculate_gross_withdrawal(net_required, inputs, tax_portions)
 
         return_rate = get_return_rate(age, inputs)
 
@@ -117,9 +154,12 @@ def _calculate_minimum_corpus(inputs: PlannerInputs, ad_hoc_map: dict) -> float:
     equity_stcg_portion = inputs.allocation_equity * inputs.equity_stcg_split
     debt_portion = inputs.allocation_debt
     arbitrage_portion = inputs.allocation_arbitrage
-    
-    blended_rate_no_exemption = (equity_ltcg_portion * inputs.tax_ltcg) + (equity_stcg_portion * inputs.tax_stcg) + (debt_portion * inputs.tax_debt) + (arbitrage_portion * inputs.tax_arbitrage)
-    ltcg_tax_impact_from_exemption = inputs.ltcg_exemption * inputs.tax_ltcg
+
+    tax_portions = {
+        "equity_ltcg_portion": equity_ltcg_portion,
+        "blended_rate_no_exemption": (equity_ltcg_portion * inputs.tax_ltcg) + (equity_stcg_portion * inputs.tax_stcg) + (debt_portion * inputs.tax_debt) + (arbitrage_portion * inputs.tax_arbitrage),
+        "other_blended_rate": (equity_stcg_portion * inputs.tax_stcg) + (debt_portion * inputs.tax_debt) + (arbitrage_portion * inputs.tax_arbitrage)
+    }
 
     for age in reversed(range(inputs.retirement_age, inputs.life_expectancy + 1)):
         return_rate = get_return_rate(age, inputs)
@@ -137,9 +177,7 @@ def _calculate_minimum_corpus(inputs: PlannerInputs, ad_hoc_map: dict) -> float:
 
         # Calculate the gross (pre-tax) outflow required to generate the net outflow
         total_gross_outflow = 0.0
-        if total_net_outflow > 0 and blended_rate_no_exemption < 1.0:
-            total_gross_outflow = (total_net_outflow - ltcg_tax_impact_from_exemption) / (1.0 - blended_rate_no_exemption)
-            total_gross_outflow = max(0, total_gross_outflow)
+        total_gross_outflow, _ = _calculate_gross_withdrawal(total_net_outflow, inputs, tax_portions)
 
         # This logic correctly inverts the forward projection's "beginning-of-period" withdrawal model.
         # The corpus at the start of the year must be enough to cover this year's outflow,

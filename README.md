@@ -6,19 +6,18 @@ A sophisticated, FastAPI-based retirement planning application designed to model
 
 | Category | Feature | Description |
 | :--- | :--- | :--- |
-| **Core Projection** | Year-by-Year Simulation | Generates a detailed annual projection of wealth from current age to life expectancy. |
-| | Inflation-Adjusted Expenses | Automatically calculates the future cost of your current lifestyle. |
-| | Dynamic Contributions | Models annual increases in contributions during the accumulation phase. |
-| | Ad-Hoc Life Events | Plans for one-time major expenses (e.g., wedding, home purchase) at specific ages, entered in today's money. |
-| **Advanced Modeling** | Sophisticated Tax Engine | Calculates a blended effective tax rate and the required gross withdrawal to meet net expenses. |
-| | Market Stress Testing | Simulates the impact of market downturns on the portfolio at the start of retirement. |
-| | Minimum Corpus Calculation | Determines the precise corpus needed at retirement using a reverse present value analysis. |
-| **Advisory & Goal Seek** | Retirement Readiness Score | Instantly shows readiness as a percentage (Projected Corpus vs. Minimum Required). |
-| | Target Contribution Analysis | Calculates the exact annual contribution needed to achieve 100% readiness. |
-| | Required Return Analysis | Solves for the pre- or post-retirement return rates needed to close any retirement gap. |
-| **Visualization** | Interactive Dashboard | A sleek, modern UI with real-time updates, conditional coloring for key metrics, and light/dark modes. |
-| | Multi-Chart Visualization | Includes charts for wealth trajectory, cash flow, portfolio allocation, and more. |
-| | Detailed Ledger | A comprehensive, scrollable table presenting the year-by-year financial breakdown. |
+| **Core Projection** | **Year-by-Year Simulation** | Generates a detailed annual projection of wealth from current age to life expectancy, forming the foundation of the plan. |
+| | **Inflation & Growth** | Automatically models inflation on expenses and growth on pre-retirement contributions to reflect real-world changes. |
+| | **Ad-Hoc Life Events** | Plan for one-time major expenses (e.g., wedding, home purchase) at specific ages, entered in today's money and correctly inflated. |
+| **Advanced Modeling** | **Sophisticated Tax Engine** | Accurately calculates a blended effective tax rate based on portfolio allocation and applies the annual LTCG exemption correctly. |
+| | **Market Stress Testing** | Simulates the impact of a "Mild" (-10%) or "Severe" (-20%) market crash on the portfolio during the first two years of retirement. |
+| | **Minimum Corpus Goal** | Determines the precise corpus needed at retirement using a reverse present value analysis, providing a clear target for your savings. |
+| **Advisory & Goal-Seek** | **Retirement Readiness Score** | Instantly shows readiness as a percentage (Projected Corpus vs. Minimum Required), with color-coded feedback. |
+| | **Target Contribution Solver** | If there's a gap, the engine calculates the exact new annual contribution needed to achieve 100% readiness. |
+| | **Required Return Solver** | Alternatively, it solves for the pre- or post-retirement return rates required to close any retirement gap. |
+| **Visualization** | **Interactive Dashboard** | A sleek, modern UI with real-time updates, conditional coloring for key metrics, and light/dark modes. |
+| | **Multi-Chart Visualization** | Includes dynamic charts for wealth trajectory, annual cash flow, and portfolio allocation over time. |
+| | **Detailed Financial Ledger** | A comprehensive, scrollable table presenting the year-by-year financial breakdown for in-depth analysis. |
 
 ## How It Works
 
@@ -183,17 +182,13 @@ The core calculation logic is a year-by-year simulation from the current age to 
 2.  **Annual Loop (Pre-Retirement)**:
     -   Calculates the annual contribution, factoring in the specified growth rate.
     -   Applies the pre-retirement return rate to the corpus after adding the contribution.
-3.  **Annual Loop (Post-Retirement)**:
-    -   **Calculate Net Withdrawal**: Determines the required after-tax withdrawal for the year by applying the inflation rate to the base annual expenses.
-    -   **Calculate Blended Tax Rate**: Computes a single effective tax rate based on the defined portfolio allocation (Equity, Debt, Arbitrage) and their respective tax rates.
-    -   **Calculate Gross Withdrawal**: "Grosses up" the net withdrawal amount to determine the pre-tax amount that must be withdrawn from the corpus to cover both the expenses and the taxes.
-	    -   `Gross Withdrawal = Net Withdrawal / (1 - Blended Tax Rate)` (correctly applying the LTCG exemption)
-    -   **Factor in Ad-Hoc Expenses**: Adds any inflation-adjusted ad-hoc expenses planned for the current year to the total outflow.
-    -   **Apply Market Returns**:
-	        -   Applies the post-retirement return rate (or a negative stress-test rate for the first two years of retirement, if selected). The peak asset age is calculated as the age with the highest corpus.
-        -   The return is calculated on the corpus balance *after* all contributions and withdrawals for the year.
-4.  **Closing Balance**: The closing corpus for one year becomes the opening corpus for the next.
-5.  **Minimum Corpus Calculation**: After the main projection, the engine performs a reverse calculation. It starts from zero at life expectancy and works backward to the retirement age, determining the present value of all future outflows (grossed-up expenses and ad-hoc costs) to find the minimum corpus required at the start of retirement.
+3.  **Annual Loop (Post-Retirement)**: The engine models withdrawals to cover living expenses.
+    -   **Calculate Net Withdrawal**: Determines the required after-tax amount for the year by applying the inflation rate to base expenses.
+    -   **Factor in Ad-Hoc Expenses**: Adds any inflation-adjusted ad-hoc expenses planned for the current year.
+    -   **Calculate Gross Withdrawal**: "Grosses up" the net withdrawal to find the pre-tax amount needed. This uses a sophisticated piecewise function that correctly applies the annual LTCG exemption only when the LTCG portion of the withdrawal exceeds the threshold.
+    -   **Apply Market Returns**: Applies the post-retirement return rate (or a stress-test rate) to the corpus balance *after* all withdrawals for the year.
+4.  **Closing Balance**: The closing corpus for one year becomes the opening corpus for the next, continuing until life expectancy.
+5.  **Minimum Corpus & Goal-Seek**: After the main projection, the engine performs a reverse calculation (from life expectancy backward) to find the minimum corpus required at retirement. It then uses this target to perform the "goal-seek" analysis for contributions and returns.
 
 ### Dashboard Features
 

@@ -504,7 +504,7 @@
             </p>
 
             <div class="mt-8 flex flex-wrap items-center gap-4">
-                <button id="launchPlannerBtn" type="button" class="landing-cta rounded-xl px-6 py-3 text-sm font-semibold text-white">Open planner</button>
+                <button id="launchPlannerBtn" type="button" class="landing-cta rounded-xl px-6 py-3 text-sm font-semibold text-white">Launch Planner</button>
                 <div class="rounded-xl border px-4 py-3 text-sm" style="border-color: var(--stroke); background: var(--glass); color: var(--text-3);">
                     Built for long-term investors and advisors who want a faster, clearer view of retirement readiness.
                 </div>
@@ -512,9 +512,14 @@
 
             <div class="mt-10 grid gap-4 md:grid-cols-3">
                 <div class="landing-stat">
-                    <p class="landing-stat-label text-[10px] uppercase tracking-[0.16em]">Forecast</p>
-                    <p class="landing-stat-title mt-2 text-xl font-bold">Projection engine</p>
-                    <p class="mt-2 text-sm">Year-by-year wealth trajectory from today to retirement.</p>
+                    <p class="landing-stat-label text-[10px] uppercase tracking-[0.16em]">Core Projection</p>
+                    <p class="landing-stat-title mt-2 text-xl font-bold">Detailed Simulation</p>
+                    <p class="mt-2 text-sm">Generates a year-by-year wealth trajectory, modeling inflation, contributions, and ad-hoc life events.</p>
+                </div>
+                <div class="landing-stat">
+                    <p class="landing-stat-label text-[10px] uppercase tracking-[0.16em]">Advanced Modeling</p>
+                    <p class="landing-stat-title mt-2 text-xl font-bold">Sophisticated Analysis</p>
+                    <p class="mt-2 text-sm">Simulates market crashes, calculates complex blended taxes, and determines your minimum corpus goal.</p>
                 </div>
                 <div class="landing-stat">
                     <p class="landing-stat-label text-[10px] uppercase tracking-[0.16em]">Stress</p>
@@ -524,7 +529,7 @@
                 <div class="landing-stat">
                     <p class="landing-stat-label text-[10px] uppercase tracking-[0.16em]">Advisory</p>
                     <p class="landing-stat-title mt-2 text-xl font-bold">Actionable insight</p>
-                    <p class="mt-2 text-sm">See corpus gaps, inflation impacts, and required savings levels.</p>
+                    <p class="mt-2 text-sm">Get a readiness score and solve for the exact contribution or return rate needed to close any gap.</p>
                 </div>
             </div>
 
@@ -534,6 +539,7 @@
                         <p class="text-[10px] uppercase tracking-[0.16em]" style="color: var(--text-3);">Product owner</p>
                         <p class="mt-1 font-semibold" style="color: var(--text-1);">Abhisek Basu Mullick</p>
                         <a href="mailto:abmullick@gmail.com" class="mt-1 inline-block hover:opacity-80" style="color: var(--accent);">abmullick@gmail.com</a>
+                        <p class="text-xs text-slate-400 mt-2">© 2024 Abhisek Basu Mullick</p>
                     </div>
                 </div>
             </div>
@@ -562,8 +568,7 @@
                     <div class="text-left md:text-right">
                         <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-300">Product Owner</p>
                         <p class="mt-1 text-lg font-bold text-white">Abhisek Basu Mullick</p>
-                        <p class="text-sm text-slate-200">abmullick@gmail.com</p>
-                        <p class="text-xs text-slate-400 mt-1">© 2024 Abhisek Basu Mullick</p>
+                        <p class="text-sm text-slate-200">abmullick@gmail.com</p>                        
                     </div>
                 </div>
             </div>
@@ -1385,13 +1390,13 @@
 
         const launchPlannerBtn = document.getElementById('launchPlannerBtn');
         const landingScreen = document.getElementById('landingScreen');
-        const plannerApp = document.getElementById('plannerApp');
+        const plannerApp = document.getElementById('plannerApp'); // This is the main app container
 
         if (launchPlannerBtn && landingScreen && plannerApp) {
             launchPlannerBtn.addEventListener('click', () => {
                 landingScreen.classList.add('hidden');
                 plannerApp.classList.remove('hidden');
-                if (Object.keys(chartInstances).length === 0) {
+                if (Object.keys(chartInstances).length === 0) { // Only run initial calc if charts are not yet built
                     calculateMetrics();
                 }
                 fitAllKpiValues();
@@ -1403,7 +1408,7 @@
             applyTheme(nextTheme);
             document.getElementById('themeToggleBtn').setAttribute('aria-pressed', String(nextTheme === 'light'));
             
-            if (!plannerApp.classList.contains('hidden')) {
+            if (plannerApp && !plannerApp.classList.contains('hidden')) {
                 calculateMetrics();
                 fitAllKpiValues();
             }
@@ -1417,11 +1422,17 @@
         initializeTheme();
         window.addEventListener('resize', fitAllKpiValues);
         
-        // Run calculation only if planner is visible on load (e.g. after a refresh)
+        // Handle direct URL access to the planner
         window.onload = function() {
-            if (plannerApp && !plannerApp.classList.contains('hidden')) {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('open') === 'true') {
+                if (landingScreen) landingScreen.classList.add('hidden');
+                if (plannerApp) plannerApp.classList.remove('hidden');
                 calculateMetrics();
                 fitAllKpiValues();
+            } else {
+                if (landingScreen) landingScreen.classList.remove('hidden');
+                if (plannerApp) plannerApp.classList.add('hidden');
             }
         };
     </script>
