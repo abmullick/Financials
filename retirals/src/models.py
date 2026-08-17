@@ -22,6 +22,7 @@ class PlannerInputs(BaseModel):
     post_retirement_return: float = Field(0.08, ge=-0.5, le=0.5)
     contribution_increase: float = Field(0.01, ge=0, le=0.5)
     ltcg_exemption: float = Field(125000.00, ge=0, le=1e7)
+    one_time_lumpsum: float = Field(0.0, ge=0, description="One-time lumpsum added at retirement (e.g., gratuity).")
     stress_scenario: StressScenario = StressScenario.NORMAL
     adhoc_expenses: list[AdHocExpense] = Field(default_factory=lambda: [
         AdHocExpense(age=58, amount=2500000.00),
@@ -39,6 +40,14 @@ class PlannerInputs(BaseModel):
     tax_stcg: float = Field(0.20, ge=0, le=1.0)
     tax_debt: float = Field(0.20, ge=0, le=1.0)
     tax_arbitrage: float = Field(0.20, ge=0, le=1.0)
+    # Pension Inputs
+    include_pension: bool = Field(False)
+    pension_start_age: int | None = Field(60, gt=0, le=120)
+    annual_pension: float = Field(600000.0, ge=0)
+    pension_increase: float = Field(0.05, ge=0, le=0.5)
+    pension_tax_rate: float = Field(0.20, ge=0, le=1.0)
+    reinvest_pension_surplus: bool = Field(True)
+
 
     @model_validator(mode="after")
     def validate_plan(self):
@@ -63,4 +72,15 @@ class PlannerInputs(BaseModel):
         if abs(equity_split_total - 1.0) > 0.01:
             raise ValueError(f"Equity sub-allocation (LTCG + STCG) must sum to approximately 100%. Current total: {(equity_split_total * 100):.1f}%.")
         
+        if self.include_pension:
+            if self.pension_start_age is None:
+                raise ValueError("Pension start age is required when pension is included.")
+            if self.pension_start_age < self.current_age:
+                raise ValueError("Pension start age cannot be in the past.")
+            if self.pension_start_age > self.life_expectancy:
+                raise ValueError("Pension start age cannot be after life expectancy.")
+            if self.annual_pension <= 0:
+                raise ValueError("Annual pension must be a positive value when pension is included.")
+
+
         return self

@@ -84,6 +84,12 @@ def run_projection(inputs: PlannerInputs):
         "other_blended_rate": (equity_stcg_portion * inputs.tax_stcg) + (debt_portion * inputs.tax_debt) + (arbitrage_portion * inputs.tax_arbitrage)
     }
 
+    # Metrics for pension
+    total_pension_received = 0.0
+    total_pension_tax = 0.0
+    total_surplus_reinvested = 0.0
+
+
     for age in range(inputs.current_age, inputs.life_expectancy + 1):
         elapsed_years = age - inputs.current_age
         is_retired = age >= inputs.retirement_age
@@ -93,25 +99,54 @@ def run_projection(inputs: PlannerInputs):
             contribution = inputs.annual_contribution * ((1 + inputs.contribution_increase) ** elapsed_years)
             total_contributions += contribution
 
+        # Add one-time lumpsum at the beginning of the retirement year
+        lumpsum_addition = inputs.one_time_lumpsum if age == inputs.retirement_age else 0.0
+
+
+        # Calculate pension for the year if applicable
+        gross_pension = 0.0
+        pension_tax = 0.0
+        net_pension = 0.0
+        if inputs.include_pension and age >= inputs.pension_start_age:
+            # Pension is defined in today's money, so it's inflated from current_age
+            pension_elapsed_years = age - inputs.current_age
+            gross_pension = inputs.annual_pension * ((1 + inputs.pension_increase) ** pension_elapsed_years)
+            pension_tax = gross_pension * inputs.pension_tax_rate
+            net_pension = gross_pension - pension_tax
+            total_pension_received += net_pension
+            total_pension_tax += pension_tax
+
         required_after_tax_withdrawal = 0.0
         if is_retired:
             required_after_tax_withdrawal = inputs.current_annual_expenses * ((1 + inputs.avg_inflation_rate) ** elapsed_years)
+
+        # Pension income first covers living expenses
+        net_expense_after_pension = required_after_tax_withdrawal - net_pension
+        pension_surplus = max(0, -net_expense_after_pension)
+        
+        # Reinvest surplus if the flag is set
+        pension_surplus_reinvested = pension_surplus if inputs.reinvest_pension_surplus else 0.0
+        if pension_surplus_reinvested > 0:
+            total_surplus_reinvested += pension_surplus_reinvested
 
         ad_hoc = 0.0
         if age in ad_hoc_map:
             ad_hoc = ad_hoc_map[age] * ((1 + inputs.avg_inflation_rate) ** elapsed_years)
 
+        # The amount that must be withdrawn from the portfolio
+        portfolio_net_withdrawal_needed = max(0, net_expense_after_pension) + ad_hoc
+
         gross_withdrawal = 0.0
         total_tax = 0.0
-        if is_retired and (required_after_tax_withdrawal > 0 or ad_hoc > 0):
-            net_required = required_after_tax_withdrawal + ad_hoc
-            gross_withdrawal, total_tax = _calculate_gross_withdrawal(net_required, inputs, tax_portions)
+        if is_retired and portfolio_net_withdrawal_needed > 0:
+            gross_withdrawal, total_tax = _calculate_gross_withdrawal(portfolio_net_withdrawal_needed, inputs, tax_portions)
 
         return_rate = get_return_rate(age, inputs)
 
         # This is an "Annuity Due" model (beginning-of-period contributions)
         # Contributions made at the start of the year get a full year's return.
-        net_for_return = opening_corpus + contribution - gross_withdrawal
+        # Pension surplus is also added at the beginning of the period.
+        net_for_return = opening_corpus + contribution + lumpsum_addition - gross_withdrawal + pension_surplus_reinvested
         returns = net_for_return * return_rate
         closing_corpus = net_for_return + returns
 
@@ -119,9 +154,13 @@ def run_projection(inputs: PlannerInputs):
             "year": elapsed_years + 1, "age": age,
             "opening": round(opening_corpus, 2),
             "contribution": round(contribution, 2),
+            "lumpsum": round(lumpsum_addition, 2),
             "withdrawal": round(gross_withdrawal, 2),
             "withdrawal_tax": round(total_tax, 2),
-            "withdrawal_after_tax": round(required_after_tax_withdrawal, 2),
+            "withdrawal_after_tax": round(portfolio_net_withdrawal_needed, 2), # This is now net from portfolio
+            "pension": round(gross_pension, 2),
+            "pension_tax": round(pension_tax, 2),
+            "pension_surplus_reinvested": round(pension_surplus_reinvested, 2),
             "ad_hoc": round(ad_hoc, 2),
             "return": round(returns, 2),
             "closing": round(closing_corpus, 2)
@@ -129,7 +168,10 @@ def run_projection(inputs: PlannerInputs):
         opening_corpus = closing_corpus
 
     # Calculate final metrics
-    corpus_at_retirement = next((p["opening"] for p in projections if p["age"] == inputs.retirement_age), 0)
+    # Corpus at retirement is the opening balance of the retirement year PLUS any lumpsum added in that year.
+    # This is crucial for an accurate readiness calculation.
+    opening_corpus_at_retirement = next((p["opening"] for p in projections if p["age"] == inputs.retirement_age), 0)
+    corpus_at_retirement = opening_corpus_at_retirement + inputs.one_time_lumpsum
     final_corpus = projections[-1]["closing"] if projections else 0
 
     peak_age = inputs.current_age
@@ -150,6 +192,9 @@ def run_projection(inputs: PlannerInputs):
             "peak_age": peak_age,
             "total_contributions": round(total_contributions, 2),
             "minimum_corpus_required": round(minimum_corpus_required, 2),
+            "total_pension_received": round(total_pension_received, 2),
+            "total_pension_tax": round(total_pension_tax, 2),
+            "total_surplus_reinvested": round(total_surplus_reinvested, 2),
             **gap_analysis,  # Merge gap analysis metrics
             # Merge goal-seek return metrics
             **_solve_for_required_returns(inputs, corpus_at_retirement, minimum_corpus_required, ad_hoc_map),
@@ -181,24 +226,37 @@ def _calculate_minimum_corpus(inputs: PlannerInputs, ad_hoc_map: dict) -> float:
 
         # Calculate this year's outflows, exactly as in the forward projection
         elapsed_years = age - inputs.current_age
+
+        # Calculate pension for the year if applicable
+        net_pension = 0.0
+        if inputs.include_pension and age >= inputs.pension_start_age:
+            pension_elapsed_years = age - inputs.current_age
+            gross_pension = inputs.annual_pension * ((1 + inputs.pension_increase) ** pension_elapsed_years)
+            net_pension = gross_pension * (1 - inputs.pension_tax_rate)
+
         required_after_tax_withdrawal = inputs.current_annual_expenses * ((1 + inputs.avg_inflation_rate) ** elapsed_years)
         
+        # Pension income first covers living expenses
+        net_expense_after_pension = required_after_tax_withdrawal - net_pension
+        pension_surplus = max(0, -net_expense_after_pension)
+        pension_surplus_reinvested = pension_surplus if inputs.reinvest_pension_surplus else 0.0
+
         ad_hoc = 0.0
         if age in ad_hoc_map:
             ad_hoc = ad_hoc_map[age] * ((1 + inputs.avg_inflation_rate) ** elapsed_years)
 
-        # Total after-tax outflow needed for the year
-        total_net_outflow = required_after_tax_withdrawal + ad_hoc
+        # Total after-tax outflow needed from the portfolio
+        portfolio_net_withdrawal_needed = max(0, net_expense_after_pension) + ad_hoc
 
         # Calculate the gross (pre-tax) outflow required to generate the net outflow
         total_gross_outflow = 0.0
-        total_gross_outflow, _ = _calculate_gross_withdrawal(total_net_outflow, inputs, tax_portions)
+        total_gross_outflow, _ = _calculate_gross_withdrawal(portfolio_net_withdrawal_needed, inputs, tax_portions)
 
         # This logic correctly inverts the forward projection's "beginning-of-period" withdrawal model.
         # The corpus at the start of the year must be enough to cover this year's outflow,
         # and the remainder must be enough to grow into the corpus needed for the start of the next year.
         # Corpus_Start = Outflow + PV(Corpus_Next_Year)
-        minimum_corpus_required = total_gross_outflow + (minimum_corpus_required / (1 + return_rate))
+        minimum_corpus_required = total_gross_outflow - pension_surplus_reinvested + (minimum_corpus_required / (1 + return_rate))
 
     return minimum_corpus_required
 
@@ -206,8 +264,13 @@ def _calculate_gap_analysis(inputs: PlannerInputs, corpus_at_retirement: float, 
     """
     Calculates retirement readiness and the investment required to close any gap.
     """
-    readiness_percent = 0.0
-    if minimum_corpus_required > 0:
+    # If minimum corpus required is zero (or negative), it means the plan is self-sufficient
+    # (e.g., pension covers all expenses). In this case, readiness is 100% or more.
+    if minimum_corpus_required <= 0:
+        # If projected corpus is also non-positive, readiness is 100%.
+        # If projected is positive, readiness is technically infinite, so we cap it.
+        readiness_percent = 100.0 if corpus_at_retirement <= 0 else 999.0
+    else:
         readiness_percent = (corpus_at_retirement / minimum_corpus_required) * 100
 
     gap = minimum_corpus_required - corpus_at_retirement
@@ -249,10 +312,13 @@ def _solve_for_required_returns(inputs: PlannerInputs, corpus_at_retirement: flo
     required to achieve 100% retirement readiness.
     """
     required_pre_ret_return = inputs.pre_retirement_return
-    required_post_ret_return = inputs.post_retirement_return
     gap = minimum_corpus_required - corpus_at_retirement
 
-    if gap > 0:
+    # If there's no gap, no additional return is required.
+    if gap <= 0:
+        required_pre_ret_return = 0.0
+        required_post_ret_return = 0.0
+    else:
         # --- 1. Solve for Required Pre-Retirement Return ---
         def get_future_corpus(rate):
             # Calculates corpus at retirement for a given pre-retirement return rate
@@ -281,6 +347,7 @@ def _solve_for_required_returns(inputs: PlannerInputs, corpus_at_retirement: flo
             required_pre_ret_return = high
 
         # --- 2. Solve for Required Post-Retirement Return ---
+        required_post_ret_return = inputs.post_retirement_return
         def get_min_corpus(rate):
             # Calculates min_corpus_required for a given post-retirement return rate
             # This is a simplified version of the main _calculate_minimum_corpus function
