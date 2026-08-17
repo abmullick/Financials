@@ -9,7 +9,6 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
-from slowapi.util import get_remote_address
 from fastapi.staticfiles import StaticFiles
 import uvicorn 
 from os import getenv
@@ -22,8 +21,16 @@ from retirement_engine import run_projection
 
 app = FastAPI()
 
+def get_client_ip(request: Request) -> str:
+    """
+    Returns the client's real IP address, considering reverse proxies
+    and load balancers (specifically Cloudflare's `CF-Connecting-IP`).
+    Falls back to the direct client host if the header is not present.
+    """
+    return request.headers.get("cf-connecting-ip", request.client.host)
+
 # Configure rate limiting
-limiter = Limiter(key_func=get_remote_address)
+limiter = Limiter(key_func=get_client_ip)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 

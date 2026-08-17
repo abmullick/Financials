@@ -1,35 +1,16 @@
+# Python compiled files
+__pycache__/
+*.py[cod]
+
 # Virtual environments
 .venv/
 venv/
 env/
-ENV/
-*.pyc
-__pycache__/
+.Python
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
-
-# OS
-.DS_Store
-Thumbs.db
-
-# Logs
-*.log
-
-# Environment
+# Environment variables
 .env
-.env.local
 
-# Cache
-.pytest_cache/
-.mypy_cache/
-.coverage
-
-# Build
-build/
-dist/
-*.egg-info/
+# Log files
+*.log
+*.out
