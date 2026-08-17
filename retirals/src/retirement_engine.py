@@ -88,6 +88,14 @@ def run_projection(inputs: PlannerInputs):
     total_pension_received = 0.0
     total_pension_tax = 0.0
     total_surplus_reinvested = 0.0
+    
+    # New metrics for correct pension coverage calculation
+    total_recurring_expenses_in_retirement = 0.0
+    total_expense_covered_by_pension = 0.0
+
+    # New metrics for corpus exhaustion
+    is_exhausted = False
+    corpus_exhaustion_age = None
 
 
     for age in range(inputs.current_age, inputs.life_expectancy + 1):
@@ -119,6 +127,7 @@ def run_projection(inputs: PlannerInputs):
         required_after_tax_withdrawal = 0.0
         if is_retired:
             required_after_tax_withdrawal = inputs.current_annual_expenses * ((1 + inputs.avg_inflation_rate) ** elapsed_years)
+            total_recurring_expenses_in_retirement += required_after_tax_withdrawal
 
         # Pension income first covers living expenses
         net_expense_after_pension = required_after_tax_withdrawal - net_pension
@@ -129,6 +138,11 @@ def run_projection(inputs: PlannerInputs):
         if pension_surplus_reinvested > 0:
             total_surplus_reinvested += pension_surplus_reinvested
 
+        # Calculate pension coverage for the year (capped at 100% of recurring expense)
+        if is_retired:
+            expense_covered_by_pension = min(net_pension, required_after_tax_withdrawal)
+            total_expense_covered_by_pension += expense_covered_by_pension
+
         ad_hoc = 0.0
         if age in ad_hoc_map:
             ad_hoc = ad_hoc_map[age] * ((1 + inputs.avg_inflation_rate) ** elapsed_years)
@@ -138,15 +152,30 @@ def run_projection(inputs: PlannerInputs):
 
         gross_withdrawal = 0.0
         total_tax = 0.0
-        if is_retired and portfolio_net_withdrawal_needed > 0:
+        
+        # Available funds for withdrawal at the start of the year
+        available_for_withdrawal = opening_corpus + contribution + lumpsum_addition + pension_surplus_reinvested
+
+        if is_retired and portfolio_net_withdrawal_needed > 0 and not is_exhausted:
             gross_withdrawal, total_tax = _calculate_gross_withdrawal(portfolio_net_withdrawal_needed, inputs, tax_portions)
+
+            if gross_withdrawal > available_for_withdrawal:
+                # Portfolio is exhausted this year.
+                is_exhausted = True
+                corpus_exhaustion_age = age
+                gross_withdrawal = available_for_withdrawal  # Withdraw everything that's left.
+                # A more complex model could re-calculate tax, but for this scope, we cap the withdrawal.
+                # The key is that the corpus will now become zero.
 
         return_rate = get_return_rate(age, inputs)
 
         # This is an "Annuity Due" model (beginning-of-period contributions)
         # Contributions made at the start of the year get a full year's return.
         # Pension surplus is also added at the beginning of the period.
-        net_for_return = opening_corpus + contribution + lumpsum_addition - gross_withdrawal + pension_surplus_reinvested
+        net_for_return = available_for_withdrawal - gross_withdrawal
+        if is_exhausted or net_for_return < 0:
+            net_for_return = 0 # Corpus is exhausted, no base for returns.
+
         returns = net_for_return * return_rate
         closing_corpus = net_for_return + returns
 
@@ -183,6 +212,12 @@ def run_projection(inputs: PlannerInputs):
     
     gap_analysis = _calculate_gap_analysis(inputs, corpus_at_retirement, minimum_corpus_required)
 
+    # Calculate the final pension coverage metric
+    avg_pension_coverage = (total_expense_covered_by_pension / total_recurring_expenses_in_retirement * 100) if total_recurring_expenses_in_retirement > 0 else 0
+
+    plan_sustainable = not is_exhausted
+
+
     return {
         "metrics": {
             "corpus_at_retirement": round(corpus_at_retirement, 2),
@@ -195,6 +230,9 @@ def run_projection(inputs: PlannerInputs):
             "total_pension_received": round(total_pension_received, 2),
             "total_pension_tax": round(total_pension_tax, 2),
             "total_surplus_reinvested": round(total_surplus_reinvested, 2),
+            "average_pension_coverage": round(avg_pension_coverage, 2),
+            "plan_sustainable": plan_sustainable,
+            "corpus_exhaustion_age": corpus_exhaustion_age,
             **gap_analysis,  # Merge gap analysis metrics
             # Merge goal-seek return metrics
             **_solve_for_required_returns(inputs, corpus_at_retirement, minimum_corpus_required, ad_hoc_map),

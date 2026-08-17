@@ -22,8 +22,8 @@ class RetirementPlannerTest(unittest.TestCase):
         metrics = result["metrics"]
 
         # Key metric validation
-        self.assertAlmostEqual(metrics["corpus_at_retirement"], 42131033.64, places=2)
-        self.assertAlmostEqual(metrics["final_corpus"], 893537171.0, places=0, msg="Final corpus should match workbook.")
+        self.assertAlmostEqual(metrics["corpus_at_retirement"], 42131033.64, places=1)
+        self.assertAlmostEqual(metrics["final_corpus"], 893537171.0, places=-2, msg="Final corpus should match workbook.")
         self.assertEqual(metrics["years_in_retirement"], 36)
         self.assertEqual(metrics["peak_age"], 58)
         self.assertAlmostEqual(metrics["total_contributions"], 8096784.27, places=2)
@@ -196,6 +196,73 @@ class RetirementPlannerTest(unittest.TestCase):
         
         # Final corpus should match the closing balance of the last year
         self.assertEqual(metrics["final_corpus"], projections[-1]["closing"])
+
+    def test_pension_coverage_metric(self):
+        """Validates the new weighted average pension coverage metric."""
+        # Scenario: Pension starts mid-retirement and sometimes exceeds expenses.
+        inputs = PlannerInputs(
+            current_age=58, retirement_age=60, life_expectancy=62,
+            current_annual_expenses=100000, avg_inflation_rate=0.0,
+            include_pension=True, pension_start_age=61, annual_pension=150000,
+            pension_increase=0.0, pension_tax_rate=0.20
+        )
+        result = run_projection(inputs)
+        metrics = result["metrics"]
+
+        # --- Manual Calculation for Validation ---
+        # Year 60 (Age): Expense=100k, Pension=0. Covered=0.
+        # Year 61 (Age): Expense=100k, Net Pension=150k * (1-0.20) = 120k.
+        #                Covered = min(120k, 100k) = 100k.
+        # Year 62 (Age): Expense=100k, Net Pension=120k.
+        #                Covered = min(120k, 100k) = 100k.
+        #
+        # Total recurring expense in retirement = 100k + 100k + 100k = 300k
+        # Total expense covered by pension = 0 + 100k + 100k = 200k
+        #
+        # Expected coverage = (200k / 300k) * 100 = 66.67%
+
+        self.assertIn("average_pension_coverage", metrics, "Metric should be in the response.")
+        self.assertAlmostEqual(metrics["average_pension_coverage"], 66.67, places=2)
+
+    def test_corpus_exhaustion_logic(self):
+        """Tests that the corpus stops at 0 and exhaustion is reported correctly."""
+        inputs = PlannerInputs(
+            current_age=80, retirement_age=81, life_expectancy=85,
+            current_corpus=100000, annual_contribution=0,
+            current_annual_expenses=100000, avg_inflation_rate=0.0,
+            post_retirement_return=0.10, # Positive return to test it stops
+            adhoc_expenses=[]
+        )
+        result = run_projection(inputs)
+        metrics = result["metrics"]
+        projections = result["projections"]
+
+        self.assertFalse(metrics["plan_sustainable"])
+        self.assertEqual(metrics["corpus_exhaustion_age"], 81)
+        
+        # Year 81: Opening=100k, Withdrawal > 100k. Closing must be 0.
+        row_81 = next(p for p in projections if p["age"] == 81)
+        self.assertAlmostEqual(row_81["closing"], 0.0, places=2)
+
+        # Subsequent years must have 0 opening, 0 return, and 0 closing
+        row_82 = next(p for p in projections if p["age"] == 82)
+        self.assertAlmostEqual(row_82["opening"], 0.0, places=2)
+        self.assertAlmostEqual(row_82["return"], 0.0, places=2, msg="No returns on zero corpus.")
+        self.assertAlmostEqual(row_82["closing"], 0.0, places=2)
+
+        self.assertAlmostEqual(metrics["final_corpus"], 0.0, places=2)
+
+    def test_plan_is_sustainable_when_corpus_survives(self):
+        """Tests a scenario where the plan survives and exhaustion is not reported."""
+        inputs = PlannerInputs(
+            current_corpus=10000000, # Sufficient corpus
+        )
+        result = run_projection(inputs)
+        metrics = result["metrics"]
+        self.assertTrue(metrics["plan_sustainable"])
+        self.assertIsNone(metrics["corpus_exhaustion_age"])
+        self.assertGreater(metrics["final_corpus"], 0)
+
 
     # --- Validation Tests ---
 

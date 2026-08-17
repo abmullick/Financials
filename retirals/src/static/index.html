@@ -830,6 +830,9 @@
                             <p id="kpi_readiness_percent" class="kpi-value mt-2 font-black">0%</p>
                         </div>
                     </div>
+                    <div id="planStatus" class="hidden mt-4 rounded-xl p-4 text-center text-lg font-bold">
+                        <!-- Populated by JS: e.g., "Portfolio Sustainable" or "Portfolio Exhausted at Age XX" -->
+                    </div>
                 </div>
 
                 <!-- Retirement Income KPIs (Pension) -->
@@ -849,7 +852,7 @@
                             <p id="kpi_total_pension_tax" class="kpi-value mt-2 font-black">₹0.00</p>
                         </div>
                         <div class="kpi-3d p-4 rounded-2xl">
-                            <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Avg Pension Coverage</p>
+                            <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400" title="Percentage of recurring retirement living expenses covered by net pension, weighted across the retirement period.">Avg Pension Coverage</p>
                             <p id="kpi_pension_coverage" class="kpi-value mt-2 font-black">0%</p>
                         </div>
                     </div>
@@ -1414,15 +1417,7 @@
                     document.getElementById('kpi_total_surplus_reinvested').innerText = fmt(data.metrics.total_surplus_reinvested);
                     document.getElementById('kpi_total_pension_tax').innerText = fmt(data.metrics.total_pension_tax);
 
-                    const retirementExpenses = data.projections
-                        .filter(p => p.age >= payload.retirement_age)
-                        .reduce((sum, p) => sum + (p.withdrawal_after_tax + p.ad_hoc), 0);
-
-                    const totalNetPensionInRetirement = data.projections
-                        .filter(p => p.age >= payload.retirement_age)
-                        .reduce((sum, p) => sum + (p.pension - p.pension_tax), 0);
-
-                    const coverage = (retirementExpenses > 0) ? (totalNetPensionInRetirement / retirementExpenses) * 100 : 0;
+                    const coverage = data.metrics.average_pension_coverage;
                     const coverageEl = document.getElementById('kpi_pension_coverage');
                     coverageEl.innerText = `${coverage.toFixed(1)}%`;
                     coverageEl.classList.remove('text-success', 'text-warning');
@@ -1431,6 +1426,18 @@
 
                 } else {
                     pensionKpiSection.classList.add('hidden');
+                }
+
+                // --- Update Plan Sustainability Status ---
+                const planStatusEl = document.getElementById('planStatus');
+                planStatusEl.classList.remove('hidden', 'text-success', 'text-danger');
+                planStatusEl.classList.add('block'); // Make it visible
+                if (data.metrics.plan_sustainable) {
+                    planStatusEl.textContent = 'Portfolio Sustainable Through Life Expectancy';
+                    planStatusEl.classList.add('text-success');
+                } else {
+                    planStatusEl.textContent = `Portfolio Exhausted at Age ${data.metrics.corpus_exhaustion_age}`;
+                    planStatusEl.classList.add('text-danger');
                 }
 
 
