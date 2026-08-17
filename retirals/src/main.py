@@ -5,11 +5,15 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 from fastapi.staticfiles import StaticFiles
 import uvicorn 
 from os import getenv
+import logging
 
 from models import PlannerInputs
 from retirement_engine import run_projection
@@ -18,16 +22,48 @@ from retirement_engine import run_projection
 
 app = FastAPI()
 
+# Configure rate limiting
+limiter = Limiter(key_func=get_remote_address)
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# Configure logging to capture detailed errors on the server
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    """
+    Middleware to add security-related HTTP headers to every response.
+    This helps protect against common web vulnerabilities.
+    """
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    # A basic Content Security Policy (CSP) to restrict resource loading.
+    # This allows scripts and styles only from the app's own origin and trusted CDNs.
+    # 'unsafe-inline' is needed for the inline <style> and <script> blocks in index.html.
+    response.headers["Content-Security-Policy"] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net/npm/chart.js; "
+        "style-src 'self' 'unsafe-inline'; "
+        "img-src 'self' data:;"
+    )
+    return response
+
 app.mount("/assets", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "..", "assets")), name="assets")
 
 @app.post("/calculate")
-def calculate_retirement(inputs: PlannerInputs):
+@limiter.limit("10/minute")
+def calculate_retirement(request: Request, inputs: PlannerInputs):
     try:
         return run_projection(inputs)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"An unexpected error occurred: {e}")
+    except Exception:
+        logger.error("An unexpected error occurred during calculation.", exc_info=True)
+        raise HTTPException(status_code=500, detail="An unexpected error occurred while calculating the projection.")
 
 @app.get("/")
 async def read_index():

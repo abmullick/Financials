@@ -26,7 +26,7 @@ class PlannerInputs(BaseModel):
     adhoc_expenses: list[AdHocExpense] = Field(default_factory=lambda: [
         AdHocExpense(age=58, amount=2500000.00),
         AdHocExpense(age=75, amount=1000000.00)
-    ])
+    ], max_items=50)
     # Portfolio Allocation
     allocation_equity: float = Field(0.60, ge=0, le=1.0)
     allocation_debt: float = Field(0.30, ge=0, le=1.0)
@@ -43,24 +43,24 @@ class PlannerInputs(BaseModel):
     @model_validator(mode="after")
     def validate_plan(self):
         if self.retirement_age <= self.current_age:
-            raise ValueError("retirement_age must be greater than current_age")
+            raise ValueError("Retirement age must be greater than current age.")
         if self.life_expectancy < self.retirement_age:
-            raise ValueError("life_expectancy must be greater than or equal to retirement_age")
+            raise ValueError("Life expectancy must be greater than or equal to retirement age.")
 
         adhoc_ages = []
         for expense in self.adhoc_expenses:
             if not (self.current_age <= expense.age <= self.life_expectancy):
-                raise ValueError(f"Ad-hoc expense age {expense.age} must be between current age and life expectancy.")
+                raise ValueError(f"Ad-hoc expense age ({expense.age}) must be between current age ({self.current_age}) and life expectancy ({self.life_expectancy}).")
             if expense.age in adhoc_ages:
                 raise ValueError(f"Duplicate ad-hoc expense age found: {expense.age}.")
             adhoc_ages.append(expense.age)
 
         allocation_total = self.allocation_equity + self.allocation_debt + self.allocation_arbitrage
         if abs(allocation_total - 1.0) > 0.01:
-            raise ValueError("portfolio allocation (equity + debt + arbitrage) must sum to approximately 100%")
+            raise ValueError(f"Portfolio allocation (equity + debt + arbitrage) must sum to approximately 100%. Current total: {(allocation_total * 100):.1f}%.")
         
         equity_split_total = self.equity_ltcg_split + self.equity_stcg_split
         if abs(equity_split_total - 1.0) > 0.01:
-            raise ValueError("equity sub-allocation (LTCG + STCG) must sum to approximately 100%")
+            raise ValueError(f"Equity sub-allocation (LTCG + STCG) must sum to approximately 100%. Current total: {(equity_split_total * 100):.1f}%.")
         
         return self

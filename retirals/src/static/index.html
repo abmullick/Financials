@@ -1212,7 +1212,6 @@
             }
 
             try {
-                console.log("Sending payload:", payload); // Debugging: Log the payload being sent
                 const response = await fetch('/calculate', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -1223,9 +1222,11 @@
                     let message = 'The calculation could not be completed.';
                     try {
                         const errorBody = await response.json();
-                        message = Array.isArray(errorBody.detail)
-                            ? errorBody.detail.map(item => item.msg).join(' | ')
-                            : (errorBody.detail || message);
+                        if (Array.isArray(errorBody.detail)) {
+                            message = errorBody.detail.map(err => `${err.loc[1]}: ${err.msg}`).join('; ');
+                        } else {
+                            message = errorBody.detail || message;
+                        }
                     } catch (error) {
                         // Ignore JSON parsing failures and keep the default message.
                     }
