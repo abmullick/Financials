@@ -263,6 +263,29 @@ class RetirementPlannerTest(unittest.TestCase):
         self.assertIsNone(metrics["corpus_exhaustion_age"])
         self.assertGreater(metrics["final_corpus"], 0)
 
+    def test_pension_timing_is_correct(self):
+        """Pension should only apply if retired AND after pension start age."""
+        inputs = PlannerInputs(
+            current_age=50, retirement_age=60, life_expectancy=62,
+            current_corpus=100000, annual_contribution=0,
+            pre_retirement_return=0.0, post_retirement_return=0.0,
+            include_pension=True,
+            pension_start_age=55, # Starts BEFORE retirement
+            annual_pension=10000, pension_tax_rate=0.0
+        )
+        result = run_projection(inputs)
+        projections = result["projections"]
+
+        # Age 55-59 (pre-retirement): Pension should be zero.
+        for age in range(55, 60):
+            row = next(p for p in projections if p["age"] == age)
+            self.assertEqual(row["pension"], 0, f"Pension should be 0 at pre-retirement age {age}")
+            self.assertEqual(row["pension_surplus_reinvested"], 0, f"Pension surplus should be 0 at pre-retirement age {age}")
+
+        # Age 60 (retirement): Pension should now apply.
+        row_60 = next(p for p in projections if p["age"] == 60)
+        self.assertGreater(row_60["pension"], 0, "Pension should apply at retirement age")
+
 
     # --- Validation Tests ---
 

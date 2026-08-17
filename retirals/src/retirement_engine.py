@@ -115,7 +115,7 @@ def run_projection(inputs: PlannerInputs):
         gross_pension = 0.0
         pension_tax = 0.0
         net_pension = 0.0
-        if inputs.include_pension and age >= inputs.pension_start_age:
+        if inputs.include_pension and is_retired and age >= inputs.pension_start_age:
             # Pension is defined in today's money, so it's inflated from current_age
             pension_elapsed_years = age - inputs.current_age
             gross_pension = inputs.annual_pension * ((1 + inputs.pension_increase) ** pension_elapsed_years)
