@@ -733,6 +733,16 @@
                 <button onclick="calculateMetrics()" class="primary-button w-full text-white font-semibold py-2.5 rounded-xl text-sm" aria-label="Run retirement simulation">
                     Run Simulation
                 </button>
+
+                <div class="grid grid-cols-2 gap-3 pt-2">
+                    <button onclick="downloadReport('pdf')" class="primary-button w-full text-white font-semibold py-2.5 rounded-xl text-sm" aria-label="Download PDF Report">
+                        📄 Download PDF
+                    </button>
+                    <button onclick="downloadReport('html')" class="primary-button w-full text-white font-semibold py-2.5 rounded-xl text-sm" aria-label="Download HTML Report">
+                        🌐 Download HTML
+                    </button>
+                </div>
+
                 <div id="formStatus" class="hidden mt-3 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700" role="alert"></div>
 
                 <div class="mt-5 flex justify-center">
@@ -1133,6 +1143,10 @@
                     ...options
                 }
             });
+        }
+
+        function downloadReport(type) {
+            alert(`The ${type.toUpperCase()} download feature is not yet implemented.`);
         }
 
         function showCalculationError(message) {
