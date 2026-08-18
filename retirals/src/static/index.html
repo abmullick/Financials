@@ -614,33 +614,42 @@
 
                 <div>
                     <label class="block text-xs font-medium text-slate-300" for="current_annual_expenses">Current Annual Expenses (₹)</label>
-                    <input type="number" id="current_annual_expenses" aria-label="Current annual expenses" value="600000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                    <input type="text" id="current_annual_expenses" aria-label="Current annual expenses" value="600000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-medium text-slate-300" for="avg_inflation_rate">Inflation Rate</label>
-                        <input type="text" id="avg_inflation_rate" aria-label="Average inflation rate" value="6.0%" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                        <div class="relative">
+                            <input type="number" step="0.1" id="avg_inflation_rate" aria-label="Average inflation rate" value="6.0" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
+                            <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">%</span>
+                        </div>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-300" for="current_corpus">Current Corpus (₹)</label>
-                        <input type="number" id="current_corpus" aria-label="Current corpus" value="100000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                        <input type="text" id="current_corpus" aria-label="Current corpus" value="100000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-xs font-medium text-slate-300" for="annual_contribution">Annual Additional Contribution (₹)</label>
-                    <input type="number" id="annual_contribution" aria-label="Annual contribution" value="200000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                    <input type="text" id="annual_contribution" aria-label="Annual contribution" value="200000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-xs font-medium text-slate-300" for="pre_retirement_return">Pre-Retire Return</label>
-                        <input type="text" id="pre_retirement_return" aria-label="Pre retirement return" value="9.0%" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                        <div class="relative">
+                            <input type="number" step="0.1" id="pre_retirement_return" aria-label="Pre retirement return" value="9.0" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
+                            <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">%</span>
+                        </div>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-300" for="post_retirement_return">Post-Retire Return</label>
-                        <input type="text" id="post_retirement_return" aria-label="Post retirement return" value="8.0%" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                        <div class="relative">
+                            <input type="number" step="0.1" id="post_retirement_return" aria-label="Post retirement return" value="8.0" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
+                            <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">%</span>
+                        </div>
                     </div>
                 </div>
 
@@ -690,19 +699,31 @@
                             <div class="grid grid-cols-2 gap-2 text-xs">
                                 <div>
                                     <label class="block font-medium text-slate-300">LTCG Tax (%)</label>
-                                    <input type="text" id="tax_ltcg" value="12.5%" class="input-shell w-full rounded-lg p-1.5 text-slate-700">
+                                    <div class="relative">
+                                        <input type="number" step="0.1" id="tax_ltcg" value="12.5" class="input-shell w-full rounded-lg p-1.5 text-slate-700 pr-7">
+                                        <span class="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-400">%</span>
+                                    </div>
                                 </div>
                                 <div>
                                     <label class="block font-medium text-slate-300">STCG Tax (%)</label>
-                                    <input type="text" id="tax_stcg" value="20.0%" class="input-shell w-full rounded-lg p-1.5 text-slate-700">
+                                    <div class="relative">
+                                        <input type="number" step="0.1" id="tax_stcg" value="20.0" class="input-shell w-full rounded-lg p-1.5 text-slate-700 pr-7">
+                                        <span class="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-400">%</span>
+                                    </div>
                                 </div>
                                 <div>
                                     <label class="block font-medium text-slate-300">Debt Tax (%)</label>
-                                    <input type="text" id="tax_debt" value="20.0%" class="input-shell w-full rounded-lg p-1.5 text-slate-700">
+                                    <div class="relative">
+                                        <input type="number" step="0.1" id="tax_debt" value="20.0" class="input-shell w-full rounded-lg p-1.5 text-slate-700 pr-7">
+                                        <span class="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-400">%</span>
+                                    </div>
                                 </div>
                                 <div>
                                     <label class="block font-medium text-slate-300">Arbitrage Tax (%)</label>
-                                    <input type="text" id="tax_arbitrage" value="20.0%" class="input-shell w-full rounded-lg p-1.5 text-slate-700">
+                                    <div class="relative">
+                                        <input type="number" step="0.1" id="tax_arbitrage" value="20.0" class="input-shell w-full rounded-lg p-1.5 text-slate-700 pr-7">
+                                        <span class="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-400">%</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -711,15 +732,15 @@
                         <div class="grid grid-cols-2 gap-3" style="border-top: 1px solid var(--stroke); padding-top: 1rem;">
                             <div>
                                 <label class="block text-xs font-medium text-slate-300">Annual Contribution Increase</label>
-                                <input type="text" id="contribution_increase" value="1.0%" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                                <input type="number" step="0.1" id="contribution_increase" value="1.0" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-slate-300">LTCG Exemption Limit (₹)</label>
-                                <input type="number" id="ltcg_exemption" value="125000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                                <input type="text" id="ltcg_exemption" value="125000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
                             </div>
                             <div class="col-span-2">
                                 <label class="block text-xs font-medium text-slate-300">One-time Lumpsum at Retirement (₹)</label>
-                                <input type="number" id="one_time_lumpsum" value="0" min="0" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700" placeholder="e.g., Gratuity, Leave Encashment">
+                                <input type="text" id="one_time_lumpsum" value="0" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700" placeholder="e.g., Gratuity, Leave Encashment">
                             </div>
                         </div>
                     </div>
@@ -741,17 +762,23 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-slate-300">Annual Pension (₹)</label>
-                                <input type="number" id="annual_pension" value="600000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                                <input type="text" id="annual_pension" value="600000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
                             </div>
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs font-medium text-slate-300">Pension Increase</label>
-                                <input type="text" id="pension_increase" value="5.0%" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                                <div class="relative">
+                                    <input type="number" step="0.1" id="pension_increase" value="5.0" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
+                                    <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">%</span>
+                                </div>
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-slate-300">Pension Tax Rate</label>
-                                <input type="text" id="pension_tax_rate" value="20.0%" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                                <div class="relative">
+                                    <input type="number" step="0.1" id="pension_tax_rate" value="20.0" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
+                                    <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">%</span>
+                                </div>
                             </div>
                         </div>
                         <div class="flex items-center gap-2 pt-2">
@@ -989,7 +1016,7 @@
             row.className = 'flex items-center gap-2 adhoc-row';
             row.innerHTML = `
                 <input class="adhoc-age input-shell w-1/3 rounded-xl p-2 text-sm text-slate-700" type="number" min="1" placeholder="Age" value="${age}">
-                <input class="adhoc-amount input-shell flex-1 rounded-xl p-2 text-sm text-slate-700" type="number" min="0" step="1000" placeholder="Amount" value="${amount}">
+                <input class="adhoc-amount input-shell flex-1 rounded-xl p-2 text-sm text-slate-700" type="text" placeholder="Amount" value="${formatCurrency(amount)}">
                 <button type="button" class="remove-adhoc-btn inline-flex h-8 w-8 items-center justify-center rounded-full bg-rose-100 text-lg font-bold text-rose-700 hover:bg-rose-200">×</button>
             `;
             row.querySelector('.remove-adhoc-btn').addEventListener('click', () => row.remove());
@@ -1009,7 +1036,7 @@
         function getAdHocExpenses() {
             return Array.from(document.querySelectorAll('.adhoc-row')).map(row => {
                 const age = parseInt(row.querySelector('.adhoc-age').value || '0', 10);
-                const amount = parseFloat(row.querySelector('.adhoc-amount').value || '0');
+                const amount = parseCurrency(row.querySelector('.adhoc-amount').value);
                 if ((!Number.isNaN(age) && age > 0) && (!Number.isNaN(amount) && amount >= 0)) {
                     return { age, amount };
                 }
@@ -1018,11 +1045,29 @@
         }
 
         function cleanPct(val) {
-            return parseFloat(val.replace('%','')) / 100.0;
+            return parseFloat(val) / 100.0;
+        }
+
+        function formatCurrency(value) {
+            const num = Number(value);
+            if (isNaN(num)) return '';
+            return new Intl.NumberFormat('en-IN', {
+                style: 'currency',
+                currency: 'INR',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(num);
+        }
+
+        function parseCurrency(value) {
+            if (typeof value !== 'string') return parseFloat(value);
+            // Remove currency symbol and commas
+            return parseFloat(value.replace(/₹/g, '').replace(/,/g, '')) || 0;
         }
 
         function fmt(num) {
-            return '₹' + num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            // Use the new formatCurrency function for consistency
+            return formatCurrency(num);
         }
 
         function fitKpiValue(element) {
@@ -1295,21 +1340,21 @@
                 current_age: parseInt(document.getElementById('current_age').value),
                 retirement_age: parseInt(document.getElementById('retirement_age').value),
                 life_expectancy: parseInt(document.getElementById('life_expectancy').value),
-                current_annual_expenses: parseFloat(document.getElementById('current_annual_expenses').value),
-                avg_inflation_rate: cleanPct(document.getElementById('avg_inflation_rate').value),
-                current_corpus: parseFloat(document.getElementById('current_corpus').value),
-                annual_contribution: parseFloat(document.getElementById('annual_contribution').value),
-                pre_retirement_return: cleanPct(document.getElementById('pre_retirement_return').value),
-                post_retirement_return: cleanPct(document.getElementById('post_retirement_return').value),
-                contribution_increase: cleanPct(document.getElementById('contribution_increase').value),
-                ltcg_exemption: parseFloat(document.getElementById('ltcg_exemption').value),
-                one_time_lumpsum: parseFloat(document.getElementById('one_time_lumpsum').value),
+                current_annual_expenses: parseCurrency(document.getElementById('current_annual_expenses').value),
+                avg_inflation_rate: parseFloat(document.getElementById('avg_inflation_rate').value) / 100.0,
+                current_corpus: parseCurrency(document.getElementById('current_corpus').value),
+                annual_contribution: parseCurrency(document.getElementById('annual_contribution').value),
+                pre_retirement_return: parseFloat(document.getElementById('pre_retirement_return').value) / 100.0,
+                post_retirement_return: parseFloat(document.getElementById('post_retirement_return').value) / 100.0,
+                contribution_increase: parseFloat(document.getElementById('contribution_increase').value) / 100.0,
+                ltcg_exemption: parseCurrency(document.getElementById('ltcg_exemption').value),
+                one_time_lumpsum: parseCurrency(document.getElementById('one_time_lumpsum').value),
                 // Pension
                 include_pension: document.getElementById('include_pension').checked,
                 pension_start_age: parseInt(document.getElementById('pension_start_age').value),
-                annual_pension: parseFloat(document.getElementById('annual_pension').value),
-                pension_increase: cleanPct(document.getElementById('pension_increase').value),
-                pension_tax_rate: cleanPct(document.getElementById('pension_tax_rate').value),
+                annual_pension: parseCurrency(document.getElementById('annual_pension').value),
+                pension_increase: parseFloat(document.getElementById('pension_increase').value) / 100.0,
+                pension_tax_rate: parseFloat(document.getElementById('pension_tax_rate').value) / 100.0,
                 reinvest_pension_surplus: document.getElementById('reinvest_pension_surplus').checked,
 
                 stress_scenario: document.getElementById('stress_scenario').value,
@@ -1322,10 +1367,10 @@
                 equity_ltcg_split: parseFloat(document.getElementById('equity_ltcg_split').value) / 100,
                 equity_stcg_split: parseFloat(document.getElementById('equity_stcg_split').value) / 100,
                 // Tax rates
-                tax_ltcg: cleanPct(document.getElementById('tax_ltcg').value),
-                tax_stcg: cleanPct(document.getElementById('tax_stcg').value),
-                tax_debt: cleanPct(document.getElementById('tax_debt').value),
-                tax_arbitrage: cleanPct(document.getElementById('tax_arbitrage').value)
+                tax_ltcg: parseFloat(document.getElementById('tax_ltcg').value) / 100.0,
+                tax_stcg: parseFloat(document.getElementById('tax_stcg').value) / 100.0,
+                tax_debt: parseFloat(document.getElementById('tax_debt').value) / 100.0,
+                tax_arbitrage: parseFloat(document.getElementById('tax_arbitrage').value) / 100.0
             };
 
             if (![payload.current_age, payload.retirement_age, payload.life_expectancy].every(Number.isFinite)) {
@@ -1635,9 +1680,47 @@
             }
         });
 
+        // Handlers for currency input focus/blur
+        function handleCurrencyFocus(e) {
+            e.target.value = parseCurrency(e.target.value);
+        }
+
+        function handleCurrencyBlur(e) {
+            const numericValue = parseCurrency(e.target.value);
+            e.target.value = formatCurrency(numericValue);
+        }
+
+        // Function to set up currency formatting for inputs
+        function setupCurrencyInputs(container = document) {
+            const currencyInputs = container.querySelectorAll(
+                '#current_annual_expenses, #current_corpus, #annual_contribution, ' +
+                '#ltcg_exemption, #one_time_lumpsum, #annual_pension, ' +
+                '.adhoc-amount' // Include ad-hoc amounts by class
+            );
+
+            currencyInputs.forEach(input => {
+                // Remove existing listeners to prevent duplicates if called multiple times
+                input.removeEventListener('focus', handleCurrencyFocus);
+                input.removeEventListener('blur', handleCurrencyBlur);
+
+                // Add new listeners
+                input.addEventListener('focus', handleCurrencyFocus);
+                input.addEventListener('blur', handleCurrencyBlur);
+
+                // Apply initial formatting if the value is a raw number and not already formatted
+                // This handles default values and dynamically added ad-hoc rows
+                const currentValue = input.value;
+                // Check if it's a number and not already formatted (doesn't start with '₹')
+                if (currentValue && !currentValue.startsWith('₹') && !isNaN(parseFloat(currentValue))) {
+                    input.value = formatCurrency(parseCurrency(currentValue));
+                }
+            });
+        }
+
         seedAdHocRows();
         initializeTheme();
         window.addEventListener('resize', fitAllKpiValues);
+        setupCurrencyInputs(); // Initial setup for all static currency inputs
         
         // Handle direct URL access to the planner
         window.onload = function() {
@@ -1645,6 +1728,7 @@
             if (urlParams.get('open') === 'true') {
                 if (landingScreen) landingScreen.classList.add('hidden');
                 if (plannerApp) plannerApp.classList.remove('hidden');
+                // Ensure metrics are calculated and KPIs fitted when launched directly
                 calculateMetrics();
                 fitAllKpiValues();
             } else {
