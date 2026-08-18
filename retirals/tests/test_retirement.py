@@ -286,6 +286,41 @@ class RetirementPlannerTest(unittest.TestCase):
         row_60 = next(p for p in projections if p["age"] == 60)
         self.assertGreater(row_60["pension"], 0, "Pension should apply at retirement age")
 
+    def test_corpus_exhaustion_accounting_consistency(self):
+        """
+        Regression test to verify accounting consistency in the exhaustion year.
+        This test is EXPECTED TO FAIL until the underlying logic is fixed.
+        It asserts that: gross_withdrawal = withdrawal_after_tax + withdrawal_tax.
+        """
+        inputs = PlannerInputs(
+            current_age=80, retirement_age=81, life_expectancy=85,
+            current_corpus=100000,
+            current_annual_expenses=120000, # Net need is > corpus
+            annual_contribution=0,
+            avg_inflation_rate=0.0,
+            post_retirement_return=0.0,
+            # Simplify tax to a flat 20% on all withdrawals
+            allocation_equity=0.0,
+            allocation_debt=1.0,
+            allocation_arbitrage=0.0,
+            tax_debt=0.20,
+            ltcg_exemption=0.0,
+            adhoc_expenses=[]
+        )
+        result = run_projection(inputs)
+        projections = result["projections"]
+        metrics = result["metrics"]
+
+        self.assertEqual(metrics["corpus_exhaustion_age"], 81)
+        exhaustion_row = next(p for p in projections if p["age"] == 81)
+
+        # 1. Verify the closing corpus is exactly zero.
+        self.assertAlmostEqual(exhaustion_row["closing"], 0.0, places=2)
+
+        # 2. Verify the fundamental accounting equation holds true.
+        # This assertion is expected to fail with the current logic.
+        self.assertAlmostEqual(exhaustion_row["withdrawal"], exhaustion_row["withdrawal_after_tax"] + exhaustion_row["withdrawal_tax"], places=2, msg="Accounting (Gross = Net + Tax) must be consistent in exhaustion year.")
+
 
     # --- Validation Tests ---
 
