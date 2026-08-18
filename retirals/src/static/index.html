@@ -596,6 +596,102 @@
             width: 1px; height: 4px;
             background-color: var(--text-3);
         }
+
+        .stepper {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            padding: 0 0.5rem;
+        }
+        .stepper-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            flex: 1;
+            text-align: center;
+        }
+        .stepper-item:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            width: 100%;
+            height: 2px;
+            background-color: var(--stroke);
+            z-index: 1;
+        }
+        .stepper-number {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: var(--bg-3);
+            border: 2px solid var(--stroke);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: var(--text-3);
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 2;
+        }
+        .stepper-label {
+            font-size: 11px;
+            margin-top: 8px;
+            color: var(--text-3);
+            font-weight: 500;
+        }
+        .stepper-item.active .stepper-number {
+            background-color: var(--accent);
+            border-color: var(--accent);
+            color: white;
+            box-shadow: 0 0 12px rgba(102, 167, 255, 0.5);
+        }
+        .stepper-item.active .stepper-label {
+            color: var(--text-1);
+            font-weight: 600;
+        }
+
+        .slider-container {
+            display: grid;
+            grid-template-columns: 60px 1fr 40px;
+            align-items: center;
+            gap: 12px;
+        }
+        .slider-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-2);
+        }
+        .slider-value {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-1);
+            text-align: right;
+        }
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 6px;
+            background: var(--stroke);
+            border-radius: 3px;
+            outline: none;
+            opacity: 0.9;
+            transition: opacity .2s;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 16px;
+            height: 16px;
+            background: var(--accent);
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid var(--bg-3);
+        }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans antialiased">
@@ -687,96 +783,138 @@
         <div class="app-layout grid grid-cols-1 lg:grid-cols-[360px_minmax(0,1fr)] gap-6 lg:gap-8">
             <!-- Parameters Sidebar -->
             <div class="panel-3d p-5 sm:p-6 rounded-2xl h-fit space-y-4">
-                <h2 class="text-xl font-semibold mb-2" style="color: var(--text-1);">Planner Parameters</h2>
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold" style="color: var(--text-1);">Planner Parameters</h2>
+                    <button id="toggleStepsBtn" type="button" class="secondary-button text-xs font-semibold px-3 py-1.5 rounded-lg">Show All</button>
+                </div>
                 
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300" for="current_age">Current Age</label>
-                        <input type="number" id="current_age" aria-label="Current age" value="23" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
-                        <p class="text-xs mt-1.5" style="color: var(--text-3);">Your current age.</p>
+                <!-- Stepper Navigation -->
+                <div id="stepper" class="stepper">
+                    <div class="stepper-item active" data-step-id="1">
+                        <div class="stepper-number">1</div>
+                        <div class="stepper-label">Timeline</div>
                     </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300" for="retirement_age">Retirement Age</label>
-                        <input type="number" id="retirement_age" aria-label="Retirement age" value="58" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
-                        <p class="text-xs mt-1.5" style="color: var(--text-3);">The age you plan to retire.</p>
+                    <div class="stepper-item" data-step-id="2">
+                        <div class="stepper-number">2</div>
+                        <div class="stepper-label">Finances</div>
+                    </div>
+                    <div class="stepper-item" data-step-id="3">
+                        <div class="stepper-number">3</div>
+                        <div class="stepper-label">Assumptions</div>
+                    </div>
+                    <div class="stepper-item" data-step-id="4">
+                        <div class="stepper-number">4</div>
+                        <div class="stepper-label">Advanced</div>
                     </div>
                 </div>
 
-                <div>
-                    <label class="block text-xs font-medium text-slate-300" for="life_expectancy">Life Expectancy</label>
-                    <input type="number" id="life_expectancy" aria-label="Life expectancy" value="85" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
-                    <p class="text-xs mt-1.5" style="color: var(--text-3);">The age until which the plan should run.</p>
-                </div>
+                <!-- Form Steps -->
+                <div id="form-steps">
+                    <!-- Step 1: Timeline -->
+                    <div data-step="1" class="form-step space-y-4">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300" for="current_age">Current Age</label>
+                                <input type="number" id="current_age" aria-label="Current age" value="23" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                                <p class="text-xs mt-1.5" style="color: var(--text-3);">Your current age.</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300" for="retirement_age">Retirement Age</label>
+                                <input type="number" id="retirement_age" aria-label="Retirement age" value="58" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                                <p class="text-xs mt-1.5" style="color: var(--text-3);">The age you plan to retire.</p>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300" for="life_expectancy">Life Expectancy</label>
+                            <input type="number" id="life_expectancy" aria-label="Life expectancy" value="85" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                            <p class="text-xs mt-1.5" style="color: var(--text-3);">The age until which the plan should run.</p>
+                        </div>
+                        <div class="pt-2">
+                            <button type="button" class="next-step-btn secondary-button w-full font-semibold py-2 rounded-xl text-sm">Next: Finances →</button>
+                        </div>
+                    </div>
 
-                <div>
-                    <label class="block text-xs font-medium text-slate-300" for="current_annual_expenses">Current Annual Expenses (₹)</label>
-                    <input type="text" id="current_annual_expenses" aria-label="Current annual expenses" value="600000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
-                    <p class="text-xs mt-1.5" style="color: var(--text-3);">Total yearly expenses in today's money.</p>
-                </div>
+                    <!-- Step 2: Finances -->
+                    <div data-step="2" class="form-step space-y-4 hidden">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300" for="current_annual_expenses">Current Annual Expenses (₹)</label>
+                            <input type="text" id="current_annual_expenses" aria-label="Current annual expenses" value="600000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                            <p class="text-xs mt-1.5" style="color: var(--text-3);">Total yearly expenses in today's money.</p>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300" for="current_corpus">Current Corpus (₹)</label>
+                            <input type="text" id="current_corpus" aria-label="Current corpus" value="100000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                            <p class="text-xs mt-1.5" style="color: var(--text-3);">Your current investment portfolio value.</p>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300" for="annual_contribution">Annual Additional Contribution (₹)</label>
+                            <input type="text" id="annual_contribution" aria-label="Annual contribution" value="200000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                            <p class="text-xs mt-1.5" style="color: var(--text-3);">Amount you plan to invest additionally each year.</p>
+                        </div>
+                        <div class="grid grid-cols-2 gap-3 pt-2">
+                            <button type="button" class="prev-step-btn secondary-button w-full font-semibold py-2 rounded-xl text-sm">← Back</button>
+                            <button type="button" class="next-step-btn secondary-button w-full font-semibold py-2 rounded-xl text-sm">Next: Assumptions →</button>
+                        </div>
+                    </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <div class="flex items-center gap-1.5 mb-1">
-                            <label class="block text-xs font-medium text-slate-300" for="avg_inflation_rate">Inflation Rate</label>
-                            <div class="tooltip-container">
-                                <span class="tooltip-icon">ⓘ</span>
-                                <div class="tooltip-content">
-                                    Average annual increase assumed for your expenses. Example: 6% means ₹10 lakh today becomes approximately ₹13.4 lakh in 5 years.
+                    <!-- Step 3: Assumptions -->
+                    <div data-step="3" class="form-step space-y-4 hidden">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <div class="flex items-center gap-1.5 mb-1">
+                                    <label class="block text-xs font-medium text-slate-300" for="avg_inflation_rate">Inflation Rate</label>
+                                    <div class="tooltip-container">
+                                        <span class="tooltip-icon">ⓘ</span>
+                                        <div class="tooltip-content">
+                                            Average annual increase assumed for your expenses. Example: 6% means ₹10 lakh today becomes approximately ₹13.4 lakh in 5 years.
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="relative">
+                                    <input type="number" step="0.1" id="avg_inflation_rate" aria-label="Average inflation rate" value="6.0" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
+                                    <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">%</span>
+                                </div>
+                                <p class="text-xs mt-1.5" style="color: var(--text-3);">Expected average annual inflation.</p>
+                            </div>
+                            <div>
+                                <div class="flex items-center gap-1.5 mb-1">
+                                    <label class="block text-xs font-medium text-slate-300" for="pre_retirement_return">Pre-Retire Return</label>
+                                    <div class="tooltip-container">
+                                        <span class="tooltip-icon">ⓘ</span>
+                                        <div class="tooltip-content">
+                                            The expected average annual return on your investment portfolio *before* you retire. This is typically higher as you can take on more risk.
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="relative">
+                                    <input type="number" step="0.1" id="pre_retirement_return" aria-label="Pre retirement return" value="9.0" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
+                                    <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">%</span>
+                                </div>
+                                <p class="text-xs mt-1.5" style="color: var(--text-3);">Expected annual portfolio return before retirement.</p>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-1.5 mb-1">
+                                <label class="block text-xs font-medium text-slate-300" for="post_retirement_return">Post-Retire Return</label>
+                                <div class="tooltip-container">
+                                    <span class="tooltip-icon">ⓘ</span>
+                                    <div class="tooltip-content">The expected average annual return on your investment portfolio *after* you retire. This is typically lower as the portfolio shifts towards safer, income-generating assets.</div>
                                 </div>
                             </div>
-                        </div>
-                        <div class="relative">
-                            <input type="number" step="0.1" id="avg_inflation_rate" aria-label="Average inflation rate" value="6.0" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
-                            <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">%</span>
-                        </div>
-                        <p class="text-xs mt-1.5" style="color: var(--text-3);">Expected average annual inflation.</p>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-300" for="current_corpus">Current Corpus (₹)</label>
-                        <input type="text" id="current_corpus" aria-label="Current corpus" value="100000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
-                        <p class="text-xs mt-1.5" style="color: var(--text-3);">Your current investment portfolio value.</p>
-                    </div>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-medium text-slate-300" for="annual_contribution">Annual Additional Contribution (₹)</label>
-                    <input type="text" id="annual_contribution" aria-label="Annual contribution" value="200000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
-                    <p class="text-xs mt-1.5" style="color: var(--text-3);">Amount you plan to invest additionally each year.</p>
-                </div>
-
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <div class="flex items-center gap-1.5 mb-1">
-                            <label class="block text-xs font-medium text-slate-300" for="pre_retirement_return">Pre-Retire Return</label>
-                            <div class="tooltip-container">
-                                <span class="tooltip-icon">ⓘ</span>
-                                <div class="tooltip-content">
-                                    The expected average annual return on your investment portfolio *before* you retire. This is typically higher as you can take on more risk.
-                                </div>
+                            <div class="relative">
+                                <input type="number" step="0.1" id="post_retirement_return" aria-label="Post retirement return" value="8.0" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
+                                <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">%</span>
                             </div>
+                            <p class="text-xs mt-1.5" style="color: var(--text-3);">Expected annual portfolio return after retirement.</p>
                         </div>
-                        <div class="relative">
-                            <input type="number" step="0.1" id="pre_retirement_return" aria-label="Pre retirement return" value="9.0" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
-                            <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">%</span>
+                        <div class="grid grid-cols-2 gap-3 pt-2">
+                            <button type="button" class="prev-step-btn secondary-button w-full font-semibold py-2 rounded-xl text-sm">← Back</button>
+                            <button type="button" class="next-step-btn secondary-button w-full font-semibold py-2 rounded-xl text-sm">Next: Advanced →</button>
                         </div>
-                        <p class="text-xs mt-1.5" style="color: var(--text-3);">Expected annual portfolio return before retirement.</p>
                     </div>
-                    <div>
-                        <div class="flex items-center gap-1.5 mb-1">
-                            <label class="block text-xs font-medium text-slate-300" for="post_retirement_return">Post-Retire Return</label>
-                            <div class="tooltip-container">
-                                <span class="tooltip-icon">ⓘ</span>
-                                <div class="tooltip-content">The expected average annual return on your investment portfolio *after* you retire. This is typically lower as the portfolio shifts towards safer, income-generating assets.</div>
-                            </div>
-                        </div>
-                        <div class="relative">
-                            <input type="number" step="0.1" id="post_retirement_return" aria-label="Post retirement return" value="8.0" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
-                            <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">%</span>
-                        </div>
-                        <p class="text-xs mt-1.5" style="color: var(--text-3);">Expected annual portfolio return after retirement.</p>
-                    </div>
-                </div>
 
+                    <!-- Step 4: Advanced Details -->
+                    <div data-step="4" class="form-step space-y-4 hidden">
                 <details class="group rounded-xl border" style="border-color: var(--stroke);">
                     <summary class="flex cursor-pointer list-none items-center justify-between px-3 py-2.5 text-sm font-semibold" style="border-bottom: 1px solid var(--stroke); background: var(--glass); color: var(--text-2);">
                         <span>Advanced assumptions</span>
@@ -788,19 +926,25 @@
                             <div class="flex justify-between items-center mb-2">
                                 <h4 class="text-xs font-semibold" style="color: var(--text-1);">Portfolio Allocation</h4>
                                 <div id="allocationTotalDisplay" class="text-xs font-semibold px-2 py-1 rounded-md">100%</div>
-                            </div>
-                            <div class="grid grid-cols-3 gap-2 text-xs">
-                                <div>
-                                    <label class="block font-medium text-slate-300">Equity (%)</label>
-                                    <input type="number" id="allocation_equity" value="60" min="0" max="100" step="1" class="input-shell w-full rounded-lg p-1.5 text-slate-700 allocation-input">
+                            </div>                            
+                            <div class="space-y-2">
+                                <input type="hidden" id="allocation_equity" value="60" class="allocation-input">
+                                <input type="hidden" id="allocation_debt" value="30" class="allocation-input">
+                                <input type="hidden" id="allocation_arbitrage" value="10" class="allocation-input">
+                                <div class="slider-container">
+                                    <label for="equity_slider" class="slider-label">Equity</label>
+                                    <input type="range" id="equity_slider" min="0" max="100" value="60" class="allocation-slider">
+                                    <span id="equity_slider_value" class="slider-value">60%</span>
                                 </div>
-                                <div>
-                                    <label class="block font-medium text-slate-300">Debt (%)</label>
-                                    <input type="number" id="allocation_debt" value="30" min="0" max="100" step="1" class="input-shell w-full rounded-lg p-1.5 text-slate-700 allocation-input">
+                                <div class="slider-container">
+                                    <label for="debt_slider" class="slider-label">Debt</label>
+                                    <input type="range" id="debt_slider" min="0" max="100" value="30" class="allocation-slider">
+                                    <span id="debt_slider_value" class="slider-value">30%</span>
                                 </div>
-                                <div>
-                                    <label class="block font-medium text-slate-300">Arbitrage (%)</label>
-                                    <input type="number" id="allocation_arbitrage" value="10" min="0" max="100" step="1" class="input-shell w-full rounded-lg p-1.5 text-slate-700 allocation-input">
+                                <div class="slider-container">
+                                    <label for="arbitrage_slider" class="slider-label">Arbitrage</label>
+                                    <input type="range" id="arbitrage_slider" min="0" max="100" value="10" class="allocation-slider">
+                                    <span id="arbitrage_slider_value" class="slider-value">10%</span>
                                 </div>
                             </div>
                             <p class="text-xs mt-1.5" style="color: var(--text-3);">How your portfolio is divided across asset classes.</p>
@@ -990,6 +1134,11 @@
                         <option value="Severe Crash (-20% for 2 yrs)">Severe Crash (-20% for 2 yrs)</option>
                     </select>
                     <p class="text-xs mt-1.5" style="color: var(--text-3);">Simulate a market crash in the first two years of retirement.</p>
+                </div>
+                        <div class="grid grid-cols-2 gap-3 pt-2">
+                            <button type="button" class="prev-step-btn secondary-button w-full font-semibold py-2 rounded-xl text-sm">← Back</button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="pt-3 border-t border-slate-200">
@@ -2039,29 +2188,108 @@
             }
         });
 
-        function setupAllocationValidator() {
-            const inputs = document.querySelectorAll('.allocation-input');
-            const totalDisplay = document.getElementById('allocationTotalDisplay');
+        function setupStepper() {
+            const stepperContainer = document.getElementById('stepper');
+            const steps = document.querySelectorAll('.form-step');
+            const stepperItems = document.querySelectorAll('.stepper-item');
+            const toggleBtn = document.getElementById('toggleStepsBtn');
+            const stepNavButtons = document.querySelectorAll('.next-step-btn, .prev-step-btn');
+            let currentStep = 1;
+            let isExpanded = false;
 
-            function validateAllocation() {
-                const equity = parseFloat(document.getElementById('allocation_equity').value) || 0;
-                const debt = parseFloat(document.getElementById('allocation_debt').value) || 0;
-                const arbitrage = parseFloat(document.getElementById('allocation_arbitrage').value) || 0;
-                const total = equity + debt + arbitrage;
+            function showStep(stepNumber) {
+                if (isExpanded) return;
+                steps.forEach(step => {
+                    step.classList.toggle('hidden', parseInt(step.dataset.step) !== stepNumber);
+                });
+                stepperItems.forEach(item => {
+                    item.classList.toggle('active', parseInt(item.dataset.stepId) === stepNumber);
+                });
+                currentStep = stepNumber;
+            }
 
-                totalDisplay.textContent = `${total.toFixed(0)}%`;
+            function toggleExpand() {
+                isExpanded = !isExpanded;
+                stepperContainer.classList.toggle('hidden', isExpanded);
+                stepNavButtons.forEach(btn => btn.parentElement.classList.toggle('hidden', isExpanded));
 
-                totalDisplay.classList.remove('bg-emerald-100', 'text-emerald-800', 'bg-rose-100', 'text-rose-800');
-                if (Math.abs(total - 100) < 0.01) {
-                    totalDisplay.classList.add('bg-emerald-100', 'text-emerald-800');
+                if (isExpanded) {
+                    steps.forEach(step => step.classList.remove('hidden'));
+                    stepperItems.forEach(item => item.classList.add('active'));
+                    toggleBtn.textContent = 'Collapse';
                 } else {
-                    totalDisplay.classList.add('bg-rose-100', 'text-rose-800');
+                    showStep(currentStep); // Restore to the current step view
+                    toggleBtn.textContent = 'Show All';
                 }
             }
 
-            inputs.forEach(input => input.addEventListener('input', validateAllocation));
-            
-            validateAllocation(); // Initial validation on load
+            document.querySelectorAll('.next-step-btn').forEach(btn => {
+                btn.addEventListener('click', () => showStep(currentStep + 1));
+            });
+            document.querySelectorAll('.prev-step-btn').forEach(btn => {
+                btn.addEventListener('click', () => showStep(currentStep - 1));
+            });
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', toggleExpand);
+            }
+
+            showStep(1);
+        }
+
+        function setupAllocationSliders() {
+            const sliders = {
+                equity: { slider: document.getElementById('equity_slider'), valueDisplay: document.getElementById('equity_slider_value'), hiddenInput: document.getElementById('allocation_equity') },
+                debt: { slider: document.getElementById('debt_slider'), valueDisplay: document.getElementById('debt_slider_value'), hiddenInput: document.getElementById('allocation_debt') },
+                arbitrage: { slider: document.getElementById('arbitrage_slider'), valueDisplay: document.getElementById('arbitrage_slider_value'), hiddenInput: document.getElementById('allocation_arbitrage') }
+            };
+            const sliderKeys = Object.keys(sliders);
+            const totalDisplay = document.getElementById('allocationTotalDisplay');
+
+            function updateSliders(changedKey) {
+                const changedSlider = sliders[changedKey];
+                const newValue = parseInt(changedSlider.slider.value, 10);
+                const oldValue = parseInt(changedSlider.hiddenInput.value, 10);
+                const delta = newValue - oldValue;
+
+                if (delta === 0) return;
+
+                const otherKeys = sliderKeys.filter(k => k !== changedKey);
+                let otherTotal = otherKeys.reduce((sum, k) => sum + parseInt(sliders[k].hiddenInput.value, 10), 0);
+
+                if (otherTotal > 0) {
+                    const adjustments = {};
+                    let totalAdjustment = 0;
+
+                    otherKeys.forEach(key => {
+                        const otherSlider = sliders[key];
+                        const otherValue = parseInt(otherSlider.hiddenInput.value, 10);
+                        const adjustment = Math.round(delta * (otherValue / otherTotal));
+                        adjustments[key] = adjustment;
+                        totalAdjustment += adjustment;
+                    });
+
+                    // Correct for rounding errors
+                    if (totalAdjustment !== delta) {
+                        adjustments[otherKeys[0]] += (delta - totalAdjustment);
+                    }
+
+                    otherKeys.forEach(key => {
+                        const otherSlider = sliders[key];
+                        const currentVal = parseInt(otherSlider.hiddenInput.value, 10);
+                        otherSlider.slider.value = Math.max(0, Math.min(100, currentVal - adjustments[key]));
+                    });
+                }
+
+                sliderKeys.forEach(key => {
+                    const s = sliders[key];
+                    s.hiddenInput.value = s.slider.value;
+                    s.valueDisplay.textContent = `${s.slider.value}%`;
+                });
+            }
+
+            sliderKeys.forEach(key => {
+                sliders[key].slider.addEventListener('input', () => updateSliders(key));
+            });
         }
 
         function setupEquitySplitValidator() {
@@ -2127,8 +2355,9 @@
         seedAdHocRows();
         initializeTheme();
         window.addEventListener('resize', fitAllKpiValues);
-        setupAllocationValidator();
         setupEquitySplitValidator();
+        setupAllocationSliders();
+        setupStepper();
         setupCurrencyInputs(); // Initial setup for all static currency inputs
         
         // Handle direct URL access to the planner
