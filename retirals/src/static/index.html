@@ -1392,15 +1392,66 @@
     <script>
         const chartInstances = {};
 
-        function buildAdHocRow(age = '', amount = '') {
+        function buildAdHocRow(age = '', amount = '', category = 'Other', inflation = null) {
             const row = document.createElement('div');
-            row.className = 'flex items-center gap-2 adhoc-row';
+            row.className = 'adhoc-row p-3 rounded-lg border';
+            row.style.borderColor = 'var(--stroke)';
+            row.style.background = 'var(--glass)';
+
+            const defaultInflationRates = {
+                'Healthcare': 8.0,
+                'Education': 8.0,
+                'Home / Renovation': 6.0,
+                'Vehicle / Consumer Goods': 5.0,
+                'Travel / Lifestyle': 6.0,
+            };
+
             row.innerHTML = `
-                <input class="adhoc-age input-shell w-1/3 rounded-xl p-2 text-sm text-slate-700" type="number" min="1" placeholder="Age" value="${age}">
-                <input class="adhoc-amount input-shell flex-1 rounded-xl p-2 text-sm text-slate-700" type="text" placeholder="Amount" value="${formatCurrency(amount)}">
-                <button type="button" class="remove-adhoc-btn inline-flex h-8 w-8 items-center justify-center rounded-full bg-rose-100 text-lg font-bold text-rose-700 hover:bg-rose-200">×</button>
+                <div class="grid grid-cols-[1fr_1fr_40px] gap-x-3 gap-y-2 items-center">
+                    <input class="adhoc-age input-shell w-full rounded-lg p-2 text-sm" type="number" min="1" placeholder="Age" value="${age}">
+                    <input class="adhoc-amount input-shell w-full rounded-lg p-2 text-sm" type="text" placeholder="Amount" value="${formatCurrency(amount)}">
+                    <button type="button" class="remove-adhoc-btn row-span-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-rose-100 text-lg font-bold text-rose-700 hover:bg-rose-200">×</button>
+                    
+                    <select class="adhoc-category input-shell w-full rounded-lg p-2 text-sm">
+                        <option>Healthcare</option>
+                        <option>Education</option>
+                        <option>Home / Renovation</option>
+                        <option>Vehicle / Consumer Goods</option>
+                        <option>Travel / Lifestyle</option>
+                        <option>Other</option>
+                        <option>Custom</option>
+                    </select>
+                    <div class="relative">
+                        <input class="adhoc-inflation input-shell w-full rounded-lg p-2 text-sm pr-7" type="number" step="0.1" placeholder="Inflation">
+                        <span class="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-400 text-xs">%</span>
+                    </div>
+                </div>
             `;
+
+            const categorySelect = row.querySelector('.adhoc-category');
+            const inflationInput = row.querySelector('.adhoc-inflation');
+            
+            categorySelect.value = category;
+            if (inflation !== null) {
+                inflationInput.value = inflation;
+            } else if (category === 'Other') {
+                inflationInput.value = document.getElementById('avg_inflation_rate').value;
+            }
+
+            categorySelect.addEventListener('change', () => {
+                const selectedCategory = categorySelect.value;
+                if (selectedCategory in defaultInflationRates) {
+                    inflationInput.value = defaultInflationRates[selectedCategory];
+                } else if (selectedCategory === 'Other') {
+                    inflationInput.value = document.getElementById('avg_inflation_rate').value;
+                } else { // Custom
+                    inflationInput.value = '';
+                    inflationInput.focus();
+                }
+            });
+
             row.querySelector('.remove-adhoc-btn').addEventListener('click', () => row.remove());
+            setupCurrencyInputs(row); // Apply currency formatting to the new amount input
             return row;
         }
 
@@ -1408,18 +1459,26 @@
             const container = document.getElementById('adhocExpenseRows');
             container.innerHTML = '';
             const defaults = [
-                { age: 58, amount: 2500000 },
-                { age: 75, amount: 1000000 }
+                { age: 58, amount: 2500000, category: 'Home / Renovation', inflation: 6.0 },
+                { age: 75, amount: 1000000, category: 'Healthcare', inflation: 8.0 }
             ];
-            defaults.forEach(item => container.appendChild(buildAdHocRow(item.age, item.amount)));
+            defaults.forEach(item => container.appendChild(buildAdHocRow(item.age, item.amount, item.category, item.inflation)));
         }
 
         function getAdHocExpenses() {
             return Array.from(document.querySelectorAll('.adhoc-row')).map(row => {
                 const age = parseInt(row.querySelector('.adhoc-age').value || '0', 10);
                 const amount = parseCurrency(row.querySelector('.adhoc-amount').value);
+                const inflationVal = row.querySelector('.adhoc-inflation').value;
+                const inflationRate = (inflationVal !== '' && !isNaN(parseFloat(inflationVal))) ? parseFloat(inflationVal) / 100.0 : null;
+
+                const expense = { age, amount };
+                if (inflationRate !== null) {
+                    expense.inflation_rate = inflationRate;
+                }
+
                 if ((!Number.isNaN(age) && age > 0) && (!Number.isNaN(amount) && amount >= 0)) {
-                    return { age, amount };
+                    return expense;
                 }
                 return null;
             }).filter(Boolean);

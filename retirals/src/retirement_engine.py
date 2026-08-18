@@ -70,7 +70,7 @@ def run_projection(inputs: PlannerInputs):
     opening_corpus = inputs.current_corpus
     total_contributions = 0.0
 
-    ad_hoc_map = {item.age: item.amount for item in inputs.adhoc_expenses or []}
+    ad_hoc_map = {item.age: item for item in inputs.adhoc_expenses or []}
 
     # Pre-calculate portfolio portions for tax calculation
     equity_ltcg_portion = inputs.allocation_equity * inputs.equity_ltcg_split
@@ -144,8 +144,10 @@ def run_projection(inputs: PlannerInputs):
             total_expense_covered_by_pension += expense_covered_by_pension
 
         ad_hoc = 0.0
-        if age in ad_hoc_map:
-            ad_hoc = ad_hoc_map[age] * ((1 + inputs.avg_inflation_rate) ** elapsed_years)
+        ad_hoc_item = ad_hoc_map.get(age)
+        if ad_hoc_item:
+            applicable_inflation = ad_hoc_item.inflation_rate if ad_hoc_item.inflation_rate is not None else inputs.avg_inflation_rate
+            ad_hoc = ad_hoc_item.amount * ((1 + applicable_inflation) ** elapsed_years)
 
         # The amount that must be withdrawn from the portfolio
         portfolio_net_withdrawal_needed = max(0, net_expense_after_pension) + ad_hoc
@@ -293,8 +295,10 @@ def _calculate_minimum_corpus(inputs: PlannerInputs, ad_hoc_map: dict) -> float:
         pension_surplus_reinvested = pension_surplus if inputs.reinvest_pension_surplus else 0.0
 
         ad_hoc = 0.0
-        if age in ad_hoc_map:
-            ad_hoc = ad_hoc_map[age] * ((1 + inputs.avg_inflation_rate) ** elapsed_years)
+        ad_hoc_item = ad_hoc_map.get(age)
+        if ad_hoc_item:
+            applicable_inflation = ad_hoc_item.inflation_rate if ad_hoc_item.inflation_rate is not None else inputs.avg_inflation_rate
+            ad_hoc = ad_hoc_item.amount * ((1 + applicable_inflation) ** elapsed_years)
 
         # Total after-tax outflow needed from the portfolio
         portfolio_net_withdrawal_needed = max(0, net_expense_after_pension) + ad_hoc

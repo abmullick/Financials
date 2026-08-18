@@ -1,9 +1,11 @@
 from pydantic import BaseModel, model_validator, Field
 from enum import Enum
+from typing import Optional
 
 class AdHocExpense(BaseModel):
     age: int = Field(..., gt=0, le=120, description="Age for the ad-hoc expense")
     amount: float = Field(..., ge=0, description="Amount of the ad-hoc expense")
+    inflation_rate: Optional[float] = Field(None, ge=0, le=0.5, description="Specific inflation rate for this expense, if different from the general rate.")
 
 class StressScenario(str, Enum):
     NORMAL = "Normal"

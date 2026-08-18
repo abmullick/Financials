@@ -48,6 +48,47 @@ class RetirementPlannerTest(unittest.TestCase):
         expected_ad_hoc = 100000 * ((1 + 0.05) ** (65 - 40))
         self.assertAlmostEqual(adhoc_row["ad_hoc"], expected_ad_hoc, places=2)
 
+    def test_adhoc_expense_with_custom_inflation(self):
+        """Ensures ad-hoc expenses with a custom inflation rate are inflated correctly."""
+        inputs = PlannerInputs(
+            current_age=40, retirement_age=60, life_expectancy=80,
+            avg_inflation_rate=0.05, # General inflation
+            adhoc_expenses=[
+                # This one should use its own 8% inflation rate
+                AdHocExpense(age=65, amount=100000, inflation_rate=0.08),
+                # This one should fall back to the general 5% inflation rate
+                AdHocExpense(age=70, amount=50000)
+            ]
+        )
+        result = run_projection(inputs)
+        
+        # Test the expense with custom inflation
+        adhoc_row_custom = next(p for p in result["projections"] if p["age"] == 65)
+        expected_ad_hoc_custom = 100000 * ((1 + 0.08) ** (65 - 40))
+        self.assertAlmostEqual(adhoc_row_custom["ad_hoc"], expected_ad_hoc_custom, places=2)
+        self.assertNotAlmostEqual(adhoc_row_custom["ad_hoc"], 100000 * ((1 + 0.05) ** (65 - 40)), places=2, msg="Should not use general inflation rate.")
+
+        # Test the expense falling back to general inflation
+        adhoc_row_general = next(p for p in result["projections"] if p["age"] == 70)
+        expected_ad_hoc_general = 50000 * ((1 + 0.05) ** (70 - 40))
+        self.assertAlmostEqual(adhoc_row_general["ad_hoc"], expected_ad_hoc_general, places=2)
+
+    def test_adhoc_expense_with_zero_custom_inflation(self):
+        """Ensures an ad-hoc expense with a custom inflation rate of 0% is not inflated."""
+        inputs = PlannerInputs(
+            current_age=40, retirement_age=60, life_expectancy=80,
+            avg_inflation_rate=0.06, # General inflation
+            adhoc_expenses=[
+                AdHocExpense(age=65, amount=100000, inflation_rate=0.0)
+            ]
+        )
+        result = run_projection(inputs)
+        
+        adhoc_row = next(p for p in result["projections"] if p["age"] == 65)
+        # With 0% inflation, the future value should be the same as the present value
+        self.assertAlmostEqual(adhoc_row["ad_hoc"], 100000.00, places=2)
+
+
     def test_mild_crash_scenario(self):
         """Validates that a mild crash reduces returns for the first 2 retirement years."""
         inputs = PlannerInputs(
