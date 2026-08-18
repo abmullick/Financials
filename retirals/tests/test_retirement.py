@@ -321,6 +321,89 @@ class RetirementPlannerTest(unittest.TestCase):
         # This assertion is expected to fail with the current logic.
         self.assertAlmostEqual(exhaustion_row["withdrawal"], exhaustion_row["withdrawal_after_tax"] + exhaustion_row["withdrawal_tax"], places=2, msg="Accounting (Gross = Net + Tax) must be consistent in exhaustion year.")
 
+    def test_exhaustion_with_ltcg_exemption(self):
+        """
+        Verifies that in an exhaustion year with an equity-heavy portfolio,
+        the recalculated tax correctly applies the LTCG exemption rules.
+        """
+        inputs = PlannerInputs(
+            current_age=70, retirement_age=71, life_expectancy=75,
+            current_corpus=100000, # Available corpus
+            current_annual_expenses=150000, # High net need to trigger exhaustion
+            annual_contribution=0,
+            avg_inflation_rate=0.0,
+            post_retirement_return=0.0,
+            # Portfolio with significant equity LTCG component
+            allocation_equity=0.8,
+            allocation_debt=0.2,
+            allocation_arbitrage=0.0,
+            equity_ltcg_split=0.7, # LTCG is 56% of withdrawal (0.8 * 0.7)
+            equity_stcg_split=0.3,
+            tax_ltcg=0.10,
+            tax_stcg=0.20,
+            tax_debt=0.20,
+            ltcg_exemption=50000, # Exemption is present
+            adhoc_expenses=[]
+        )
+        result = run_projection(inputs)
+        exhaustion_row = next(p for p in result["projections"] if p["age"] == 71)
+
+        # --- Manual Verification ---
+        # Gross withdrawal is capped to available corpus: 100,000
+        # LTCG portion of withdrawal = 100,000 * (0.8 * 0.7) = 56,000
+        # Since 56,000 > 50,000 (exemption), we are in Case 2 of tax logic.
+        # Tax = (Gross * FullBlendedRate) - (Exemption * LTCGTax)
+        # FullBlendedRate = (0.8*0.7*0.1) + (0.8*0.3*0.2) + (0.2*0.2) = 0.056 + 0.048 + 0.04 = 0.144
+        # Expected Tax = (100,000 * 0.144) - (50,000 * 0.10) = 14,400 - 5,000 = 9,400
+        # Expected Net = 100,000 - 9,400 = 90,600
+
+        self.assertAlmostEqual(exhaustion_row["withdrawal"], 100000.0, places=2, msg="Gross withdrawal should be capped to available corpus.")
+        self.assertAlmostEqual(exhaustion_row["withdrawal_tax"], 9400.0, places=2, msg="Tax in exhaustion year must be recalculated respecting LTCG exemption.")
+        self.assertAlmostEqual(exhaustion_row["withdrawal_after_tax"], 90600.0, places=2, msg="Net withdrawal must be recalculated.")
+        self.assertAlmostEqual(exhaustion_row["closing"], 0.0, places=2)
+        self.assertAlmostEqual(
+            exhaustion_row["withdrawal"],
+            exhaustion_row["withdrawal_after_tax"] + exhaustion_row["withdrawal_tax"],
+            places=2, msg="Accounting must be consistent in LTCG exhaustion year."
+        )
+
+    def test_accounting_in_normal_non_exhaustion_year(self):
+        """
+        Verifies that the accounting equation (Gross = Net + Tax) holds true
+        for a normal year where the portfolio is not exhausted. This ensures
+        the exhaustion fix does not impact standard calculations.
+        """
+        inputs = PlannerInputs(
+            current_age=60, retirement_age=61, life_expectancy=65,
+            current_corpus=5000000, # Ample corpus
+            current_annual_expenses=100000,
+            annual_contribution=0,
+            avg_inflation_rate=0.0,
+            post_retirement_return=0.0,
+            allocation_equity=0.5,
+            allocation_debt=0.5,
+            tax_ltcg=0.10,
+            tax_debt=0.20,
+            ltcg_exemption=100000,
+            adhoc_expenses=[]
+        )
+        result = run_projection(inputs)
+        metrics = result["metrics"]
+        normal_year_row = next(p for p in result["projections"] if p["age"] == 61)
+
+        # Verify plan does not exhaust
+        self.assertTrue(metrics["plan_sustainable"])
+        self.assertIsNone(metrics["corpus_exhaustion_age"])
+
+        # Verify accounting is correct
+        self.assertGreater(normal_year_row["withdrawal"], 0)
+        self.assertAlmostEqual(
+            normal_year_row["withdrawal"],
+            normal_year_row["withdrawal_after_tax"] + normal_year_row["withdrawal_tax"],
+            places=2, msg="Accounting must be consistent in a normal, non-exhaustion year."
+        )
+        self.assertGreater(normal_year_row["closing"], 0, "Corpus should not be zero in a normal year.")
+
 
     # --- Validation Tests ---
 

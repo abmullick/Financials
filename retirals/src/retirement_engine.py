@@ -164,9 +164,16 @@ def run_projection(inputs: PlannerInputs):
                 is_exhausted = True
                 corpus_exhaustion_age = age
                 gross_withdrawal = available_for_withdrawal  # Withdraw everything that's left.
-                # A more complex model could re-calculate tax, but for this scope, we cap the withdrawal.
-                # The key is that the corpus will now become zero.
-
+                
+                # Recalculate tax and net withdrawal based on the capped gross withdrawal.
+                ltcg_portion_of_withdrawal = gross_withdrawal * tax_portions["equity_ltcg_portion"]
+                if ltcg_portion_of_withdrawal <= inputs.ltcg_exemption:
+                    # Case 1: LTCG component is fully exempt. Tax is on other portions.
+                    total_tax = gross_withdrawal * tax_portions["other_blended_rate"]
+                else:
+                    # Case 2: LTCG component exceeds exemption. Apply full rate with a credit.
+                    total_tax = (gross_withdrawal * tax_portions["blended_rate_no_exemption"]) - (inputs.ltcg_exemption * inputs.tax_ltcg)
+                portfolio_net_withdrawal_needed = gross_withdrawal - total_tax
         return_rate = get_return_rate(age, inputs)
 
         # This is an "Annuity Due" model (beginning-of-period contributions)
