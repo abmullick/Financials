@@ -660,35 +660,41 @@
                     </summary>
                     <div class="space-y-3 px-3 pb-3 pt-3">
                         <!-- Portfolio Allocation Section -->
-                        <div>
-                            <h4 class="text-xs font-semibold mb-2" style="color: var(--text-1);">Portfolio Allocation</h4>
+                        <div id="portfolioAllocationGroup">
+                            <div class="flex justify-between items-center mb-2">
+                                <h4 class="text-xs font-semibold" style="color: var(--text-1);">Portfolio Allocation</h4>
+                                <div id="allocationTotalDisplay" class="text-xs font-semibold px-2 py-1 rounded-md">100%</div>
+                            </div>
                             <div class="grid grid-cols-3 gap-2 text-xs">
                                 <div>
                                     <label class="block font-medium text-slate-300">Equity (%)</label>
-                                    <input type="number" id="allocation_equity" value="60" min="0" max="100" class="input-shell w-full rounded-lg p-1.5 text-slate-700">
+                                    <input type="number" id="allocation_equity" value="60" min="0" max="100" step="1" class="input-shell w-full rounded-lg p-1.5 text-slate-700 allocation-input">
                                 </div>
                                 <div>
                                     <label class="block font-medium text-slate-300">Debt (%)</label>
-                                    <input type="number" id="allocation_debt" value="30" min="0" max="100" class="input-shell w-full rounded-lg p-1.5 text-slate-700">
+                                    <input type="number" id="allocation_debt" value="30" min="0" max="100" step="1" class="input-shell w-full rounded-lg p-1.5 text-slate-700 allocation-input">
                                 </div>
                                 <div>
                                     <label class="block font-medium text-slate-300">Arbitrage (%)</label>
-                                    <input type="number" id="allocation_arbitrage" value="10" min="0" max="100" class="input-shell w-full rounded-lg p-1.5 text-slate-700">
+                                    <input type="number" id="allocation_arbitrage" value="10" min="0" max="100" step="1" class="input-shell w-full rounded-lg p-1.5 text-slate-700 allocation-input">
                                 </div>
                             </div>
                         </div>
 
                         <!-- Equity Sub-allocation -->
                         <div>
-                            <h4 class="text-xs font-semibold mb-2" style="color: var(--text-1);">Equity sub-allocation (LTCG/STCG split)</h4>
+                            <div class="flex justify-between items-center mb-2">
+                                <h4 class="text-xs font-semibold" style="color: var(--text-1);">Equity sub-allocation (LTCG/STCG split)</h4>
+                                <div id="equitySplitTotalDisplay" class="text-xs font-semibold px-2 py-1 rounded-md">100%</div>
+                            </div>
                             <div class="grid grid-cols-2 gap-2 text-xs">
                                 <div>
                                     <label class="block font-medium text-slate-300">LTCG (%)</label>
-                                    <input type="number" id="equity_ltcg_split" value="70" min="0" max="100" class="input-shell w-full rounded-lg p-1.5 text-slate-700">
+                                    <input type="number" id="equity_ltcg_split" value="70" min="0" max="100" step="1" class="input-shell w-full rounded-lg p-1.5 text-slate-700 equity-split-input">
                                 </div>
                                 <div>
                                     <label class="block font-medium text-slate-300">STCG (%)</label>
-                                    <input type="number" id="equity_stcg_split" value="30" min="0" max="100" class="input-shell w-full rounded-lg p-1.5 text-slate-700">
+                                    <input type="number" id="equity_stcg_split" value="30" min="0" max="100" step="1" class="input-shell w-full rounded-lg p-1.5 text-slate-700 equity-split-input">
                                 </div>
                             </div>
                         </div>
@@ -748,8 +754,11 @@
 
                 <details id="pensionSection" class="group rounded-xl border" style="border-color: var(--stroke);">
                     <summary class="flex cursor-pointer list-none items-center justify-between px-3 py-2.5 text-sm font-semibold" style="border-bottom: 1px solid var(--stroke); background: var(--glass); color: var(--text-2);">
-                        <div class="flex items-center gap-2">
-                            <input type="checkbox" id="include_pension" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500">
+                        <div class="flex items-center gap-3">
+                            <label for="include_pension" class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="include_pension" class="sr-only peer">
+                                <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                            </label>
                             <label for="include_pension">Retirement Income (Pension)</label>
                         </div>
                         <span class="text-xs transition-transform group-open:rotate-180" style="color: var(--text-3);">▾</span>
@@ -781,8 +790,11 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="flex items-center gap-2 pt-2">
-                            <input type="checkbox" id="reinvest_pension_surplus" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500" checked>
+                        <div class="flex items-center gap-3 pt-2">
+                            <label for="reinvest_pension_surplus" class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" id="reinvest_pension_surplus" class="sr-only peer" checked>
+                                <div class="w-11 h-6 bg-gray-200 rounded-full peer peer-focus:ring-2 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+                            </label>
                             <label for="reinvest_pension_surplus" class="text-xs font-medium text-slate-300">Reinvest pension surplus into corpus</label>
                         </div>
                     </div>
@@ -1680,6 +1692,54 @@
             }
         });
 
+        function setupAllocationValidator() {
+            const inputs = document.querySelectorAll('.allocation-input');
+            const totalDisplay = document.getElementById('allocationTotalDisplay');
+
+            function validateAllocation() {
+                const equity = parseFloat(document.getElementById('allocation_equity').value) || 0;
+                const debt = parseFloat(document.getElementById('allocation_debt').value) || 0;
+                const arbitrage = parseFloat(document.getElementById('allocation_arbitrage').value) || 0;
+                const total = equity + debt + arbitrage;
+
+                totalDisplay.textContent = `${total.toFixed(0)}%`;
+
+                totalDisplay.classList.remove('bg-emerald-100', 'text-emerald-800', 'bg-rose-100', 'text-rose-800');
+                if (Math.abs(total - 100) < 0.01) {
+                    totalDisplay.classList.add('bg-emerald-100', 'text-emerald-800');
+                } else {
+                    totalDisplay.classList.add('bg-rose-100', 'text-rose-800');
+                }
+            }
+
+            inputs.forEach(input => input.addEventListener('input', validateAllocation));
+            
+            validateAllocation(); // Initial validation on load
+        }
+
+        function setupEquitySplitValidator() {
+            const inputs = document.querySelectorAll('.equity-split-input');
+            const totalDisplay = document.getElementById('equitySplitTotalDisplay');
+
+            function validateEquitySplit() {
+                const ltcg = parseFloat(document.getElementById('equity_ltcg_split').value) || 0;
+                const stcg = parseFloat(document.getElementById('equity_stcg_split').value) || 0;
+                const total = ltcg + stcg;
+
+                totalDisplay.textContent = `${total.toFixed(0)}%`;
+
+                totalDisplay.classList.remove('bg-emerald-100', 'text-emerald-800', 'bg-rose-100', 'text-rose-800');
+                if (Math.abs(total - 100) < 0.01) {
+                    totalDisplay.classList.add('bg-emerald-100', 'text-emerald-800');
+                } else {
+                    totalDisplay.classList.add('bg-rose-100', 'text-rose-800');
+                }
+            }
+
+            inputs.forEach(input => input.addEventListener('input', validateEquitySplit));
+            validateEquitySplit(); // Initial validation on load
+        }
+
         // Handlers for currency input focus/blur
         function handleCurrencyFocus(e) {
             e.target.value = parseCurrency(e.target.value);
@@ -1720,6 +1780,8 @@
         seedAdHocRows();
         initializeTheme();
         window.addEventListener('resize', fitAllKpiValues);
+        setupAllocationValidator();
+        setupEquitySplitValidator();
         setupCurrencyInputs(); // Initial setup for all static currency inputs
         
         // Handle direct URL access to the planner
