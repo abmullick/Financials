@@ -404,6 +404,81 @@ class RetirementPlannerTest(unittest.TestCase):
         )
         self.assertGreater(normal_year_row["closing"], 0, "Corpus should not be zero in a normal year.")
 
+    def test_post_exhaustion_with_unfunded_expenses(self):
+        """
+        Tests that after corpus exhaustion, `unfunded_expense` correctly reports
+        the shortfall not covered by an insufficient pension.
+        """
+        inputs = PlannerInputs(
+            current_age=70, retirement_age=71, life_expectancy=75,
+            current_corpus=100000,
+            current_annual_expenses=150000, # High expenses
+            avg_inflation_rate=0.0,
+            post_retirement_return=0.0,
+            include_pension=True,
+            pension_start_age=71,
+            annual_pension=50000, # Pension is insufficient
+            pension_tax_rate=0.20, # Net pension = 40,000
+            adhoc_expenses=[]
+        )
+        result = run_projection(inputs)
+        metrics = result["metrics"]
+        projections = result["projections"]
+
+        self.assertEqual(metrics["corpus_exhaustion_age"], 71, "Corpus should exhaust at age 71.")
+
+        # Year after exhaustion (age 72)
+        post_exhaustion_row = next(p for p in projections if p["age"] == 72)
+
+        self.assertEqual(post_exhaustion_row["opening"], 0)
+        self.assertEqual(post_exhaustion_row["withdrawal"], 0)
+        self.assertEqual(post_exhaustion_row["return"], 0)
+        self.assertEqual(post_exhaustion_row["closing"], 0)
+        self.assertGreater(post_exhaustion_row["pension"], 0, "Pension should continue after exhaustion.")
+
+        # Expected unfunded = expense - net_pension = 150,000 - 40,000 = 110,000
+        self.assertEqual(post_exhaustion_row["unfunded_expense"], 110000)
+
+    def test_post_exhaustion_with_sufficient_pension(self):
+        """
+        Tests that after corpus exhaustion, `unfunded_expense` is zero when
+        pension is sufficient to cover all recurring expenses.
+        """
+        inputs = PlannerInputs(
+            current_age=70, retirement_age=71, life_expectancy=75,
+            current_corpus=100000,
+            current_annual_expenses=150000,
+            avg_inflation_rate=0.0,
+            post_retirement_return=0.0,
+            include_pension=True,
+            pension_start_age=71,
+            annual_pension=200000, # Pension is sufficient
+            pension_tax_rate=0.20, # Net pension = 160,000
+            adhoc_expenses=[]
+        )
+        result = run_projection(inputs)
+        projections = result["projections"]
+
+        # Year after exhaustion (age 72)
+        post_exhaustion_row = next(p for p in projections if p["age"] == 72)
+
+        self.assertEqual(post_exhaustion_row["opening"], 0)
+        self.assertEqual(post_exhaustion_row["withdrawal"], 0)
+        self.assertEqual(post_exhaustion_row["unfunded_expense"], 0, "Unfunded expense should be 0 when pension is sufficient.")
+        self.assertGreater(post_exhaustion_row["pension_surplus_reinvested"], 0, "Pension surplus should be calculated.")
+
+    def test_unfunded_expense_is_zero_before_exhaustion(self):
+        """
+        Verifies that the `unfunded_expense` field is always zero in years
+        before the portfolio is exhausted.
+        """
+        inputs = PlannerInputs(current_corpus=50000000) # A plan that won't exhaust
+        result = run_projection(inputs)
+        projections = result["projections"]
+
+        for row in projections:
+            self.assertEqual(row["unfunded_expense"], 0, f"Unfunded expense should be 0 at age {row['age']} for a sustainable plan.")
+
 
     # --- Validation Tests ---
 

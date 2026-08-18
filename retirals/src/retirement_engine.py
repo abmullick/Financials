@@ -150,6 +150,7 @@ def run_projection(inputs: PlannerInputs):
         # The amount that must be withdrawn from the portfolio
         portfolio_net_withdrawal_needed = max(0, net_expense_after_pension) + ad_hoc
 
+        unfunded_expense = 0.0
         gross_withdrawal = 0.0
         total_tax = 0.0
         
@@ -174,6 +175,10 @@ def run_projection(inputs: PlannerInputs):
                     # Case 2: LTCG component exceeds exemption. Apply full rate with a credit.
                     total_tax = (gross_withdrawal * tax_portions["blended_rate_no_exemption"]) - (inputs.ltcg_exemption * inputs.tax_ltcg)
                 portfolio_net_withdrawal_needed = gross_withdrawal - total_tax
+        elif is_exhausted: # This is the case for years *after* the exhaustion year
+            # The portfolio is gone, so withdrawals are zero.
+            # The unfunded amount is the recurring expense not covered by pension.
+            unfunded_expense = max(0, net_expense_after_pension)
         return_rate = get_return_rate(age, inputs)
 
         # This is an "Annuity Due" model (beginning-of-period contributions)
@@ -198,6 +203,7 @@ def run_projection(inputs: PlannerInputs):
             "pension_tax": round(pension_tax, 2),
             "pension_surplus_reinvested": round(pension_surplus_reinvested, 2),
             "ad_hoc": round(ad_hoc, 2),
+            "unfunded_expense": round(unfunded_expense, 2),
             "return": round(returns, 2),
             "closing": round(closing_corpus, 2)
         })

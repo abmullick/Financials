@@ -949,16 +949,19 @@
                         <table class="ledger-table min-w-full text-sm">
                             <thead class="sticky top-0">
                                 <tr>
-                                    <th class="px-4 py-2 text-left text-xs font-medium uppercase">Age</th>
-                                    <th class="px-4 py-2 text-right text-xs font-medium uppercase">Opening</th>
-                                    <th class="px-4 py-2 text-right text-xs font-medium uppercase">Return</th>
-                                    <th class="px-4 py-2 text-right text-xs font-medium uppercase">Contribution</th>
-                                    <th class="px-4 py-2 text-right text-xs font-medium uppercase">Lumpsum</th>
-                                    <th class="px-4 py-2 text-right text-xs font-medium uppercase">Pension</th>
-                                    <th class="px-4 py-2 text-right text-xs font-medium uppercase">Pension Tax</th>
-                                    <th class="px-4 py-2 text-right text-xs font-medium uppercase">Reinvested</th>
-                                    <th class="px-4 py-2 text-right text-xs font-medium uppercase">Withdrawal</th>
-                                    <th class="px-4 py-2 text-right text-xs font-medium uppercase">Closing</th>
+                                    <th class="py-2 px-3 text-left text-xs font-medium uppercase">Age</th>
+                                    <th class="py-2 px-3 text-right text-xs font-medium uppercase">Opening</th>
+                                    <th class="py-2 px-3 text-right text-xs font-medium uppercase">Contribution</th>
+                                    <th class="py-2 px-3 text-right text-xs font-medium uppercase">Lumpsum</th>
+                                    <th class="py-2 px-3 text-right text-xs font-medium uppercase">Pension</th>
+                                    <th class="py-2 px-3 text-right text-xs font-medium uppercase">Pension Tax</th>
+                                    <th class="py-2 px-3 text-right text-xs font-medium uppercase">Reinvested</th>
+                                    <th class="py-2 px-3 text-right text-xs font-medium uppercase">Withdrawal</th>
+                                    <th class="py-2 px-3 text-right text-xs font-medium uppercase">Withdrawal Tax</th>
+                                    <th class="py-2 px-3 text-right text-xs font-medium uppercase">Ad-Hoc</th>
+                                    <th class="py-2 px-3 text-right text-xs font-medium uppercase text-red-400">Unfunded</th>
+                                    <th class="py-2 px-3 text-right text-xs font-medium uppercase">Return</th>
+                                    <th class="py-2 px-3 text-right text-xs font-medium uppercase">Closing</th>
                                 </tr>
                             </thead>
                             <tbody id="ledger_body">
@@ -1446,13 +1449,14 @@
                 const ages = data.projections.map(row => row.age);
                 const opening = data.projections.map(row => row.opening);
                 const contribution = data.projections.map(row => row.contribution);
+                const lumpsumData = data.projections.map(row => row.lumpsum);
                 const withdrawal = data.projections.map(row => row.withdrawal);
                 const withdrawalAfterTax = data.projections.map(row => row.withdrawal_after_tax);
                 const withdrawalTax = data.projections.map(row => row.withdrawal_tax);
                 const adHoc = data.projections.map(row => row.ad_hoc);
                 const returns = data.projections.map(row => row.return);
                 const closing = data.projections.map(row => row.closing);
-
+                const unfundedExpense = data.projections.map(row => row.unfunded_expense);
                 const pensionData = data.projections.map(p => p.pension - p.pension_tax);
                 const pensionSurplusData = data.projections.map(p => p.pension_surplus_reinvested);
 
@@ -1462,17 +1466,21 @@
                 data.projections.forEach(row => {
                     const tr = document.createElement('tr');
                     if (row.age === payload.retirement_age) tr.className = 'bg-amber-50/70 font-medium';
+                    if (row.age === data.metrics.corpus_exhaustion_age) tr.className = 'bg-rose-50/70 font-medium';
                     tr.innerHTML = `
-                        <td class="px-4 py-2 font-medium">${row.age}</td>
-                        <td class="px-4 py-2 text-right">${fmt(row.opening)}</td>
-                        <td class="px-4 py-2 text-right text-blue-600">${fmt(row.return)}</td>
-                        <td class="px-4 py-2 text-right text-emerald-600">+${fmt(row.contribution)}</td>
-                        <td class="px-4 py-2 text-right text-emerald-600">+${fmt(row.lumpsum)}</td>
-                        <td class="px-4 py-2 text-right text-emerald-600">+${fmt(row.pension)}</td>
-                        <td class="px-4 py-2 text-right text-rose-600">-${fmt(row.pension_tax)}</td>
-                        <td class="px-4 py-2 text-right text-emerald-600">+${fmt(row.pension_surplus_reinvested)}</td>
-                        <td class="px-4 py-2 text-right text-rose-600">-${fmt(row.withdrawal)}</td>
-                        <td class="px-4 py-2 text-right font-medium">${fmt(row.closing)}</td>
+                        <td class="py-2 px-3 font-medium">${row.age}</td>
+                        <td class="py-2 px-3 text-right">${fmt(row.opening)}</td>
+                        <td class="py-2 px-3 text-right text-emerald-600 dark:text-emerald-400">+${fmt(row.contribution)}</td>
+                        <td class="py-2 px-3 text-right text-emerald-600 dark:text-emerald-400">+${fmt(row.lumpsum)}</td>
+                        <td class="py-2 px-3 text-right text-emerald-600 dark:text-emerald-400">+${fmt(row.pension)}</td>
+                        <td class="py-2 px-3 text-right text-rose-600 dark:text-rose-400">-${fmt(row.pension_tax)}</td>
+                        <td class="py-2 px-3 text-right text-emerald-600 dark:text-emerald-400">+${fmt(row.pension_surplus_reinvested)}</td>
+                        <td class="py-2 px-3 text-right text-rose-600 dark:text-rose-400">-${fmt(row.withdrawal)}</td>
+                        <td class="py-2 px-3 text-right text-rose-600 dark:text-rose-400">-${fmt(row.withdrawal_tax)}</td>
+                        <td class="py-2 px-3 text-right text-purple-600 dark:text-purple-400">-${fmt(row.ad_hoc)}</td>
+                        <td class="py-2 px-3 text-right font-semibold ${row.unfunded_expense > 0 ? 'text-red-600 dark:text-red-400' : ''}">-${fmt(row.unfunded_expense)}</td>
+                        <td class="py-2 px-3 text-right text-blue-600 dark:text-blue-400">${fmt(row.return)}</td>
+                        <td class="py-2 px-3 text-right font-medium">${fmt(row.closing)}</td>
                     `
                     ;
                     tbody.appendChild(tr);
@@ -1490,6 +1498,7 @@
 
                 const cashFlowDatasets = [
                     { label: 'Contribution', data: contribution, backgroundColor: 'rgba(16, 185, 129, 0.78)', borderColor: 'rgba(16, 185, 129, 1)', borderWidth: 1 },
+                    { label: 'Lumpsum', data: lumpsumData, backgroundColor: 'rgba(37, 99, 235, 0.78)', borderColor: 'rgba(37, 99, 235, 1)', borderWidth: 1 },
                     { label: 'Portfolio Withdrawal', data: withdrawal, backgroundColor: 'rgba(239, 68, 68, 0.78)', borderColor: 'rgba(239, 68, 68, 1)', borderWidth: 1  }
                 ];
 
@@ -1511,9 +1520,11 @@
                 }]);
 
                 makeBarChart('expenseChart', ages, [
-                    { label: 'Annual Expenses', data: withdrawalAfterTax, backgroundColor: 'rgba(239, 68, 68, 0.76)', borderColor: 'rgba(239, 68, 68, 1)', borderWidth: 1 },
-                    { label: 'Ad-Hoc', data: adHoc, backgroundColor: 'rgba(124, 58, 237, 0.76)', borderColor: 'rgba(124, 58, 237, 1)', borderWidth: 1 }
-                ], { scales: { x: { stacked: false }, y: { stacked: false } } });
+                    { label: 'Annual Expenses (Net)', data: withdrawalAfterTax, backgroundColor: 'rgba(239, 68, 68, 0.76)', borderColor: 'rgba(239, 68, 68, 1)', borderWidth: 1, stack: 'outflow' },
+                    { label: 'Withdrawal Tax', data: withdrawalTax, backgroundColor: 'rgba(59, 130, 246, 0.76)', borderColor: 'rgba(59, 130, 246, 1)', borderWidth: 1, stack: 'outflow' },
+                    { label: 'Ad-Hoc', data: adHoc, backgroundColor: 'rgba(124, 58, 237, 0.76)', borderColor: 'rgba(124, 58, 237, 1)', borderWidth: 1 },
+                    { label: 'Unfunded Expense', data: unfundedExpense, backgroundColor: 'rgba(217, 70, 239, 0.76)', borderColor: 'rgba(217, 70, 239, 1)', borderWidth: 1 }
+                ], { scales: { x: { stacked: true }, y: { stacked: true } } });
 
                 makeLineChart('withdrawalReturnChart', ages, [
                     { label: 'Withdrawal', data: withdrawal, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.08)', fill: false, pointRadius: 0 },
