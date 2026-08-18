@@ -1141,20 +1141,15 @@
                     </div>
                 </div>
 
-                <div class="pt-3 border-t border-slate-200">
-                    <div class="flex items-center justify-between mb-2">
+                <div class="pt-4 mt-4" style="border-top: 1px solid var(--stroke);">
+                    <div class="space-y-2">
                         <div>
-                            <h3 class="text-sm font-semibold text-slate-700">Ad-hoc Expenses</h3>
-                            <p class="text-xs text-slate-400">(in today's money)</p>
+                            <h3 class="text-sm font-semibold" style="color: var(--text-1);">Future One-Time Expenses</h3>
+                            <p class="text-xs" style="color: var(--text-3);">Optional — add any major future expenses.</p>
                         </div>
-                        <button id="addAdHocBtn" type="button" class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-lg font-bold text-white shadow-sm hover:bg-slate-700">+</button>
+                        <div id="adhocExpenseRows" class="space-y-3 pt-1"></div>
+                        <button id="addAdHocBtn" type="button" class="secondary-button w-full font-semibold py-2 rounded-xl text-sm mt-2">+ Add Expense</button>
                     </div>
-                    <div class="flex items-center gap-2 px-1 mb-1">
-                        <label class="w-1/3 text-xs font-medium text-slate-400">Age</label>
-                        <label class="flex-1 text-xs font-medium text-slate-400">Amount</label>
-                        <div class="w-8"></div> <!-- Spacer for the delete button -->
-                    </div>
-                    <div id="adhocExpenseRows" class="space-y-2"></div>
                 </div>
 
                 <div class="text-center pt-2">
@@ -1458,11 +1453,6 @@
         function seedAdHocRows() {
             const container = document.getElementById('adhocExpenseRows');
             container.innerHTML = '';
-            const defaults = [
-                { age: 58, amount: 2500000, category: 'Home / Renovation', inflation: 6.0 },
-                { age: 75, amount: 1000000, category: 'Healthcare', inflation: 8.0 }
-            ];
-            defaults.forEach(item => container.appendChild(buildAdHocRow(item.age, item.amount, item.category, item.inflation)));
         }
 
         function getAdHocExpenses() {
