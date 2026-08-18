@@ -503,6 +503,53 @@
                 height: 22rem;
             }
         }
+
+        .tooltip-container {
+            display: inline-block;
+            position: relative;
+        }
+
+        .tooltip-icon {
+            cursor: help;
+            font-size: 11px;
+            font-weight: bold;
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            border-radius: 50%;
+            width: 15px;
+            height: 15px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+        }
+
+        .tooltip-content {
+            visibility: hidden;
+            width: 250px;
+            background-color: var(--bg-4);
+            color: var(--text-2);
+            text-align: left;
+            border-radius: 8px;
+            padding: 12px;
+            position: absolute;
+            z-index: 50;
+            bottom: 135%;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            transition: opacity 0.2s ease-in-out;
+            font-size: 12px;
+            line-height: 1.5;
+            border: 1px solid var(--stroke);
+            box-shadow: 0 8px 24px rgba(2, 8, 18, 0.2);
+            pointer-events: none;
+        }
+
+        .tooltip-container:hover .tooltip-content {
+            visibility: visible;
+            opacity: 1;
+        }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans antialiased">
@@ -600,56 +647,87 @@
                     <div>
                         <label class="block text-xs font-medium text-slate-300" for="current_age">Current Age</label>
                         <input type="number" id="current_age" aria-label="Current age" value="23" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                        <p class="text-xs mt-1.5" style="color: var(--text-3);">Your current age.</p>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-300" for="retirement_age">Retirement Age</label>
                         <input type="number" id="retirement_age" aria-label="Retirement age" value="58" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                        <p class="text-xs mt-1.5" style="color: var(--text-3);">The age you plan to retire.</p>
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-xs font-medium text-slate-300" for="life_expectancy">Life Expectancy</label>
                     <input type="number" id="life_expectancy" aria-label="Life expectancy" value="85" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                    <p class="text-xs mt-1.5" style="color: var(--text-3);">The age until which the plan should run.</p>
                 </div>
 
                 <div>
                     <label class="block text-xs font-medium text-slate-300" for="current_annual_expenses">Current Annual Expenses (₹)</label>
                     <input type="text" id="current_annual_expenses" aria-label="Current annual expenses" value="600000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                    <p class="text-xs mt-1.5" style="color: var(--text-3);">Total yearly expenses in today's money.</p>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-medium text-slate-300" for="avg_inflation_rate">Inflation Rate</label>
+                        <div class="flex items-center gap-1.5 mb-1">
+                            <label class="block text-xs font-medium text-slate-300" for="avg_inflation_rate">Inflation Rate</label>
+                            <div class="tooltip-container">
+                                <span class="tooltip-icon">ⓘ</span>
+                                <div class="tooltip-content">
+                                    Average annual increase assumed for your expenses. Example: 6% means ₹10 lakh today becomes approximately ₹13.4 lakh in 5 years.
+                                </div>
+                            </div>
+                        </div>
                         <div class="relative">
                             <input type="number" step="0.1" id="avg_inflation_rate" aria-label="Average inflation rate" value="6.0" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
                             <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">%</span>
                         </div>
+                        <p class="text-xs mt-1.5" style="color: var(--text-3);">Expected average annual inflation.</p>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-300" for="current_corpus">Current Corpus (₹)</label>
                         <input type="text" id="current_corpus" aria-label="Current corpus" value="100000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                        <p class="text-xs mt-1.5" style="color: var(--text-3);">Your current investment portfolio value.</p>
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-xs font-medium text-slate-300" for="annual_contribution">Annual Additional Contribution (₹)</label>
                     <input type="text" id="annual_contribution" aria-label="Annual contribution" value="200000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                    <p class="text-xs mt-1.5" style="color: var(--text-3);">Amount you plan to invest additionally each year.</p>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs font-medium text-slate-300" for="pre_retirement_return">Pre-Retire Return</label>
+                        <div class="flex items-center gap-1.5 mb-1">
+                            <label class="block text-xs font-medium text-slate-300" for="pre_retirement_return">Pre-Retire Return</label>
+                            <div class="tooltip-container">
+                                <span class="tooltip-icon">ⓘ</span>
+                                <div class="tooltip-content">
+                                    The expected average annual return on your investment portfolio *before* you retire. This is typically higher as you can take on more risk.
+                                </div>
+                            </div>
+                        </div>
                         <div class="relative">
                             <input type="number" step="0.1" id="pre_retirement_return" aria-label="Pre retirement return" value="9.0" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
                             <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">%</span>
                         </div>
+                        <p class="text-xs mt-1.5" style="color: var(--text-3);">Expected annual portfolio return before retirement.</p>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium text-slate-300" for="post_retirement_return">Post-Retire Return</label>
+                        <div class="flex items-center gap-1.5 mb-1">
+                            <label class="block text-xs font-medium text-slate-300" for="post_retirement_return">Post-Retire Return</label>
+                            <div class="tooltip-container">
+                                <span class="tooltip-icon">ⓘ</span>
+                                <div class="tooltip-content">The expected average annual return on your investment portfolio *after* you retire. This is typically lower as the portfolio shifts towards safer, income-generating assets.</div>
+                            </div>
+                        </div>
                         <div class="relative">
                             <input type="number" step="0.1" id="post_retirement_return" aria-label="Post retirement return" value="8.0" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
                             <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">%</span>
                         </div>
+                        <p class="text-xs mt-1.5" style="color: var(--text-3);">Expected annual portfolio return after retirement.</p>
                     </div>
                 </div>
 
@@ -658,7 +736,7 @@
                         <span>Advanced assumptions</span>
                         <span class="text-xs transition-transform group-open:rotate-180" style="color: var(--text-3);">▾</span>
                     </summary>
-                    <div class="space-y-3 px-3 pb-3 pt-3">
+                    <div class="space-y-4 px-3 pb-3 pt-3">
                         <!-- Portfolio Allocation Section -->
                         <div id="portfolioAllocationGroup">
                             <div class="flex justify-between items-center mb-2">
@@ -679,6 +757,7 @@
                                     <input type="number" id="allocation_arbitrage" value="10" min="0" max="100" step="1" class="input-shell w-full rounded-lg p-1.5 text-slate-700 allocation-input">
                                 </div>
                             </div>
+                            <p class="text-xs mt-1.5" style="color: var(--text-3);">How your portfolio is divided across asset classes.</p>
                         </div>
 
                         <!-- Equity Sub-allocation -->
@@ -697,6 +776,7 @@
                                     <input type="number" id="equity_stcg_split" value="30" min="0" max="100" step="1" class="input-shell w-full rounded-lg p-1.5 text-slate-700 equity-split-input">
                                 </div>
                             </div>
+                            <p class="text-xs mt-1.5" style="color: var(--text-3);">How equity returns are split between long/short-term gains.</p>
                         </div>
 
                         <!-- Tax Rates by Asset Class -->
@@ -704,49 +784,89 @@
                             <h4 class="text-xs font-semibold mb-2" style="color: var(--text-1);">Tax rates by asset class</h4>
                             <div class="grid grid-cols-2 gap-2 text-xs">
                                 <div>
-                                    <label class="block font-medium text-slate-300">LTCG Tax (%)</label>
+                                    <div class="flex items-center gap-1.5 mb-1">
+                                        <label class="block font-medium text-slate-300">LTCG Tax (%)</label>
+                                        <div class="tooltip-container">
+                                            <span class="tooltip-icon">ⓘ</span>
+                                            <div class="tooltip-content">Tax on Long-Term Capital Gains from equity, typically for assets held over 1 year.</div>
+                                        </div>
+                                    </div>
                                     <div class="relative">
                                         <input type="number" step="0.1" id="tax_ltcg" value="12.5" class="input-shell w-full rounded-lg p-1.5 text-slate-700 pr-7">
                                         <span class="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-400">%</span>
                                     </div>
                                 </div>
                                 <div>
-                                    <label class="block font-medium text-slate-300">STCG Tax (%)</label>
+                                    <div class="flex items-center gap-1.5 mb-1">
+                                        <label class="block font-medium text-slate-300">STCG Tax (%)</label>
+                                        <div class="tooltip-container">
+                                            <span class="tooltip-icon">ⓘ</span>
+                                            <div class="tooltip-content">Tax on Short-Term Capital Gains from equity, typically for assets held less than 1 year.</div>
+                                        </div>
+                                    </div>
                                     <div class="relative">
                                         <input type="number" step="0.1" id="tax_stcg" value="20.0" class="input-shell w-full rounded-lg p-1.5 text-slate-700 pr-7">
                                         <span class="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-400">%</span>
                                     </div>
                                 </div>
                                 <div>
-                                    <label class="block font-medium text-slate-300">Debt Tax (%)</label>
+                                    <div class="flex items-center gap-1.5 mb-1">
+                                        <label class="block font-medium text-slate-300">Debt Tax (%)</label>
+                                        <div class="tooltip-container">
+                                            <span class="tooltip-icon">ⓘ</span>
+                                            <div class="tooltip-content">Tax on gains from debt instruments. This is often taxed at your income tax slab rate.</div>
+                                        </div>
+                                    </div>
                                     <div class="relative">
                                         <input type="number" step="0.1" id="tax_debt" value="20.0" class="input-shell w-full rounded-lg p-1.5 text-slate-700 pr-7">
                                         <span class="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-400">%</span>
                                     </div>
                                 </div>
                                 <div>
-                                    <label class="block font-medium text-slate-300">Arbitrage Tax (%)</label>
+                                    <div class="flex items-center gap-1.5 mb-1">
+                                        <label class="block font-medium text-slate-300">Arbitrage Tax (%)</label>
+                                        <div class="tooltip-container">
+                                            <span class="tooltip-icon">ⓘ</span>
+                                            <div class="tooltip-content">Tax on gains from arbitrage funds, which are typically treated as equity for tax purposes.</div>
+                                        </div>
+                                    </div>
                                     <div class="relative">
                                         <input type="number" step="0.1" id="tax_arbitrage" value="20.0" class="input-shell w-full rounded-lg p-1.5 text-slate-700 pr-7">
                                         <span class="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-400">%</span>
                                     </div>
                                 </div>
                             </div>
+                            <p class="text-xs mt-1.5" style="color: var(--text-3);">Applicable tax rates for gains from each asset class.</p>
                         </div>
 
                         <!-- Basic Assumptions -->
-                        <div class="grid grid-cols-2 gap-3" style="border-top: 1px solid var(--stroke); padding-top: 1rem;">
+                        <div class="grid grid-cols-2 gap-4" style="border-top: 1px solid var(--stroke); padding-top: 1rem;">
                             <div>
-                                <label class="block text-xs font-medium text-slate-300">Annual Contribution Increase</label>
+                                <div class="flex items-center gap-1.5 mb-1">
+                                    <label class="block text-xs font-medium text-slate-300">Annual Contribution Increase</label>
+                                    <div class="tooltip-container">
+                                        <span class="tooltip-icon">ⓘ</span>
+                                        <div class="tooltip-content">The percentage by which you plan to increase your annual investment each year, often tied to salary hikes.</div>
+                                    </div>
+                                </div>
                                 <input type="number" step="0.1" id="contribution_increase" value="1.0" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                                <p class="text-xs mt-1.5" style="color: var(--text-3);">Annual % increase in your contribution.</p>
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-slate-300">LTCG Exemption Limit (₹)</label>
+                                <div class="flex items-center gap-1.5 mb-1">
+                                    <label class="block text-xs font-medium text-slate-300">LTCG Exemption Limit (₹)</label>
+                                    <div class="tooltip-container">
+                                        <span class="tooltip-icon">ⓘ</span>
+                                        <div class="tooltip-content">The annual amount of Long-Term Capital Gains from equity that is exempt from tax. The current limit is ₹1,00,000, but this planner allows for a higher limit to be set for a married couple filing jointly (e.g., ₹1,25,000 each).</div>
+                                    </div>
+                                </div>
                                 <input type="text" id="ltcg_exemption" value="125000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                                <p class="text-xs mt-1.5" style="color: var(--text-3);">Annual tax exemption on LTCG.</p>
                             </div>
                             <div class="col-span-2">
                                 <label class="block text-xs font-medium text-slate-300">One-time Lumpsum at Retirement (₹)</label>
                                 <input type="text" id="one_time_lumpsum" value="0" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700" placeholder="e.g., Gratuity, Leave Encashment">
+                                <p class="text-xs mt-1.5" style="color: var(--text-3);">Any one-time amount received at retirement.</p>
                             </div>
                         </div>
                     </div>
@@ -763,31 +883,47 @@
                         </div>
                         <span class="text-xs transition-transform group-open:rotate-180" style="color: var(--text-3);">▾</span>
                     </summary>
-                    <div id="pensionInputs" class="space-y-3 px-3 pb-3 pt-3 hidden">
+                    <div id="pensionInputs" class="space-y-4 px-3 pb-3 pt-3 hidden">
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs font-medium text-slate-300">Pension Start Age</label>
                                 <input type="number" id="pension_start_age" value="60" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                                <p class="text-xs mt-1.5" style="color: var(--text-3);">Age you start receiving pension.</p>
                             </div>
                             <div>
                                 <label class="block text-xs font-medium text-slate-300">Annual Pension (₹)</label>
                                 <input type="text" id="annual_pension" value="600000" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                                <p class="text-xs mt-1.5" style="color: var(--text-3);">Yearly amount in today's money.</p>
                             </div>
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-xs font-medium text-slate-300">Pension Increase</label>
+                                <div class="flex items-center gap-1.5 mb-1">
+                                    <label class="block text-xs font-medium text-slate-300">Pension Increase</label>
+                                    <div class="tooltip-container">
+                                        <span class="tooltip-icon">ⓘ</span>
+                                        <div class="tooltip-content">The expected annual percentage increase in your pension amount, which may be fixed or linked to inflation (e.g., Dearness Relief).</div>
+                                    </div>
+                                </div>
                                 <div class="relative">
                                     <input type="number" step="0.1" id="pension_increase" value="5.0" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
                                     <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">%</span>
                                 </div>
+                                <p class="text-xs mt-1.5" style="color: var(--text-3);">Annual % increase in pension.</p>
                             </div>
                             <div>
-                                <label class="block text-xs font-medium text-slate-300">Pension Tax Rate</label>
+                                <div class="flex items-center gap-1.5 mb-1">
+                                    <label class="block text-xs font-medium text-slate-300">Pension Tax Rate</label>
+                                    <div class="tooltip-container">
+                                        <span class="tooltip-icon">ⓘ</span>
+                                        <div class="tooltip-content">The effective income tax rate applicable to your pension income. This is taxed as 'Income from Salary'.</div>
+                                    </div>
+                                </div>
                                 <div class="relative">
                                     <input type="number" step="0.1" id="pension_tax_rate" value="20.0" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
                                     <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">%</span>
                                 </div>
+                                <p class="text-xs mt-1.5" style="color: var(--text-3);">Tax rate on pension income.</p>
                             </div>
                         </div>
                         <div class="flex items-center gap-3 pt-2">
@@ -807,6 +943,7 @@
                         <option value="Mild Crash (-10% for 2 yrs)">Mild Crash (-10% for 2 yrs)</option>
                         <option value="Severe Crash (-20% for 2 yrs)">Severe Crash (-20% for 2 yrs)</option>
                     </select>
+                    <p class="text-xs mt-1.5" style="color: var(--text-3);">Simulate a market crash in the first two years of retirement.</p>
                 </div>
 
                 <div class="pt-3 border-t border-slate-200">
@@ -816,6 +953,11 @@
                             <p class="text-xs text-slate-400">(in today's money)</p>
                         </div>
                         <button id="addAdHocBtn" type="button" class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-slate-900 text-lg font-bold text-white shadow-sm hover:bg-slate-700">+</button>
+                    </div>
+                    <div class="flex items-center gap-2 px-1 mb-1">
+                        <label class="w-1/3 text-xs font-medium text-slate-400">Age</label>
+                        <label class="flex-1 text-xs font-medium text-slate-400">Amount</label>
+                        <div class="w-8"></div> <!-- Spacer for the delete button -->
                     </div>
                     <div id="adhocExpenseRows" class="space-y-2"></div>
                 </div>
