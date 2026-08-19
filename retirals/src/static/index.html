@@ -1179,53 +1179,92 @@
 
             <!-- Dashboard Analytics View -->
             <div class="lg:col-span-1 min-w-0 space-y-6">
-                <!-- Projection Summary KPIs -->
-                <div class="space-y-4">
-                    <h3 class="text-lg font-semibold" style="color: var(--text-2);">Projection Summary</h3>
-                    <div class="kpi-grid grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div class="kpi-3d p-4 rounded-2xl">
-                            <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Corpus At Retirement</p>
-                            <p id="kpi_retirement_corpus" class="kpi-value mt-2 font-black">₹0.00</p>
+                <!-- Main Summary Panel -->
+                <div class="panel-3d rounded-2xl p-5 sm:p-6 space-y-6">
+                    <!-- Plan Health Indicator -->
+                    <div id="planHealthSection" class="hidden">
+                        <h3 class="text-lg font-semibold" style="color: var(--text-2);">Retirement Plan Health</h3>
+                        <div id="planHealthIndicator" class="mt-4 p-5 rounded-2xl text-center transition-colors duration-300">
+                            <div id="planHealthStatus" class="text-2xl font-black">
+                                <!-- e.g. 🟢 Strong -->
+                            </div>
+                            <p id="planHealthMessage" class="mt-2 text-sm" style="color: var(--text-3);">
+                                <!-- e.g. Your projected corpus remains positive through age 85. -->
+                            </p>
                         </div>
-                        <div class="kpi-3d p-4 rounded-2xl">
-                            <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Final Terminal Corpus</p>
-                            <p id="kpi_final_corpus" class="kpi-value mt-2 font-black">₹0.00</p>
+                    </div>
+
+                    <!-- Key Insight Box -->
+                    <div id="keyInsightSection" class="hidden">
+                        <div id="keyInsightBox" class="p-5 rounded-2xl border transition-colors duration-300">
+                            <h3 id="keyInsightTitle" class="text-lg font-bold flex items-center gap-2">
+                                <!-- e.g. 💡 Key Insight -->
+                            </h3>
+                            <p id="keyInsightMessage" class="mt-2 text-sm leading-relaxed" style="color: var(--text-3);"></p>
                         </div>
-                        <div class="kpi-3d p-4 rounded-2xl">
-                            <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Peak Asset Age</p>
-                            <p id="kpi_peak_age" class="kpi-value mt-2 font-black">0</p>
-                        </div>
-                        <div class="kpi-3d p-4 rounded-2xl">
-                            <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Retirement Span</p>
-                            <p id="kpi_retirement_span" class="kpi-value mt-2 font-black">0 yrs</p>
-                        </div>
-                        <div class="kpi-3d p-4 rounded-2xl">
-                            <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Retirement Readiness</p>
-                            <p id="kpi_readiness_percent" class="kpi-value mt-2 font-black">0%</p>
+                    </div>
+
+                    <!-- Projection Summary KPIs -->
+                    <div>
+                        <h3 class="text-lg font-semibold" style="color: var(--text-2);">Projection Summary</h3>
+                        <div class="kpi-grid grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+                            <div class="kpi-3d p-4 rounded-2xl">
+                                <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Corpus At Retirement</p>
+                                <p id="kpi_retirement_corpus" class="kpi-value mt-2 font-black">₹0.00</p>
+                            </div>
+                            <div class="kpi-3d p-4 rounded-2xl">
+                                <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Final Terminal Corpus</p>
+                                <p id="kpi_final_corpus" class="kpi-value mt-2 font-black">₹0.00</p>
+                            </div>
+                            <div class="kpi-3d p-4 rounded-2xl">
+                                <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Peak Asset Age</p>
+                                <p id="kpi_peak_age" class="kpi-value mt-2 font-black">0</p>
+                            </div>
+                            <div class="kpi-3d p-4 rounded-2xl">
+                                <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Retirement Span</p>
+                                <p id="kpi_retirement_span" class="kpi-value mt-2 font-black">0 yrs</p>
+                            </div>
+                            <div class="kpi-3d p-4 rounded-2xl">
+                                <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Retirement Readiness</p>
+                                <p id="kpi_readiness_percent" class="kpi-value mt-2 font-black">0%</p>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Plan Health Indicator -->
-                <div id="planHealthSection" class="hidden">
-                    <h3 class="text-lg font-semibold" style="color: var(--text-2);">Retirement Plan Health</h3>
-                    <div id="planHealthIndicator" class="mt-4 p-5 rounded-2xl text-center transition-colors duration-300">
-                        <div id="planHealthStatus" class="text-2xl font-black">
-                            <!-- e.g. 🟢 Strong -->
+                <!-- Advisory & Goal Seek KPIs -->
+                <details class="group rounded-xl border" style="border-color: var(--stroke);">
+                    <summary class="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-lg font-semibold" style="background: var(--glass); color: var(--text-2);">
+                        <span>Advisory & Goal Seek</span>
+                        <span class="text-lg transition-transform group-open:rotate-180" style="color: var(--text-3);">▾</span>
+                    </summary>
+                    <div class="p-4">
+                        <div class="kpi-grid grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <div class="kpi-3d p-4 rounded-2xl">
+                                <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Min Corpus Required</p>
+                                <p id="kpi_minimum_corpus_required" class="kpi-value mt-2 font-black">₹0.00</p>
+                            </div>
+                            <div class="kpi-3d p-4 rounded-2xl">
+                                <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Target Annual Contribution for 100%</p>
+                                <p id="kpi_target_annual_contribution" class="kpi-value mt-2 font-black">₹0.00</p>
+                            </div>
+                            <div class="kpi-3d p-4 rounded-2xl">
+                                <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Required Pre-Retire Return for 100%</p>
+                                <p id="kpi_req_pre_ret_return" class="kpi-value mt-2 font-black">0.00%</p>
+                            </div>
+                            <div class="kpi-3d p-4 rounded-2xl">
+                                <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Required Post-Retire Return for 100%</p>
+                                <p id="kpi_req_post_ret_return" class="kpi-value mt-2 font-black">0.00%</p>
+                            </div>
                         </div>
-                        <p id="planHealthMessage" class="mt-2 text-sm" style="color: var(--text-3);">
-                            <!-- e.g. Your projected corpus remains positive through age 85. -->
-                        </p>
                     </div>
-                </div>
+                </details>
 
-                <!-- Key Insight Box -->
-                <div id="keyInsightSection" class="hidden">
-                    <div id="keyInsightBox" class="mt-6 p-5 rounded-2xl border transition-colors duration-300">
-                        <h3 id="keyInsightTitle" class="text-lg font-bold flex items-center gap-2">
-                            <!-- e.g. 💡 Key Insight -->
-                        </h3>
-                        <p id="keyInsightMessage" class="mt-2 text-sm leading-relaxed" style="color: var(--text-3);"></p>
+                <!-- Wealth Growth & Depletion Chart (Moved) -->
+                <div class="chart-panel p-4 rounded-2xl">
+                    <h3 class="text-md font-semibold mb-3" style="color: var(--text-2);">Wealth Growth &amp; Depletion</h3>
+                    <div class="h-64">
+                        <canvas id="trajectoryChart"></canvas>
                     </div>
                 </div>
 
@@ -1252,103 +1291,86 @@
                     </div>
                 </div>
 
-                <!-- Advisory & Goal Seek KPIs -->
-                <div class="space-y-4">
-                    <h3 class="text-lg font-semibold" style="color: var(--text-2);">Advisory & Goal Seek</h3>
-                    <div class="kpi-grid grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div class="kpi-3d p-4 rounded-2xl">
-                            <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Min Corpus Required</p>
-                            <p id="kpi_minimum_corpus_required" class="kpi-value mt-2 font-black">₹0.00</p>
-                        </div>
-                        <div class="kpi-3d p-4 rounded-2xl">
-                            <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Target Annual Contribution for 100%</p>
-                            <p id="kpi_target_annual_contribution" class="kpi-value mt-2 font-black">₹0.00</p>
-                        </div>
-                        <div class="kpi-3d p-4 rounded-2xl">
-                            <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Required Pre-Retire Return for 100%</p>
-                            <p id="kpi_req_pre_ret_return" class="kpi-value mt-2 font-black">0.00%</p>
-                        </div>
-                        <div class="kpi-3d p-4 rounded-2xl">
-                            <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Required Post-Retire Return for 100%</p>
-                            <p id="kpi_req_post_ret_return" class="kpi-value mt-2 font-black">0.00%</p>
-                        </div>
-                    </div>
-                </div>
+                <!-- Collapsible Detailed Analysis Section -->
+                <details class="group rounded-xl border" style="border-color: var(--stroke);">
+                    <summary class="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-lg font-semibold" style="background: var(--glass); color: var(--text-2);">
+                        <span>Explore Detailed Analysis</span>
+                        <span class="text-lg transition-transform group-open:rotate-180" style="color: var(--text-3);">▾</span>
+                    </summary>
+                    <div class="p-4">
+                        <!-- Workbook-style Multi-Chart Dashboard -->
+                        <div class="chart-grid grid grid-cols-1 xl:grid-cols-2 gap-4 xl:gap-6">
+                            <div class="chart-panel p-4 rounded-2xl">
+                                <h3 class="text-md font-semibold mb-3" style="color: var(--text-2);">Cash Flow Breakdown</h3>
+                                <div class="h-64">
+                                    <canvas id="cashFlowChart"></canvas>
+                                </div>
+                            </div>
 
-                <!-- Workbook-style Multi-Chart Dashboard -->
-                <div class="chart-grid grid grid-cols-1 xl:grid-cols-2 gap-4 xl:gap-6">
-                    <div class="chart-panel p-4 rounded-2xl">
-                        <h3 class="text-md font-semibold mb-3" style="color: var(--text-2);">Wealth Growth &amp; Depletion</h3>
-                        <div class="h-64">
-                            <canvas id="trajectoryChart"></canvas>
-                        </div>
-                    </div>
+                            <div class="chart-panel p-4 rounded-2xl">
+                                <h3 class="text-md font-semibold mb-3" style="color: var(--text-2);">Portfolio Allocation</h3>
+                                <div class="h-64">
+                                    <canvas id="allocationChart"></canvas>
+                                </div>
+                            </div>
 
-                    <div class="chart-panel p-4 rounded-2xl">
-                        <h3 class="text-md font-semibold mb-3" style="color: var(--text-2);">Cash Flow Breakdown</h3>
-                        <div class="h-64">
-                            <canvas id="cashFlowChart"></canvas>
-                        </div>
-                    </div>
+                            <div class="chart-panel p-4 rounded-2xl">
+                                <h3 class="text-md font-semibold mb-3" style="color: var(--text-2);">Effective Tax Contribution</h3>
+                                <div class="h-64">
+                                    <canvas id="taxAllocationChart"></canvas>
+                                </div>
+                            </div>
 
-                    <div class="chart-panel p-4 rounded-2xl">
-                        <h3 class="text-md font-semibold mb-3" style="color: var(--text-2);">Portfolio Allocation</h3>
-                        <div class="h-64">
-                            <canvas id="allocationChart"></canvas>
-                        </div>
-                    </div>
+                            <div class="chart-panel p-4 rounded-2xl">
+                                <h3 class="text-md font-semibold mb-3" style="color: var(--text-2);">Annual Investment Returns</h3>
+                                <div class="h-64">
+                                    <canvas id="returnChart"></canvas>
+                                </div>
+                            </div>
 
-                    <div class="chart-panel p-4 rounded-2xl">
-                        <h3 class="text-md font-semibold mb-3" style="color: var(--text-2);">Effective Tax Contribution</h3>
-                        <div class="h-64">
-                            <canvas id="taxAllocationChart"></canvas>
-                        </div>
-                    </div>
+                            <div class="chart-panel p-4 rounded-2xl">
+                                <h3 class="text-md font-semibold mb-3" style="color: var(--text-2);">Annual Expenses</h3>
+                                <div class="h-64">
+                                    <canvas id="expenseChart"></canvas>
+                                </div>
+                            </div>
 
-                    <div class="chart-panel p-4 rounded-2xl">
-                        <h3 class="text-md font-semibold mb-3" style="color: var(--text-2);">Annual Investment Returns</h3>
-                        <div class="h-64">
-                            <canvas id="returnChart"></canvas>
-                        </div>
-                    </div>
+                            <div class="chart-panel p-4 rounded-2xl">
+                                <h3 class="text-md font-semibold mb-3" style="color: var(--text-2);">Withdrawal vs Annual Return by Age</h3>
+                                <div class="h-64">
+                                    <canvas id="withdrawalReturnChart"></canvas>
+                                </div>
+                            </div>
 
-                    <div class="chart-panel p-4 rounded-2xl">
-                        <h3 class="text-md font-semibold mb-3" style="color: var(--text-2);">Annual Expenses</h3>
-                        <div class="h-64">
-                            <canvas id="expenseChart"></canvas>
+                            <div class="chart-panel p-4 rounded-2xl">
+                                <h3 class="text-md font-semibold mb-3" style="color: var(--text-2);">Projected Corpus Balance by Age</h3>
+                                <div class="h-64">
+                                    <canvas id="projectedBalanceChart"></canvas>
+                                </div>
+                            </div>
                         </div>
                     </div>
-
-                    <div class="chart-panel p-4 rounded-2xl">
-                        <h3 class="text-md font-semibold mb-3" style="color: var(--text-2);">Withdrawal vs Annual Return by Age</h3>
-                        <div class="h-64">
-                            <canvas id="withdrawalReturnChart"></canvas>
-                        </div>
-                    </div>
-
-                    <div class="chart-panel p-4 rounded-2xl">
-                        <h3 class="text-md font-semibold mb-3" style="color: var(--text-2);">Projected Corpus Balance by Age</h3>
-                        <div class="h-64">
-                            <canvas id="projectedBalanceChart"></canvas>
-                        </div>
-                    </div>
-                </div>
+                </details>
 
                 <!-- Projection Table Data -->
-                <div class="ledger-table-wrap rounded-2xl overflow-hidden mt-6">
-                    <div class="px-6 py-5" style="border-bottom: 1px solid var(--stroke); background: var(--glass);">
-                        <h3 class="text-md font-semibold" style="color: var(--text-1);">Retirement Journey</h3>
-                        <div id="journeyTimelineContainer" class="mt-5 relative h-10">
-                            <!-- Timeline bar and markers will be injected here by JS -->
+                <details class="group rounded-xl border" style="border-color: var(--stroke);">
+                    <summary class="block cursor-pointer list-none" style="background: var(--glass);">
+                        <div class="px-4 py-3">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-semibold flex items-center gap-2" style="color: var(--text-2);">
+                                    <span>Click Here for Detailed Retirement Projection</span><span class="font-sans">→</span>
+                                </h3>
+                                <span class="text-lg transition-transform group-open:rotate-180" style="color: var(--text-3);">▾</span>
+                            </div>
+                            <div id="journeyTimelineContainer" class="mt-4 relative h-10">
+                                <!-- Timeline bar and markers will be injected here by JS -->
+                            </div>
+                            <div id="journeyLegend" class="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs">
+                                <!-- Legend will be injected here by JS -->
+                            </div>
                         </div>
-                        <div id="journeyLegend" class="mt-3 flex flex-wrap gap-x-4 gap-y-2 text-xs">
-                            <!-- Legend will be injected here by JS -->
-                        </div>
-                    </div>
-                    <div class="px-6 py-4" style="background: var(--glass);">
-                         <h3 class="text-md font-semibold" style="color: var(--text-1);">Year-by-Year Ledger</h3>
-                    </div>
-                    <div class="overflow-x-auto max-h-80">
+                    </summary>
+                    <div class="ledger-table-wrap overflow-hidden" style="border-top: 1px solid var(--stroke);">
                         <table class="ledger-table min-w-full text-sm">
                             <thead class="sticky top-0">
                                 <tr>
@@ -1372,7 +1394,7 @@
                             </tbody>
                         </table>
                     </div>
-                </div>
+                </details>
             </div>
 
             <!-- Footer -->
