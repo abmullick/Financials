@@ -765,7 +765,7 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-4">
-                    <div class="flex items-center gap-2 text-slate-200">
+                    <div class="flex items-center gap-2 text-slate-300">
                         <span class="text-[10px] font-semibold uppercase tracking-[0.18em]">Mode</span>
                         <button id="themeToggleBtn" class="theme-toggle" type="button" aria-label="Toggle between dark and bright mode">
                             <span class="theme-toggle-thumb"></span>
@@ -774,7 +774,8 @@
                     <div class="text-left md:text-right">
                         <p class="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-300">Product Owner</p>
                         <p class="mt-1 text-lg font-bold" style="color: var(--text-1);">Abhisek Basu Mullick</p>
-                        <p class="text-sm" style="color: var(--text-2);">abmullick@gmail.com</p>                        
+                        <p class="text-sm" style="color: var(--text-2);">abmullick@gmail.com</p>
+                        <p class="text-xs text-slate-400 mt-1">© 2026 Abhisek Basu Mullick. All rights reserved.</p>
                     </div>
                 </div>
             </div>
@@ -1233,10 +1234,18 @@
                 </div>
 
                 <!-- Advisory & Goal Seek KPIs -->
-                <details class="group rounded-xl border" style="border-color: var(--stroke);">
-                    <summary class="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-lg font-semibold" style="background: var(--glass); color: var(--text-2);">
-                        <span>Advisory & Goal Seek</span>
-                        <span class="text-lg transition-transform group-open:rotate-180" style="color: var(--text-3);">▾</span>
+                <details class="group rounded-xl border-l-4" style="border-color: var(--accent); border-left-color: var(--accent);">
+                    <summary class="flex cursor-pointer list-none items-center justify-between p-4 transition-colors group-hover:bg-white/5" style="background: var(--glass);">
+                        <div class="flex items-center gap-4">
+                            <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg" style="background-color: rgba(102, 167, 255, 0.1);">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" style="color: var(--accent);" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm.707-10.293a1 1 0 00-1.414-1.414l-3 3a1 1 0 000 1.414l3 3a1 1 0 001.414-1.414L9.414 11H13a1 1 0 100-2H9.414l1.293-1.293z" clip-rule="evenodd" /></svg>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold" style="color: var(--text-1);">Advisory & Goal Seek</h3>
+                                <p class="text-xs" style="color: var(--text-3);">See what it takes to reach your retirement goals.</p>
+                            </div>
+                        </div>
+                        <span class="text-xl transition-transform group-open:rotate-180" style="color: var(--text-3);">▾</span>
                     </summary>
                     <div class="p-4">
                         <div class="kpi-grid grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1292,10 +1301,18 @@
                 </div>
 
                 <!-- Collapsible Detailed Analysis Section -->
-                <details class="group rounded-xl border" style="border-color: var(--stroke);">
-                    <summary class="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-lg font-semibold" style="background: var(--glass); color: var(--text-2);">
-                        <span>Explore Detailed Analysis</span>
-                        <span class="text-lg transition-transform group-open:rotate-180" style="color: var(--text-3);">▾</span>
+                <details class="group rounded-xl border-l-4" style="border-color: var(--stroke); border-left-color: var(--purple);">
+                    <summary class="flex cursor-pointer list-none items-center justify-between p-4 transition-colors group-hover:bg-white/5" style="background: var(--glass);">
+                        <div class="flex items-center gap-4">
+                            <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg" style="background-color: rgba(167, 139, 250, 0.1);">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" style="color: var(--purple);" viewBox="0 0 20 20" fill="currentColor"><path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" /><path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" /></svg>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold" style="color: var(--text-1);">Explore Detailed Analysis</h3>
+                                <p class="text-xs" style="color: var(--text-3);">Dive into the underlying financial data and charts.</p>
+                            </div>
+                        </div>
+                        <span class="text-xl transition-transform group-open:rotate-180" style="color: var(--text-3);">▾</span>
                     </summary>
                     <div class="p-4">
                         <!-- Workbook-style Multi-Chart Dashboard -->
@@ -1353,14 +1370,20 @@
                 </details>
 
                 <!-- Projection Table Data -->
-                <details class="group rounded-xl border" style="border-color: var(--stroke);">
-                    <summary class="block cursor-pointer list-none" style="background: var(--glass);">
-                        <div class="px-4 py-3">
+                <details class="group rounded-xl border-l-4" style="border-color: var(--stroke); border-left-color: var(--success);">
+                    <summary class="block cursor-pointer list-none transition-colors group-hover:bg-white/5" style="background: var(--glass);">
+                        <div class="p-4">
                             <div class="flex items-center justify-between">
-                                <h3 class="text-lg font-semibold flex items-center gap-2" style="color: var(--text-2);">
-                                    <span>Click Here for Detailed Retirement Projection</span><span class="font-sans">→</span>
-                                </h3>
-                                <span class="text-lg transition-transform group-open:rotate-180" style="color: var(--text-3);">▾</span>
+                                <div class="flex items-center gap-4">
+                                    <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg" style="background-color: rgba(50, 210, 150, 0.1);">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" style="color: var(--success);" viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" /><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" /></svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-semibold" style="color: var(--text-1);">Detailed Retirement Projection</h3>
+                                        <p class="text-xs" style="color: var(--text-3);">View the year-by-year financial ledger and journey.</p>
+                                    </div>
+                                </div>
+                                <span class="text-xl transition-transform group-open:rotate-180" style="color: var(--text-3);">▾</span>
                             </div>
                             <div id="journeyTimelineContainer" class="mt-4 relative h-10">
                                 <!-- Timeline bar and markers will be injected here by JS -->
@@ -1399,7 +1422,7 @@
 
             <!-- Footer -->
             <footer class="mt-8 pt-6" style="border-top: 1px solid var(--stroke);">
-                <!-- Footer content can be added here if needed in the future -->
+                <!-- Footer is intentionally left blank as per design. -->
             </footer>
 
         </div>
