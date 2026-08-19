@@ -410,7 +410,11 @@ def _solve_for_required_returns(inputs: PlannerInputs, corpus_at_retirement: flo
                 fv_factor = (1 + rate) * ((((1 + rate) ** n) - ((1 + g) ** n)) / (rate - g))
             
             fv_contributions = inputs.annual_contribution * fv_factor
-            return fv_current_corpus + fv_contributions
+            return (
+                fv_current_corpus
+                + fv_contributions
+                + inputs.one_time_lumpsum
+            )
 
         # Bisection method to find the rate
         low, high = inputs.pre_retirement_return, 0.50  # Search up to 50%
