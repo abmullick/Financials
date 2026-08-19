@@ -77,6 +77,29 @@
             --muted-label: #475569;
         }
 
+        .results-panel-animated {
+            animation: panel-enter 0.5s ease-out forwards;
+        }
+
+
+        @keyframes number-reveal {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes panel-enter {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .kpi-value.animate-reveal, .kpi-value.animate-reveal-staggered {
+            animation: number-reveal 0.6s ease-out forwards;
+        }
+
+        .chart-panel, .panel-3d { /* details.group will use results-panel-animated */
+            animation: panel-enter 0.5s ease-out forwards;
+        }
+
         html {
             scroll-behavior: smooth;
         }
@@ -91,6 +114,7 @@
             letter-spacing: -0.015em;
             color-scheme: light;
             transition: background 0.2s ease, color 0.2s ease;
+            opacity: 0; animation: 1s ease 0.2s forwards fadeIn;
         }
 
         body:not(.theme-light) {
@@ -109,7 +133,6 @@
                 inset 0 1px 0 rgba(255,255,255,0.06);
             backdrop-filter: blur(14px);
             -webkit-backdrop-filter: blur(14px);
-            transform: translateY(-1px);
             color: var(--text-1);
         }
 
@@ -141,7 +164,6 @@
             line-height: 1.1;
             overflow-wrap: anywhere;
             word-break: break-word;
-            transition: font-size 0.15s ease;
             color: var(--text-1);
             text-shadow: 0 0 0 rgba(0,0,0,0);
         }
@@ -692,6 +714,11 @@
             border-radius: 50%;
             border: 2px solid var(--bg-3);
         }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans antialiased">
@@ -1184,12 +1211,12 @@
                 <div class="panel-3d rounded-2xl p-5 sm:p-6 space-y-6">
                     <!-- Plan Health Indicator -->
                     <div id="planHealthSection" class="hidden">
-                        <h3 class="text-lg font-semibold" style="color: var(--text-2);">Retirement Plan Health</h3>
-                        <div id="planHealthIndicator" class="mt-4 p-5 rounded-2xl text-center transition-colors duration-300">
-                            <div id="planHealthStatus" class="text-2xl font-black">
+                        <div id="planHealthIndicator" class="p-6 rounded-2xl text-center transition-colors duration-300">
+                            <h3 class="text-sm font-semibold uppercase tracking-widest" style="color: var(--text-3);">Retirement Plan Health</h3>
+                            <div id="planHealthStatus" class="mt-3 text-4xl font-black sm:text-5xl">
                                 <!-- e.g. 🟢 Strong -->
                             </div>
-                            <p id="planHealthMessage" class="mt-2 text-sm" style="color: var(--text-3);">
+                            <p id="planHealthMessage" class="mt-4 max-w-md mx-auto text-base" style="color: var(--text-2);">
                                 <!-- e.g. Your projected corpus remains positive through age 85. -->
                             </p>
                         </div>
@@ -1197,11 +1224,14 @@
 
                     <!-- Key Insight Box -->
                     <div id="keyInsightSection" class="hidden">
-                        <div id="keyInsightBox" class="p-5 rounded-2xl border transition-colors duration-300">
-                            <h3 id="keyInsightTitle" class="text-lg font-bold flex items-center gap-2">
-                                <!-- e.g. 💡 Key Insight -->
-                            </h3>
-                            <p id="keyInsightMessage" class="mt-2 text-sm leading-relaxed" style="color: var(--text-3);"></p>
+                        <div id="keyInsightBox" class="p-5 rounded-2xl border-l-4 transition-colors duration-300">
+                            <p class="text-xs font-semibold uppercase tracking-widest" style="color: var(--text-3);">Key Insight</p>
+                            <div class="mt-3">
+                                <h3 id="keyInsightTitle" class="text-xl font-bold flex items-center gap-2" style="color: var(--text-1);">
+                                    <!-- e.g. 💡 Plan is Sustainable -->
+                                </h3>
+                                <p id="keyInsightMessage" class="mt-2 text-base leading-relaxed" style="color: var(--text-2);"></p>
+                            </div>
                         </div>
                     </div>
 
@@ -1234,7 +1264,7 @@
                 </div>
 
                 <!-- Advisory & Goal Seek KPIs -->
-                <details class="group rounded-xl border-l-4" style="border-color: var(--accent); border-left-color: var(--accent);">
+                <details id="advisorySection" class="group rounded-xl border-l-4 hidden" style="border-color: var(--stroke); border-left-color: var(--accent);">
                     <summary class="flex cursor-pointer list-none items-center justify-between p-4 transition-colors group-hover:bg-white/5" style="background: var(--glass);">
                         <div class="flex items-center gap-4">
                             <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg" style="background-color: rgba(102, 167, 255, 0.1);">
@@ -1242,7 +1272,7 @@
                             </div>
                             <div>
                                 <h3 class="font-semibold" style="color: var(--text-1);">Advisory & Goal Seek</h3>
-                                <p class="text-xs" style="color: var(--text-3);">See what it takes to reach your retirement goals.</p>
+                                <p class="text-xs" style="color: var(--text-3);">Identify gaps and find solutions to achieve your goals.</p>
                             </div>
                         </div>
                         <span class="text-xl transition-transform group-open:rotate-180" style="color: var(--text-3);">▾</span>
@@ -1270,7 +1300,7 @@
                 </details>
 
                 <!-- Wealth Growth & Depletion Chart (Moved) -->
-                <div class="chart-panel p-4 rounded-2xl">
+                <div id="wealthChartPanel" class="chart-panel p-4 rounded-2xl hidden">
                     <h3 class="text-md font-semibold mb-3" style="color: var(--text-2);">Wealth Growth &amp; Depletion</h3>
                     <div class="h-64">
                         <canvas id="trajectoryChart"></canvas>
@@ -1301,7 +1331,7 @@
                 </div>
 
                 <!-- Collapsible Detailed Analysis Section -->
-                <details class="group rounded-xl border-l-4" style="border-color: var(--stroke); border-left-color: var(--purple);">
+                <details id="detailedAnalysisSection" class="group rounded-xl border-l-4 hidden" style="border-color: var(--stroke); border-left-color: var(--purple); margin-top: 1.5rem;">
                     <summary class="flex cursor-pointer list-none items-center justify-between p-4 transition-colors group-hover:bg-white/5" style="background: var(--glass);">
                         <div class="flex items-center gap-4">
                             <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg" style="background-color: rgba(167, 139, 250, 0.1);">
@@ -1309,7 +1339,7 @@
                             </div>
                             <div>
                                 <h3 class="font-semibold" style="color: var(--text-1);">Explore Detailed Analysis</h3>
-                                <p class="text-xs" style="color: var(--text-3);">Dive into the underlying financial data and charts.</p>
+                                <p class="text-xs" style="color: var(--text-3);">In-depth charts for cash flow, allocation, and returns.</p>
                             </div>
                         </div>
                         <span class="text-xl transition-transform group-open:rotate-180" style="color: var(--text-3);">▾</span>
@@ -1370,20 +1400,15 @@
                 </details>
 
                 <!-- Projection Table Data -->
-                <details class="group rounded-xl border-l-4" style="border-color: var(--stroke); border-left-color: var(--success);">
-                    <summary class="block cursor-pointer list-none transition-colors group-hover:bg-white/5" style="background: var(--glass);">
-                        <div class="p-4">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-4">
-                                    <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg" style="background-color: rgba(50, 210, 150, 0.1);">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" style="color: var(--success);" viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" /><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" /></svg>
-                                    </div>
-                                    <div>
-                                        <h3 class="font-semibold" style="color: var(--text-1);">Detailed Retirement Projection</h3>
-                                        <p class="text-xs" style="color: var(--text-3);">View the year-by-year financial ledger and journey.</p>
-                                    </div>
-                                </div>
-                                <span class="text-xl transition-transform group-open:rotate-180" style="color: var(--text-3);">▾</span>
+                <details id="detailedProjectionSection" class="group rounded-xl border-l-4 hidden" style="border-color: var(--stroke); border-left-color: var(--success); margin-top: 1.5rem;">
+                    <summary class="flex cursor-pointer list-none items-center justify-between p-4 transition-colors group-hover:bg-white/5" style="background: var(--glass);">
+                        <div class="flex items-center gap-4">
+                            <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg" style="background-color: rgba(50, 210, 150, 0.1);">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" style="color: var(--success);" viewBox="0 0 20 20" fill="currentColor"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" /><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd" /></svg>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold" style="color: var(--text-1);">Detailed Retirement Projection</h3>
+                                <p class="text-xs" style="color: var(--text-3);">View the year-by-year financial ledger and journey.</p>
                             </div>
                             <div id="journeyTimelineContainer" class="mt-4 relative h-10">
                                 <!-- Timeline bar and markers will be injected here by JS -->
@@ -1392,8 +1417,10 @@
                                 <!-- Legend will be injected here by JS -->
                             </div>
                         </div>
+                        <span class="text-xl transition-transform group-open:rotate-180" style="color: var(--text-3);">▾</span>
                     </summary>
-                    <div class="ledger-table-wrap overflow-hidden" style="border-top: 1px solid var(--stroke);">
+                    <div class="p-4 pt-0">
+                        <div class="ledger-table-wrap overflow-hidden" style="border-top: 1px solid var(--stroke);">
                         <table class="ledger-table min-w-full text-sm">
                             <thead class="sticky top-0">
                                 <tr>
@@ -1416,6 +1443,7 @@
                                 <!-- Generated Dynamically -->
                             </tbody>
                         </table>
+                        </div>
                     </div>
                 </details>
             </div>
@@ -1800,6 +1828,27 @@
         }
 
         function clearCalculationError() {
+            // Clear previous KPI animations
+            document.querySelectorAll('.kpi-value').forEach(el => {
+                el.classList.remove('animate-reveal');
+            });
+
+            // Hide all result sections and remove animation class to prepare for new animation
+            const sectionsToHide = [
+                document.getElementById('planHealthSection'),
+                document.getElementById('keyInsightSection'),
+                document.getElementById('advisorySection'),
+                document.getElementById('pensionKpiSection'),
+                document.getElementById('wealthChartPanel'),
+                document.getElementById('detailedAnalysisSection'),
+                document.getElementById('detailedProjectionSection')
+            ].filter(Boolean);
+
+            sectionsToHide.forEach(section => {
+                section.classList.add('hidden');
+                section.classList.remove('results-panel-animated');
+            });
+
             const status = document.getElementById('formStatus');
             if (!status) return;
             status.textContent = '';
@@ -1957,7 +2006,7 @@
                 const healthStatus = document.getElementById('planHealthStatus');
                 const healthMessage = document.getElementById('planHealthMessage');
 
-                healthSection.classList.remove('hidden');
+                // healthSection.classList.remove('hidden'); // Handled by animation logic below
                 healthIndicator.classList.remove('bg-emerald-500/10', 'border-emerald-500/30', 'bg-amber-500/10', 'border-amber-500/30', 'bg-rose-500/10', 'border-rose-500/30');
 
                 if (data.metrics.plan_sustainable) {
@@ -1987,7 +2036,7 @@
                 const insightTitle = document.getElementById('keyInsightTitle');
                 const insightMessage = document.getElementById('keyInsightMessage');
 
-                insightSection.classList.remove('hidden');
+                // insightSection.classList.remove('hidden'); // Handled by animation logic below
                 insightBox.classList.remove('bg-emerald-500/10', 'border-emerald-500/30', 'bg-amber-500/10', 'border-amber-500/30');
 
                 if (data.metrics.plan_sustainable) {
@@ -2014,7 +2063,35 @@
                     insightBox.classList.add('bg-amber-500/10', 'border-amber-500/30');
                 }
 
-                fitAllKpiValues();
+                // --- Animate results appearance ---
+                const sectionsToAnimate = [
+                    document.getElementById('planHealthSection'),
+                    document.getElementById('keyInsightSection'),
+                    document.getElementById('advisorySection'),
+                    document.getElementById('wealthChartPanel'),
+                    // Only animate pension section if it's actually included
+                    payload.include_pension ? document.getElementById('pensionKpiSection') : null,
+                    document.getElementById('detailedAnalysisSection'),
+                    document.getElementById('detailedProjectionSection')
+                ].filter(Boolean); // Filter out nulls
+
+                sectionsToAnimate.forEach((section, index) => {
+                    setTimeout(() => {
+                        section.classList.remove('hidden');
+                        section.classList.add('results-panel-animated');
+                        // Remove animation class after it completes to allow re-triggering
+                        section.addEventListener('animationend', function handler() {
+                            section.classList.remove('results-panel-animated');
+                            section.removeEventListener('animationend', handler);
+                        }, { once: true });
+                    }, index * 100); // Stagger by 100ms
+                });
+
+                // Apply KPI animations after a slight delay to ensure elements are visible
+                setTimeout(() => {
+                    document.querySelectorAll('.kpi-value').forEach(el => el.classList.add('animate-reveal'));
+                    fitAllKpiValues();
+                }, sectionsToAnimate.length * 100 + 50); // Delay slightly more than the last section animation
 
                 // --- Update Retirement Journey Timeline ---
                 const timelineContainer = document.getElementById('journeyTimelineContainer');
