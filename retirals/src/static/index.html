@@ -261,6 +261,29 @@
             background: rgba(30, 41, 59, 0.7);
         }
 
+        /* --- New Lifecycle Row Tints --- */
+        .row-accumulation td { background-color: rgba(16, 185, 129, 0.03) !important; }
+        .row-retirement td { background-color: rgba(59, 130, 246, 0.03) !important; }
+        .row-pension-only td { background-color: rgba(167, 139, 250, 0.04) !important; }
+        .row-exhaustion {
+            border-top: 2px solid rgba(239, 68, 68, 0.4) !important;
+        }
+        .row-exhaustion td {
+            background-color: rgba(239, 68, 68, 0.08) !important;
+            font-weight: 600;
+        }
+
+        body.theme-light .row-accumulation td { background-color: rgba(16, 185, 129, 0.04) !important; }
+        body.theme-light .row-retirement td { background-color: rgba(59, 130, 246, 0.04) !important; }
+        body.theme-light .row-pension-only td { background-color: rgba(167, 139, 250, 0.05) !important; }
+        body.theme-light .row-exhaustion {
+            border-top: 2px solid rgba(220, 38, 38, 0.3) !important;
+        }
+        body.theme-light .row-exhaustion td {
+            background-color: rgba(220, 38, 38, 0.06) !important;
+            font-weight: 600;
+        }
+
         .ledger-table .text-emerald-600,
         .ledger-table .text-rose-600,
         .ledger-table .text-purple-600,
@@ -1608,12 +1631,12 @@
             return document.body.classList.contains('theme-light');
         }
 
-        function makeLineChart(canvasId, labels, datasets, options = {}) {
+        function makeLineChart(canvasId, labels, datasets, options = {}, plugins = []) {
             const ctx = document.getElementById(canvasId).getContext('2d');
             if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
 
-            const axisColor = isLightTheme() ? '#334155' : '#e2e8f0';
-            const gridColor = isLightTheme() ? 'rgba(15, 23, 42, 0.08)' : 'rgba(226, 232, 240, 0.18)';
+            const axisColor = isLightTheme() ? 'var(--chart-axis)' : 'var(--chart-axis)';
+            const gridColor = isLightTheme() ? 'var(--chart-grid)' : 'var(--chart-grid)';
 
             const prepared = datasets.map(ds => ({
                 ...ds,
@@ -1636,6 +1659,7 @@
             chartInstances[canvasId] = new Chart(ctx, {
                 type: 'line',
                 data: { labels, datasets: prepared },
+                plugins: plugins,
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
@@ -1647,7 +1671,7 @@
                             labels: { boxWidth: 12, usePointStyle: true, pointStyle: 'circle', color: axisColor, padding: 16, font: { weight: '600' } }
                         },
                         tooltip: {
-                            backgroundColor: isLightTheme() ? 'rgba(15, 23, 42, 0.92)' : 'rgba(15, 23, 42, 0.92)',
+                            backgroundColor: 'rgba(15, 23, 42, 0.92)',
                             titleColor: '#f8fafc',
                             bodyColor: '#e2e8f0',
                             borderWidth: 1,
@@ -1665,7 +1689,12 @@
                         y: {
                             grid: { color: gridColor },
                             border: { color: gridColor },
-                            ticks: { callback: value => typeof value === 'number' ? '₹' + value.toLocaleString('en-IN') : value, color: axisColor }
+                            ticks: { 
+                                callback: value => typeof value === 'number' ? new Intl.NumberFormat('en-IN', {
+                                    notation: 'compact', compactDisplay: 'short'
+                                }).format(value) : value, 
+                                color: axisColor 
+                            }
                         }
                     },
                     ...options
@@ -1677,8 +1706,8 @@
             const ctx = document.getElementById(canvasId).getContext('2d');
             if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
 
-            const axisColor = isLightTheme() ? '#334155' : '#e2e8f0';
-            const gridColor = isLightTheme() ? 'rgba(15, 23, 42, 0.08)' : 'rgba(226, 232, 240, 0.18)';
+            const axisColor = isLightTheme() ? 'var(--chart-axis)' : 'var(--chart-axis)';
+            const gridColor = isLightTheme() ? 'var(--chart-grid)' : 'var(--chart-grid)';
 
             const prepared = datasets.map(ds => ({
                 ...ds,
@@ -1722,7 +1751,12 @@
                             stacked: true,
                             grid: { color: gridColor },
                             border: { color: gridColor },
-                            ticks: { callback: value => typeof value === 'number' ? '₹' + value.toLocaleString('en-IN') : value, color: axisColor }
+                            ticks: { 
+                                callback: value => typeof value === 'number' ? new Intl.NumberFormat('en-IN', {
+                                    notation: 'compact', compactDisplay: 'short'
+                                }).format(value) : value, 
+                                color: axisColor 
+                            }
                         }
                     },
                     ...options
@@ -1734,7 +1768,7 @@
             const ctx = document.getElementById(canvasId).getContext('2d');
             if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
 
-            const axisColor = isLightTheme() ? '#1f2d3d' : '#dfeafc';
+            const axisColor = isLightTheme() ? 'var(--chart-legend)' : 'var(--chart-legend)';
             const defaultColors = [
                 'rgba(59, 130, 246, 0.85)',   // blue-500
                 'rgba(16, 185, 129, 0.85)',   // emerald-500
@@ -2189,10 +2223,23 @@
 
                 data.projections.forEach(row => {
                     const tr = document.createElement('tr');
-                    if (row.age === payload.retirement_age) tr.className = 'bg-amber-50/70 font-medium';
-                    if (row.age === data.metrics.corpus_exhaustion_age) tr.className = 'bg-rose-50/70 font-medium';
+                    
+                    // Apply lifecycle phase background tints
+                    if (row.age < payload.retirement_age) {
+                        tr.classList.add('row-accumulation');
+                    } else if (row.age === data.metrics.corpus_exhaustion_age) {
+                        tr.classList.add('row-exhaustion');
+                    } else if (data.metrics.corpus_exhaustion_age && row.age > data.metrics.corpus_exhaustion_age && payload.include_pension) {
+                        tr.classList.add('row-pension-only');
+                    } else {
+                        tr.classList.add('row-retirement');
+                    }
+
+                    // Highlight the first year of retirement for clarity
+                    if (row.age === payload.retirement_age) tr.style.borderTop = '2px solid rgba(59, 130, 246, 0.4)';
+
                     tr.innerHTML = `
-                        <td class="py-2 px-3 font-medium">${row.age}</td>
+                        <td class="py-2 px-3 font-semibold">${row.age}</td>
                         <td class="py-2 px-3 text-right">${fmt(row.opening)}</td>
                         <td class="py-2 px-3 text-right text-emerald-600 dark:text-emerald-400">+${fmt(row.contribution)}</td>
                         <td class="py-2 px-3 text-right text-emerald-600 dark:text-emerald-400">+${fmt(row.lumpsum)}</td>
@@ -2204,21 +2251,107 @@
                         <td class="py-2 px-3 text-right text-purple-600 dark:text-purple-400">-${fmt(row.ad_hoc)}</td>
                         <td class="py-2 px-3 text-right font-semibold ${row.unfunded_expense > 0 ? 'text-red-600 dark:text-red-400' : ''}">-${fmt(row.unfunded_expense)}</td>
                         <td class="py-2 px-3 text-right text-blue-600 dark:text-blue-400">${fmt(row.return)}</td>
-                        <td class="py-2 px-3 text-right font-medium">${fmt(row.closing)}</td>
+                        <td class="py-2 px-3 text-right font-semibold">${fmt(row.closing)}</td>
                     `
                     ;
                     tbody.appendChild(tr);
                 });
 
-                makeLineChart('trajectoryChart', ages, [{
-                    label: 'Net Closing Assets (₹)',
-                    data: closing,
-                    borderColor: '#facc15',
-                    backgroundColor: withGradient(document.getElementById('trajectoryChart').getContext('2d'), 'rgba(250, 204, 21, 0.2)', 'rgba(250, 204, 21, 0.01)'),
-                    fill: true,
-                    pointRadius: 0,
-                    pointHoverRadius: 5
-                }]);
+                // --- Enhanced Trajectory Chart with Milestones ---
+                const trajectoryDatasets = [
+                    {
+                        label: 'Net Closing Assets (₹)',
+                        data: closing,
+                        borderColor: '#facc15', // yellow-400
+                        backgroundColor: withGradient(document.getElementById('trajectoryChart').getContext('2d'), 'rgba(250, 204, 21, 0.2)', 'rgba(250, 204, 21, 0.01)'),
+                        fill: true,
+                        pointRadius: 0,
+                        pointHoverRadius: 5,
+                        order: 1 // Render on top
+                    }
+                ];
+
+                if (payload.include_pension) {
+                    trajectoryDatasets.push({
+                        label: 'Net Pension Income (₹)',
+                        data: pensionData,
+                        borderColor: '#a78bfa', // purple-400
+                        backgroundColor: 'rgba(167, 139, 250, 0.1)',
+                        fill: 'start',
+                        pointRadius: 0,
+                        pointHoverRadius: 5,
+                        borderDash: [5, 5],
+                        order: 2
+                    });
+                }
+
+                const milestonePlugin = {
+                    id: 'milestonePlugin',
+                    beforeDraw: (chart) => {
+                        const { ctx, chartArea: { top, bottom, left, right }, scales: { x, y } } = chart;
+                        ctx.save();
+
+                        const retirementAge = payload.retirement_age;
+                        const exhaustionAge = data.metrics.corpus_exhaustion_age;
+
+                        const retirementPixel = x.getPixelForValue(ages.indexOf(retirementAge));
+                        const exhaustionPixel = exhaustionAge ? x.getPixelForValue(ages.indexOf(exhaustionAge)) : null;
+
+                        // --- Background Regions ---
+                        // Accumulation Phase
+                        ctx.fillStyle = 'rgba(16, 185, 129, 0.05)'; // Emerald
+                        ctx.fillRect(left, top, retirementPixel - left, bottom - top);
+
+                        // Retirement Phase
+                        ctx.fillStyle = 'rgba(59, 130, 246, 0.05)'; // Blue
+                        ctx.fillRect(retirementPixel, top, (exhaustionPixel || right) - retirementPixel, bottom - top);
+
+                        // Pension Only Phase (if applicable)
+                        if (exhaustionPixel && payload.include_pension) {
+                            ctx.fillStyle = 'rgba(167, 139, 250, 0.08)'; // Purple
+                            ctx.fillRect(exhaustionPixel, top, right - exhaustionPixel, bottom - top);
+                        }
+
+                        // --- Vertical Milestone Lines ---
+                        const drawMilestoneLine = (pixel, label, color) => {
+                            if (pixel >= left && pixel <= right) {
+                                ctx.beginPath();
+                                ctx.strokeStyle = color;
+                                ctx.lineWidth = 2;
+                                ctx.setLineDash([6, 3]);
+                                ctx.moveTo(pixel, top);
+                                ctx.lineTo(pixel, bottom);
+                                ctx.stroke();
+                                ctx.setLineDash([]);
+
+                                // Label
+                                ctx.fillStyle = color;
+                                ctx.textAlign = 'center';
+                                ctx.font = '600 11px Inter, sans-serif';
+                                ctx.save();
+                                ctx.translate(pixel + 5, top + 50);
+                                ctx.rotate(Math.PI / 2);
+                                ctx.fillText(label, 0, 0);
+                                ctx.restore();
+                            }
+                        };
+
+                        drawMilestoneLine(retirementPixel, 'Retirement', 'rgba(59, 130, 246, 0.7)');
+                        if (exhaustionPixel) {
+                            drawMilestoneLine(exhaustionPixel, 'Exhaustion', 'rgba(239, 68, 68, 0.7)');
+                        }
+
+                        ctx.restore();
+                    }
+                };
+
+                makeLineChart(
+                    'trajectoryChart', 
+                    ages, 
+                    trajectoryDatasets,
+                    { plugins: { legend: { display: true } } },
+                    [milestonePlugin]
+                );
 
                 const cashFlowDatasets = [
                     { label: 'Contribution', data: contribution, backgroundColor: 'rgba(16, 185, 129, 0.78)', borderColor: 'rgba(16, 185, 129, 1)', borderWidth: 1 },
