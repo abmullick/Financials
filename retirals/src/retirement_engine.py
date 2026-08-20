@@ -117,7 +117,7 @@ def run_projection(inputs: PlannerInputs):
         net_pension = 0.0
         if inputs.include_pension and is_retired and age >= inputs.pension_start_age:
             # Pension is defined in today's money, so it's inflated from current_age
-            pension_elapsed_years = age - inputs.current_age
+            pension_elapsed_years = age - inputs.pension_start_age
             gross_pension = inputs.annual_pension * ((1 + inputs.pension_increase) ** pension_elapsed_years)
             pension_tax = gross_pension * inputs.pension_tax_rate
             net_pension = gross_pension - pension_tax
@@ -305,7 +305,7 @@ def _calculate_minimum_corpus(inputs: PlannerInputs, ad_hoc_map: dict) -> float:
         # Calculate pension for the year if applicable
         net_pension = 0.0
         if inputs.include_pension and age >= inputs.pension_start_age:
-            pension_elapsed_years = age - inputs.current_age
+            pension_elapsed_years = age - inputs.pension_start_age
             gross_pension = inputs.annual_pension * ((1 + inputs.pension_increase) ** pension_elapsed_years)
             net_pension = gross_pension * (1 - inputs.pension_tax_rate)
 
