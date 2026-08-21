@@ -1660,8 +1660,8 @@
             const ctx = document.getElementById(canvasId).getContext('2d');
             if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
 
-            const axisColor = isLightTheme() ? 'var(--chart-axis)' : 'var(--chart-axis)';
-            const gridColor = isLightTheme() ? 'var(--chart-grid)' : 'var(--chart-grid)';
+            const axisColor = isLightTheme() ? '#334155' : '#cbd5e1';
+            const gridColor = isLightTheme() ? 'rgba(148, 163, 184, 0.18)' : 'rgba(226, 232, 240, 0.18)';
 
             const prepared = datasets.map(ds => ({
                 ...ds,
@@ -1693,7 +1693,7 @@
                     elements: { line: { capBezierPoints: true } },
                     plugins: {
                         legend: {
-                            labels: { boxWidth: 12, usePointStyle: true, pointStyle: 'circle', color: axisColor, padding: 16, font: { weight: '600' } }
+                            labels: { boxWidth: 12, usePointStyle: true, pointStyle: 'circle', color: axisColor, padding: 16, font: { weight: '700', size: 13 } }
                         },
                         tooltip: {
                             backgroundColor: 'rgba(15, 23, 42, 0.92)',
@@ -1731,8 +1731,8 @@
             const ctx = document.getElementById(canvasId).getContext('2d');
             if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
 
-            const axisColor = isLightTheme() ? 'var(--chart-axis)' : 'var(--chart-axis)';
-            const gridColor = isLightTheme() ? 'var(--chart-grid)' : 'var(--chart-grid)';
+            const axisColor = isLightTheme() ? '#334155' : '#cbd5e1';
+            const gridColor = isLightTheme() ? 'rgba(148, 163, 184, 0.18)' : 'rgba(226, 232, 240, 0.18)';
 
             const prepared = datasets.map(ds => ({
                 ...ds,
@@ -1753,7 +1753,7 @@
                     animation: { duration: 800, easing: 'easeOutQuart' },
                     plugins: {
                         legend: {
-                            labels: { boxWidth: 12, usePointStyle: true, pointStyle: 'circle', color: axisColor, padding: 16, font: { weight: '600' } }
+                            labels: { boxWidth: 12, usePointStyle: true, pointStyle: 'circle', color: axisColor, padding: 16, font: { weight: '700', size: 13 } }
                         },
                         tooltip: {
                             backgroundColor: 'rgba(15, 23, 42, 0.92)',
@@ -1793,7 +1793,7 @@
             const ctx = document.getElementById(canvasId).getContext('2d');
             if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
 
-            const axisColor = isLightTheme() ? 'var(--chart-legend)' : 'var(--chart-legend)';
+            const axisColor = isLightTheme() ? '#334155' : '#cbd5e1';
             const defaultColors = [
                 'rgba(59, 130, 246, 0.85)',   // blue-500
                 'rgba(16, 185, 129, 0.85)',   // emerald-500
@@ -2374,7 +2374,7 @@
                     'trajectoryChart', 
                     ages, 
                     trajectoryDatasets,
-                    { plugins: { legend: { display: true } } },
+                    { plugins: { legend: { display: true, labels: { color: isLightTheme() ? '#334155' : '#cbd5e1', boxWidth: 12, usePointStyle: true, pointStyle: 'circle', padding: 16, font: { weight: '700', size: 13 } } } } },
                     [milestonePlugin]
                 );
 
