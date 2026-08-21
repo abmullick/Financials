@@ -388,6 +388,31 @@
             transform: translateX(28px);
         }
 
+        .chevron-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border-radius: 9999px;
+            font-size: 22px;
+            font-weight: 900;
+            line-height: 1;
+            color: #eab308;
+            background: var(--glass);
+            border: 1px solid var(--stroke);
+            transition: transform 0.2s ease, background 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        body.theme-light .chevron-toggle {
+            color: #2563eb;
+        }
+
+        details[open] .chevron-toggle {
+            transform: rotate(180deg);
+        }
+
         input, select {
             transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
             font-weight: 500;
@@ -1298,7 +1323,7 @@
                                 <p class="text-xs" style="color: var(--text-3);">Identify gaps and find solutions to achieve your goals.</p>
                             </div>
                         </div>
-                        <span class="text-xl transition-transform group-open:rotate-180" style="color: var(--text-3);">▾</span>
+                        <span class="chevron-toggle">▾</span>
                     </summary>
                     <div class="p-4">
                         <div class="kpi-grid grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1365,7 +1390,7 @@
                                 <p class="text-xs" style="color: var(--text-3);">In-depth charts for cash flow, allocation, and returns.</p>
                             </div>
                         </div>
-                        <span class="text-xl transition-transform group-open:rotate-180" style="color: var(--text-3);">▾</span>
+                        <span class="chevron-toggle">▾</span>
                     </summary>
                     <div class="p-4">
                         <!-- Workbook-style Multi-Chart Dashboard -->
@@ -1440,7 +1465,7 @@
                                 <!-- Legend will be injected here by JS -->
                             </div>
                         </div>
-                        <span class="text-xl transition-transform group-open:rotate-180" style="color: var(--text-3);">▾</span>
+                        <span class="chevron-toggle">▾</span>
                     </summary>
                     <div class="p-4 pt-0">
                         <div class="ledger-table-wrap overflow-x-auto" style="border-top: 1px solid var(--stroke);">
