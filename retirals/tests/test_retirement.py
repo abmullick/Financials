@@ -1,6 +1,6 @@
 import unittest
-from src.models import PlannerInputs, AdHocExpense, StressScenario
-from src.retirement_engine import run_projection
+from src.models import PlannerInputs, AdHocExpense, StressScenario, ReturnDistribution
+from src.retirement_engine import run_projection, run_monte_carlo
 
 class RetirementPlannerTest(unittest.TestCase):
     """Comprehensive test suite for the retirement planner engine."""
@@ -553,6 +553,156 @@ class RetirementPlannerTest(unittest.TestCase):
                 AdHocExpense(age=60, amount=1000),
                 AdHocExpense(age=60, amount=2000)
             ])
+
+    # --- Monte Carlo Tests ---
+
+    def test_mc_basic_output_structure(self):
+        """Monte Carlo should return metrics and yearly percentiles."""
+        inputs = PlannerInputs(
+            current_age=30, retirement_age=60, life_expectancy=70,
+            num_simulations=100,
+            monte_carlo_seed=42,
+            adhoc_expenses=[]
+        )
+        result = run_monte_carlo(inputs)
+
+        self.assertIn("metrics", result)
+        self.assertIn("yearly_percentiles", result)
+        self.assertIn("num_simulations", result)
+        self.assertEqual(result["num_simulations"], 100)
+
+        m = result["metrics"]
+        self.assertIn("success_rate", m)
+        self.assertIn("median_final_corpus", m)
+        self.assertIn("p5_final_corpus", m)
+        self.assertIn("p95_final_corpus", m)
+        self.assertGreaterEqual(m["success_rate"], 0)
+        self.assertLessEqual(m["success_rate"], 100)
+
+    def test_mc_zero_volatility_matches_deterministic(self):
+        """With 0% volatility, MC should produce results close to deterministic projection."""
+        inputs = PlannerInputs(
+            current_age=30, retirement_age=60, life_expectancy=65,
+            num_simulations=200,
+            volatility_equity=0.0,
+            volatility_debt=0.0,
+            volatility_arbitrage=0.0,
+            monte_carlo_seed=123,
+            adhoc_expenses=[]
+        )
+        mc_result = run_monte_carlo(inputs)
+        det_result = run_projection(inputs)
+
+        self.assertAlmostEqual(mc_result["metrics"]["median_final_corpus"], det_result["metrics"]["final_corpus"], delta=1.0)
+        self.assertEqual(mc_result["metrics"]["success_rate"], 100.0)
+
+    def test_mc_percentiles_are_ordered(self):
+        """Yearly percentiles should be ordered: p5 <= p25 <= p50 <= p75 <= p95."""
+        inputs = PlannerInputs(
+            current_age=30, retirement_age=60, life_expectancy=65,
+            num_simulations=500,
+            monte_carlo_seed=7,
+            adhoc_expenses=[]
+        )
+        result = run_monte_carlo(inputs)
+        yearly = result["yearly_percentiles"]
+
+        for i in range(len(yearly["ages"])):
+            self.assertLessEqual(yearly["p5"][i], yearly["p25"][i])
+            self.assertLessEqual(yearly["p25"][i], yearly["p50"][i])
+            self.assertLessEqual(yearly["p50"][i], yearly["p75"][i])
+            self.assertLessEqual(yearly["p75"][i], yearly["p95"][i])
+
+    def test_mc_reproducible_with_seed(self):
+        """Same seed should produce identical results."""
+        inputs1 = PlannerInputs(current_age=30, retirement_age=60, life_expectancy=65, num_simulations=100, monte_carlo_seed=99, adhoc_expenses=[])
+        inputs2 = PlannerInputs(current_age=30, retirement_age=60, life_expectancy=65, num_simulations=100, monte_carlo_seed=99, adhoc_expenses=[])
+
+        result1 = run_monte_carlo(inputs1)
+        result2 = run_monte_carlo(inputs2)
+
+        self.assertEqual(result1["metrics"]["median_final_corpus"], result2["metrics"]["median_final_corpus"])
+        self.assertEqual(result1["metrics"]["success_rate"], result2["metrics"]["success_rate"])
+
+    def test_mc_lognormal_vs_normal(self):
+        """Lognormal and normal distributions should both run and produce valid metrics."""
+        inputs_lognormal = PlannerInputs(
+            current_age=30, retirement_age=60, life_expectancy=65,
+            num_simulations=200,
+            return_distribution=ReturnDistribution.LOGNORMAL,
+            monte_carlo_seed=1,
+            adhoc_expenses=[]
+        )
+        inputs_normal = PlannerInputs(
+            current_age=30, retirement_age=60, life_expectancy=65,
+            num_simulations=200,
+            return_distribution=ReturnDistribution.NORMAL,
+            monte_carlo_seed=1,
+            adhoc_expenses=[]
+        )
+
+        result_log = run_monte_carlo(inputs_lognormal)
+        result_norm = run_monte_carlo(inputs_normal)
+
+        for r in [result_log, result_norm]:
+            self.assertGreaterEqual(r["metrics"]["success_rate"], 0)
+            self.assertLessEqual(r["metrics"]["success_rate"], 100)
+            self.assertGreater(r["metrics"]["median_final_corpus"], 0)
+
+    def test_mc_high_volatility_reduces_success_rate(self):
+        """Higher volatility should generally reduce the probability of success."""
+        inputs_low_vol = PlannerInputs(
+            current_age=30, retirement_age=60, life_expectancy=65,
+            num_simulations=1000,
+            volatility_equity=0.05,
+            volatility_debt=0.01,
+            volatility_arbitrage=0.02,
+            monte_carlo_seed=42,
+            adhoc_expenses=[]
+        )
+        inputs_high_vol = PlannerInputs(
+            current_age=30, retirement_age=60, life_expectancy=65,
+            num_simulations=1000,
+            volatility_equity=0.30,
+            volatility_debt=0.10,
+            volatility_arbitrage=0.15,
+            monte_carlo_seed=42,
+            adhoc_expenses=[]
+        )
+
+        result_low = run_monte_carlo(inputs_low_vol)
+        result_high = run_monte_carlo(inputs_high_vol)
+
+        self.assertGreaterEqual(result_low["metrics"]["success_rate"], result_high["metrics"]["success_rate"],
+            "Low volatility should have equal or higher success rate than high volatility.")
+
+    def test_mc_success_false_on_corpus_exhaustion(self):
+        """MC success must be False when corpus exhausts with unfunded expenses."""
+        inputs = PlannerInputs(
+            current_age=70, retirement_age=71, life_expectancy=75,
+            current_corpus=50000,
+            current_annual_expenses=150000,
+            annual_contribution=0,
+            avg_inflation_rate=0.0,
+            post_retirement_return=0.0,
+            allocation_equity=0.8,
+            allocation_debt=0.2,
+            allocation_arbitrage=0.0,
+            equity_ltcg_split=0.7,
+            equity_stcg_split=0.3,
+            tax_ltcg=0.10,
+            tax_stcg=0.20,
+            tax_debt=0.20,
+            ltcg_exemption=50000,
+            num_simulations=100,
+            monte_carlo_seed=1,
+            adhoc_expenses=[]
+        )
+        result = run_monte_carlo(inputs)
+        det = run_projection(inputs)
+
+        self.assertEqual(det["metrics"]["plan_sustainable"], False)
+        self.assertEqual(result["metrics"]["success_rate"], 0.0)
 
 if __name__ == "__main__":
     unittest.main()

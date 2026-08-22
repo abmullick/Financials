@@ -15,7 +15,7 @@ from os import getenv
 import logging
 
 from models import PlannerInputs
-from retirement_engine import run_projection
+from retirement_engine import run_projection, run_monte_carlo
 
 # Start the FastAPI application 
 
@@ -71,6 +71,17 @@ def calculate_retirement(request: Request, inputs: PlannerInputs):
     except Exception:
         logger.error("An unexpected error occurred during calculation.", exc_info=True)
         raise HTTPException(status_code=500, detail="An unexpected error occurred while calculating the projection.")
+
+@app.post("/calculate-mc")
+@limiter.limit("5/minute")
+def calculate_monte_carlo(request: Request, inputs: PlannerInputs):
+    try:
+        return run_monte_carlo(inputs)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception:
+        logger.error("An unexpected error occurred during Monte Carlo calculation.", exc_info=True)
+        raise HTTPException(status_code=500, detail="An unexpected error occurred while running Monte Carlo simulation.")
 
 @app.get("/")
 async def read_index():

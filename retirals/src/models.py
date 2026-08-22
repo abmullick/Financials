@@ -1,6 +1,6 @@
 from pydantic import BaseModel, model_validator, Field
 from enum import Enum
-from typing import Optional
+from typing import Optional, Literal
 
 class AdHocExpense(BaseModel):
     age: int = Field(..., gt=0, le=120, description="Age for the ad-hoc expense")
@@ -11,6 +11,10 @@ class StressScenario(str, Enum):
     NORMAL = "Normal"
     MILD_CRASH = "Mild Crash (-10% for 2 yrs)"
     SEVERE_CRASH = "Severe Crash (-20% for 2 yrs)"
+
+class ReturnDistribution(str, Enum):
+    NORMAL = "normal"
+    LOGNORMAL = "lognormal"
 
 class PlannerInputs(BaseModel):
     current_age: int = Field(43, gt=0, le=120)
@@ -49,7 +53,13 @@ class PlannerInputs(BaseModel):
     pension_increase: float = Field(0.05, ge=0, le=0.5)
     pension_tax_rate: float = Field(0.20, ge=0, le=1.0)
     reinvest_pension_surplus: bool = Field(True)
-
+    # Monte Carlo Parameters
+    num_simulations: int = Field(1000, ge=100, le=50000, description="Number of Monte Carlo simulation paths.")
+    volatility_equity: float = Field(0.18, ge=0, le=1.0, description="Annual volatility for equity allocation.")
+    volatility_debt: float = Field(0.06, ge=0, le=1.0, description="Annual volatility for debt allocation.")
+    volatility_arbitrage: float = Field(0.08, ge=0, le=1.0, description="Annual volatility for arbitrage allocation.")
+    return_distribution: ReturnDistribution = Field(ReturnDistribution.LOGNORMAL, description="Distribution type for return simulation: normal or lognormal.")
+    monte_carlo_seed: Optional[int] = Field(None, description="Optional random seed for reproducible simulations.")
 
     @model_validator(mode="after")
     def validate_plan(self):
@@ -83,6 +93,5 @@ class PlannerInputs(BaseModel):
                 raise ValueError("Pension start age cannot be after life expectancy.")
             if self.annual_pension <= 0:
                 raise ValueError("Annual pension must be a positive value when pension is included.")
-
 
         return self

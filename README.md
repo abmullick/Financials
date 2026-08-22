@@ -199,6 +199,19 @@ The core calculation logic is a year-by-year simulation from the current age to 
 - Key metrics summary (corpus at retirement, peak asset age, retirement span, final corpus) with conditional green/amber/red coloring for goal-oriented feedback.
 - Fully responsive design with light/dark theme support (defaulting to light mode).
 
-## Notes
+## Monte Carlo Simulation
+
+In addition to deterministic projection, the app supports Monte Carlo simulation via the `/calculate-mc` endpoint. This runs 1,000–50,000 stochastic paths to estimate the probability of retirement success and show percentile bands for final corpus.
+
+Key characteristics:
+- **Distributions**: Lognormal (default, recommended) and Normal
+- **Volatility**: Blended across equity, debt, and arbitrage allocations for both accumulation and retirement phases
+- **Stress scenarios**: Optional -10% / -20% deterministic crashes in the first two retirement years
+- **Pension**: Fully integrated; net pension reduces portfolio withdrawals and can be reinvested as surplus
+- **Failure rule**: A path is marked failed if corpus exhausts with unfunded expenses during retirement; once failed, corpus stays at zero
+- **Seed**: Optional integer seed for reproducible results
+- **Outputs**: Probability of success, median/p5/p25/p75/p95 final corpus, and year-by-year percentile bands
+
+See `retirals/MONTE_CARLO.md` for the full methodology and interpretation guide.
 
 This project implements the complete logic and interface of a spreadsheet-based retirement corpus planner. It provides financial advisors and individuals with an interactive tool for retirement scenario analysis, stress testing, and corpus adequacy validation.

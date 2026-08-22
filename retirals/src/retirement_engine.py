@@ -1,4 +1,6 @@
-from models import PlannerInputs, StressScenario
+from models import PlannerInputs, StressScenario, ReturnDistribution
+import random
+import math
 
 def get_return_rate(age: int, inputs: PlannerInputs) -> float:
     """Determines the annual return rate, applying stress scenarios if applicable."""
@@ -448,4 +450,205 @@ def _solve_for_required_returns(inputs: PlannerInputs, corpus_at_retirement: flo
     return {
         "required_pre_retirement_return": round(required_pre_ret_return * 100, 2),
         "required_post_retirement_return": round(required_post_ret_return * 100, 2)
+    }
+
+def _get_mc_volatility(inputs: PlannerInputs, is_retired: bool) -> float:
+    """Returns the blended portfolio volatility for Monte Carlo simulation."""
+    return (
+        inputs.allocation_equity * inputs.volatility_equity +
+        inputs.allocation_debt * inputs.volatility_debt +
+        inputs.allocation_arbitrage * inputs.volatility_arbitrage
+    )
+
+def _get_mc_return(age: int, inputs: PlannerInputs, rng: random.Random) -> float:
+    """Returns a stochastic annual return for Monte Carlo simulation."""
+    is_retired = age >= inputs.retirement_age
+    base_return = inputs.post_retirement_return if is_retired else inputs.pre_retirement_return
+
+    # Apply stress scenarios for the first 2 years of retirement (deterministic)
+    if is_retired and age < inputs.retirement_age + 2:
+        if inputs.stress_scenario == StressScenario.MILD_CRASH:
+            return -0.10
+        elif inputs.stress_scenario == StressScenario.SEVERE_CRASH:
+            return -0.20
+
+    z = rng.gauss(0, 1)
+    sigma = _get_mc_volatility(inputs, is_retired)
+
+    if inputs.return_distribution == ReturnDistribution.LOGNORMAL:
+        # For lognormal, we want E[R] = base_return.
+        # If R = exp(mu + sigma*Z) - 1, then E[R] = exp(mu + 0.5*sigma^2) - 1
+        # Solving for mu: mu = ln(1 + base_return) - 0.5 * sigma^2
+        mu = math.log(1 + base_return) - 0.5 * sigma ** 2
+        return math.exp(mu + sigma * z) - 1
+    else:
+        # Normal distribution: mean = base_return, std = portfolio volatility
+        return base_return + sigma * z
+
+def _run_single_mc_path(inputs: PlannerInputs, rng: random.Random) -> dict:
+    """Runs a single Monte Carlo simulation path and returns annual corpus values and success flag."""
+    corpus = inputs.current_corpus
+    total_contributions = 0.0
+    ad_hoc_map = {item.age: item for item in inputs.adhoc_expenses or []}
+    success = True
+
+    # Pre-calculate portfolio portions for tax calculation (deterministic)
+    equity_ltcg_portion = inputs.allocation_equity * inputs.equity_ltcg_split
+    equity_stcg_portion = inputs.allocation_equity * inputs.equity_stcg_split
+    debt_portion = inputs.allocation_debt
+    arbitrage_portion = inputs.allocation_arbitrage
+
+    tax_portions = {
+        "equity_ltcg_portion": equity_ltcg_portion,
+        "blended_rate_no_exemption": (equity_ltcg_portion * inputs.tax_ltcg) + (equity_stcg_portion * inputs.tax_stcg) + (debt_portion * inputs.tax_debt) + (arbitrage_portion * inputs.tax_arbitrage),
+        "other_blended_rate": (equity_stcg_portion * inputs.tax_stcg) + (debt_portion * inputs.tax_debt) + (arbitrage_portion * inputs.tax_arbitrage)
+    }
+
+    annual_values = []
+
+    for age in range(inputs.current_age, inputs.life_expectancy + 1):
+        elapsed_years = age - inputs.current_age
+        is_retired = age >= inputs.retirement_age
+
+        contribution = 0.0
+        if not is_retired:
+            contribution = inputs.annual_contribution * ((1 + inputs.contribution_increase) ** elapsed_years)
+            total_contributions += contribution
+
+        lumpsum_addition = inputs.one_time_lumpsum if age == inputs.retirement_age else 0.0
+
+        gross_pension = 0.0
+        pension_tax = 0.0
+        net_pension = 0.0
+        if inputs.include_pension and is_retired and age >= inputs.pension_start_age:
+            pension_elapsed_years = age - inputs.pension_start_age
+            gross_pension = inputs.annual_pension * ((1 + inputs.pension_increase) ** pension_elapsed_years)
+            pension_tax = gross_pension * inputs.pension_tax_rate
+            net_pension = gross_pension - pension_tax
+
+        required_after_tax_withdrawal = 0.0
+        if is_retired:
+            required_after_tax_withdrawal = inputs.current_annual_expenses * ((1 + inputs.avg_inflation_rate) ** elapsed_years)
+
+        net_expense_after_pension = required_after_tax_withdrawal - net_pension
+        pension_surplus = max(0, -net_expense_after_pension)
+        pension_surplus_reinvested = pension_surplus if inputs.reinvest_pension_surplus else 0.0
+
+        ad_hoc = 0.0
+        ad_hoc_item = ad_hoc_map.get(age)
+        if ad_hoc_item:
+            applicable_inflation = ad_hoc_item.inflation_rate if ad_hoc_item.inflation_rate is not None else inputs.avg_inflation_rate
+            ad_hoc = ad_hoc_item.amount * ((1 + applicable_inflation) ** elapsed_years)
+
+        portfolio_net_withdrawal_needed = max(0, net_expense_after_pension) + ad_hoc
+
+        gross_withdrawal = 0.0
+        total_tax = 0.0
+        unfunded_expense = 0.0
+
+        available_for_withdrawal = corpus + contribution + lumpsum_addition + pension_surplus_reinvested
+
+        if is_retired and portfolio_net_withdrawal_needed > 0:
+            gross_withdrawal, total_tax = _calculate_gross_withdrawal(portfolio_net_withdrawal_needed, inputs, tax_portions)
+
+            if gross_withdrawal > available_for_withdrawal:
+                gross_withdrawal = available_for_withdrawal
+                ltcg_portion_of_withdrawal = gross_withdrawal * tax_portions["equity_ltcg_portion"]
+                if ltcg_portion_of_withdrawal <= inputs.ltcg_exemption:
+                    total_tax = gross_withdrawal * tax_portions["other_blended_rate"]
+                else:
+                    total_tax = gross_withdrawal * tax_portions["blended_rate_no_exemption"] - inputs.ltcg_exemption * inputs.tax_ltcg
+                actual_net_withdrawal = gross_withdrawal - total_tax
+                unfunded_expense = max(0, portfolio_net_withdrawal_needed - actual_net_withdrawal)
+                portfolio_net_withdrawal_needed = actual_net_withdrawal
+                if unfunded_expense > 0:
+                    success = False
+
+        return_rate = _get_mc_return(age, inputs, rng)
+
+        net_for_return = available_for_withdrawal - gross_withdrawal
+        if net_for_return < 0:
+            net_for_return = 0
+            success = False
+
+        returns = net_for_return * return_rate
+        corpus = net_for_return + returns
+
+        if corpus < 0:
+            if is_retired:
+                success = False
+            corpus = 0
+
+        annual_values.append({
+            "age": age,
+            "corpus": corpus
+        })
+
+    return {
+        "annual_values": annual_values,
+        "success": success,
+        "final_corpus": corpus
+    }
+
+def run_monte_carlo(inputs: PlannerInputs) -> dict:
+    """
+    Runs a Monte Carlo simulation of the retirement plan.
+    
+    Returns year-by-year percentile bands and summary statistics.
+    """
+    if inputs.monte_carlo_seed is not None:
+        rng = random.Random(inputs.monte_carlo_seed)
+    else:
+        rng = random.Random()
+
+    num_sims = inputs.num_simulations
+    years = list(range(inputs.current_age, inputs.life_expectancy + 1))
+    num_years = len(years)
+
+    # Collect results across all simulations
+    all_final_corpus = []
+    all_success = []
+    # year_by_year[year_index] = [corpus_value_sim1, corpus_value_sim2, ...]
+    year_by_year = [[] for _ in range(num_years)]
+
+    for _ in range(num_sims):
+        path = _run_single_mc_path(inputs, rng)
+        all_final_corpus.append(path["final_corpus"])
+        all_success.append(path["success"])
+        for i, val in enumerate(path["annual_values"]):
+            year_by_year[i].append(val["corpus"])
+
+    # Calculate percentiles for each year
+    percentiles = {}
+    for pct in [5, 25, 50, 75, 95]:
+        percentiles[f"p{pct}"] = []
+        for i in range(num_years):
+            vals = sorted(year_by_year[i])
+            idx = int((pct / 100.0) * (len(vals) - 1))
+            percentiles[f"p{pct}"].append(round(vals[idx], 2))
+
+    success_rate = sum(all_success) / num_sims * 100.0
+
+    return {
+        "metrics": {
+            "success_rate": round(success_rate, 2),
+            "median_final_corpus": round(sorted(all_final_corpus)[num_sims // 2], 2),
+            "mean_final_corpus": round(sum(all_final_corpus) / num_sims, 2),
+            "std_final_corpus": round((sum((x - sum(all_final_corpus)/num_sims)**2 for x in all_final_corpus) / num_sims) ** 0.5, 2),
+            "min_final_corpus": round(min(all_final_corpus), 2),
+            "max_final_corpus": round(max(all_final_corpus), 2),
+            "p5_final_corpus": round(sorted(all_final_corpus)[int(0.05 * (num_sims - 1))], 2),
+            "p25_final_corpus": round(sorted(all_final_corpus)[int(0.25 * (num_sims - 1))], 2),
+            "p75_final_corpus": round(sorted(all_final_corpus)[int(0.75 * (num_sims - 1))], 2),
+            "p95_final_corpus": round(sorted(all_final_corpus)[int(0.95 * (num_sims - 1))], 2),
+        },
+        "yearly_percentiles": {
+            "ages": years,
+            "p5": percentiles["p5"],
+            "p25": percentiles["p25"],
+            "p50": percentiles["p50"],
+            "p75": percentiles["p75"],
+            "p95": percentiles["p95"],
+        },
+        "num_simulations": num_sims
     }

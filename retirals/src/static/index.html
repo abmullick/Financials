@@ -1211,6 +1211,53 @@
                     </select>
                     <p class="text-xs mt-1.5" style="color: var(--text-3);">Simulate a market crash in the first two years of retirement.</p>
                 </div>
+
+                <details class="group rounded-xl border" style="border-color: var(--stroke);">
+                    <summary class="flex cursor-pointer list-none items-center justify-between px-3 py-2.5 text-sm font-semibold" style="border-bottom: 1px solid var(--stroke); background: var(--glass); color: var(--text-2);">
+                        <span>Monte Carlo Simulation Settings</span>
+                        <span class="chevron-toggle">▾</span>
+                    </summary>
+                    <div class="space-y-4 px-3 pb-3 pt-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300">Number of Simulations</label>
+                                <input type="number" id="num_simulations" value="1000" min="100" max="50000" step="100" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                                <p class="text-xs mt-1.5" style="color: var(--text-3);">More simulations = more accurate but slower.</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300">Return Distribution</label>
+                                <select id="return_distribution" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 bg-white">
+                                    <option value="lognormal">Lognormal (Recommended)</option>
+                                    <option value="normal">Normal</option>
+                                </select>
+                                <p class="text-xs mt-1.5" style="color: var(--text-3);">Lognormal prevents negative prices.</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300">Equity Volatility (%)</label>
+                                <input type="number" step="0.1" id="volatility_equity" value="18.0" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
+                                <p class="text-xs mt-1.5" style="color: var(--text-3);">Annual std dev.</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300">Debt Volatility (%)</label>
+                                <input type="number" step="0.1" id="volatility_debt" value="6.0" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
+                                <p class="text-xs mt-1.5" style="color: var(--text-3);">Annual std dev.</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300">Arbitrage Volatility (%)</label>
+                                <input type="number" step="0.1" id="volatility_arbitrage" value="8.0" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
+                                <p class="text-xs mt-1.5" style="color: var(--text-3);">Annual std dev.</p>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300">Random Seed (Optional)</label>
+                            <input type="number" id="monte_carlo_seed" placeholder="e.g. 42 for reproducible results" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                            <p class="text-xs mt-1.5" style="color: var(--text-3);">Leave blank for random seed each run.</p>
+                        </div>
+                    </div>
+                </details>
+
                         <div class="grid grid-cols-2 gap-3 pt-2">
                             <button type="button" class="prev-step-btn secondary-button w-full font-semibold py-2 rounded-xl text-sm">← Back</button>
                         </div>
@@ -1233,6 +1280,13 @@
                         ▶ Run Retirement Simulation
                     </button>
                     <p class="text-xs mt-2" style="color: var(--text-3);">Calculates your projected retirement journey</p>
+                </div>
+
+                <div class="text-center pt-2">
+                    <button onclick="calculateMonteCarlo()" class="secondary-button w-full font-semibold py-3 rounded-xl text-base" aria-label="Run Monte Carlo simulation" style="border-color: var(--accent); color: var(--accent);">
+                        🎲 Run Monte Carlo Simulation
+                    </button>
+                    <p class="text-xs mt-2" style="color: var(--text-3);">Probabilistic analysis with market volatility</p>
                 </div>
 
                 <div class="grid grid-cols-2 gap-3 pt-4">
@@ -1491,6 +1545,48 @@
                                 <!-- Generated Dynamically -->
                             </tbody>
                         </table>
+                        </div>
+                    </div>
+                </details>
+
+                <!-- Monte Carlo Simulation Results -->
+                <details id="monteCarloSection" class="group rounded-xl border-l-4 hidden" style="border-color: var(--stroke); border-left-color: var(--accent); margin-top: 1.5rem;">
+                    <summary class="flex cursor-pointer list-none items-center justify-between p-4 transition-colors group-hover:bg-white/5" style="background: var(--glass);">
+                        <div class="flex items-center gap-4">
+                            <div class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg" style="background-color: rgba(102, 167, 255, 0.1);">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" style="color: var(--accent);" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M4 2a1 1 0 011 1v2.101a7.002 7.002 0 0111.601 2.566 1 1 0 11-1.885.666A5.002 5.002 0 005.999 7H9a1 1 0 010 2H4a1 1 0 01-1-1V3a1 1 0 011-1zm.008 9.057a1 1 0 011.276.61A5.002 5.002 0 0014.001 13H11a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0v-2.101a7.002 7.002 0 01-11.601-2.566 1 1 0 01.61-1.276z" clip-rule="evenodd" /></svg>
+                            </div>
+                            <div>
+                                <h3 class="font-semibold" style="color: var(--text-1);">Monte Carlo Simulation</h3>
+                                <p class="text-xs" style="color: var(--text-3);">Probabilistic retirement outcomes based on market volatility.</p>
+                            </div>
+                        </div>
+                        <span class="chevron-toggle">▾</span>
+                    </summary>
+                    <div class="p-4">
+                        <div class="kpi-grid grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                            <div class="kpi-3d p-4 rounded-2xl">
+                                <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Probability of Success</p>
+                                <p id="mc_success_rate" class="kpi-value mt-2 font-black">0%</p>
+                            </div>
+                            <div class="kpi-3d p-4 rounded-2xl">
+                                <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Median Final Corpus</p>
+                                <p id="mc_median_final" class="kpi-value mt-2 font-black">₹0.00</p>
+                            </div>
+                            <div class="kpi-3d p-4 rounded-2xl">
+                                <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Worst Case (5th %ile)</p>
+                                <p id="mc_p5_final" class="kpi-value mt-2 font-black">₹0.00</p>
+                            </div>
+                            <div class="kpi-3d p-4 rounded-2xl">
+                                <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Best Case (95th %ile)</p>
+                                <p id="mc_p95_final" class="kpi-value mt-2 font-black">₹0.00</p>
+                            </div>
+                        </div>
+                        <div class="chart-panel p-4 rounded-2xl">
+                            <h3 class="text-md font-semibold mb-3" style="color: var(--text-2);">Corpus Distribution Over Time</h3>
+                            <div class="h-64">
+                                <canvas id="monteCarloChart"></canvas>
+                            </div>
                         </div>
                     </div>
                 </details>
@@ -2458,6 +2554,125 @@
             } catch (error) {
                 showCalculationError(error.message || 'Unexpected error while calculating retirement metrics.');
             }
+        }
+
+        async function calculateMonteCarlo() {
+            clearCalculationError();
+
+            const payload = {
+                current_age: parseInt(document.getElementById('current_age').value),
+                retirement_age: parseInt(document.getElementById('retirement_age').value),
+                life_expectancy: parseInt(document.getElementById('life_expectancy').value),
+                current_annual_expenses: parseCurrency(document.getElementById('current_annual_expenses').value),
+                avg_inflation_rate: parseFloat(document.getElementById('avg_inflation_rate').value) / 100.0,
+                current_corpus: parseCurrency(document.getElementById('current_corpus').value),
+                annual_contribution: parseCurrency(document.getElementById('annual_contribution').value),
+                pre_retirement_return: parseFloat(document.getElementById('pre_retirement_return').value) / 100.0,
+                post_retirement_return: parseFloat(document.getElementById('post_retirement_return').value) / 100.0,
+                contribution_increase: parseFloat(document.getElementById('contribution_increase').value) / 100.0,
+                ltcg_exemption: parseCurrency(document.getElementById('ltcg_exemption').value),
+                one_time_lumpsum: parseCurrency(document.getElementById('one_time_lumpsum').value),
+                include_pension: document.getElementById('include_pension').checked,
+                pension_start_age: parseInt(document.getElementById('pension_start_age').value),
+                annual_pension: parseCurrency(document.getElementById('annual_pension').value),
+                pension_increase: parseFloat(document.getElementById('pension_increase').value) / 100.0,
+                pension_tax_rate: parseFloat(document.getElementById('pension_tax_rate').value) / 100.0,
+                reinvest_pension_surplus: document.getElementById('reinvest_pension_surplus').checked,
+                stress_scenario: document.getElementById('stress_scenario').value,
+                adhoc_expenses: getAdHocExpenses(),
+                allocation_equity: parseFloat(document.getElementById('allocation_equity').value) / 100,
+                allocation_debt: parseFloat(document.getElementById('allocation_debt').value) / 100,
+                allocation_arbitrage: parseFloat(document.getElementById('allocation_arbitrage').value) / 100,
+                equity_ltcg_split: parseFloat(document.getElementById('equity_ltcg_split').value) / 100,
+                equity_stcg_split: parseFloat(document.getElementById('equity_stcg_split').value) / 100,
+                tax_ltcg: parseFloat(document.getElementById('tax_ltcg').value) / 100,
+                tax_stcg: parseFloat(document.getElementById('tax_stcg').value) / 100,
+                tax_debt: parseFloat(document.getElementById('tax_debt').value) / 100,
+                tax_arbitrage: parseFloat(document.getElementById('tax_arbitrage').value) / 100,
+                num_simulations: parseInt(document.getElementById('num_simulations').value),
+                volatility_equity: parseFloat(document.getElementById('volatility_equity').value) / 100,
+                volatility_debt: parseFloat(document.getElementById('volatility_debt').value) / 100,
+                volatility_arbitrage: parseFloat(document.getElementById('volatility_arbitrage').value) / 100,
+                return_distribution: document.getElementById('return_distribution').value,
+                monte_carlo_seed: document.getElementById('monte_carlo_seed').value ? parseInt(document.getElementById('monte_carlo_seed').value) : null,
+            };
+
+            if (isNaN(payload.current_age) || isNaN(payload.retirement_age) || isNaN(payload.life_expectancy)) {
+                showCalculationError('Please enter valid numeric ages before running the simulation.');
+                return;
+            }
+
+            if (payload.retirement_age <= payload.current_age) {
+                showCalculationError('Retirement age must be greater than the current age.');
+                return;
+            }
+
+            if (payload.life_expectancy < payload.retirement_age) {
+                showCalculationError('Life expectancy must be greater than or equal to the retirement age.');
+                return;
+            }
+
+            try {
+                const response = await fetch('/calculate-mc', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    let message = `The Monte Carlo calculation failed (HTTP ${response.status}).`;
+                    try {
+                        const errorBody = await response.json();
+                        if (Array.isArray(errorBody.detail)) {
+                            message = errorBody.detail.map(err => `${err.loc[1]}: ${err.msg}`).join('; ');
+                        } else if (errorBody.detail) {
+                            message = errorBody.detail;
+                        }
+                    } catch (jsonError) {
+                        const text = await response.text();
+                        console.error('MC error response (non-JSON):', text);
+                        message = `The Monte Carlo calculation could not be completed. Server returned ${response.status}.`;
+                    }
+                    throw new Error(message);
+                }
+
+                const data = await response.json();
+                renderMonteCarloResults(data);
+            } catch (error) {
+                console.error('Monte Carlo calculation error:', error);
+                showCalculationError(error.message || 'Unexpected error while running Monte Carlo simulation.');
+            }
+        }
+
+        function renderMonteCarloResults(data) {
+            const metrics = data.metrics;
+            const yearly = data.yearly_percentiles;
+
+            document.getElementById('monteCarloSection').classList.remove('hidden');
+
+            document.getElementById('mc_success_rate').innerText = `${metrics.success_rate.toFixed(1)}%`;
+            document.getElementById('mc_median_final').innerText = fmt(metrics.median_final_corpus);
+            document.getElementById('mc_p5_final').innerText = fmt(metrics.p5_final_corpus);
+            document.getElementById('mc_p95_final').innerText = fmt(metrics.p95_final_corpus);
+
+            const datasets = [
+                { label: '95th %ile', data: yearly.p95, borderColor: 'rgba(16, 185, 129, 0.9)', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: false, pointRadius: 0, borderWidth: 2 },
+                { label: '75th %ile', data: yearly.p75, borderColor: 'rgba(59, 130, 246, 0.9)', backgroundColor: 'rgba(59, 130, 246, 0.08)', fill: false, pointRadius: 0, borderWidth: 2 },
+                { label: 'Median', data: yearly.p50, borderColor: '#facc15', backgroundColor: 'rgba(250, 204, 21, 0.08)', fill: false, pointRadius: 0, borderWidth: 3 },
+                { label: '25th %ile', data: yearly.p25, borderColor: 'rgba(249, 115, 22, 0.9)', backgroundColor: 'rgba(249, 115, 22, 0.08)', fill: false, pointRadius: 0, borderWidth: 2 },
+                { label: '5th %ile', data: yearly.p5, borderColor: 'rgba(239, 68, 68, 0.9)', backgroundColor: 'rgba(239, 68, 68, 0.1)', fill: false, pointRadius: 0, borderWidth: 2 }
+            ];
+
+            makeLineChart('monteCarloChart', yearly.ages, datasets, {
+                plugins: {
+                    legend: {
+                        display: true,
+                        labels: { color: isLightTheme() ? '#334155' : '#cbd5e1', boxWidth: 12, usePointStyle: true, pointStyle: 'circle', padding: 16, font: { weight: '700', size: 13 } }
+                    }
+                }
+            });
+
+            fitAllKpiValues();
         }
 
         function applyTheme(theme) {
