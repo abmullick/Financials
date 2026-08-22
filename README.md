@@ -1,5 +1,5 @@
 # Parity Retirement Planner
-
+# With Deterministic Model
 A sophisticated, FastAPI-based retirement planning application designed to model and visualize long-term financial trajectories. It meticulously simulates annual corpus growth, inflation-adjusted retirement withdrawals, complex tax implications, and market stress scenarios. The application's core logic is engineered for parity with detailed spreadsheet-based financial models, offering users a powerful and intuitive web dashboard for comprehensive scenario analysis. This tool is ideal for financial advisors and individuals seeking a clear, data-driven understanding of their retirement readiness.
 
 ## Key Features at a Glance
