@@ -1,6 +1,7 @@
 import unittest
+import math
 from src.models import PlannerInputs, AdHocExpense, StressScenario, ReturnDistribution
-from src.retirement_engine import run_projection, run_monte_carlo
+from src.retirement_engine import run_projection, run_monte_carlo, _get_mc_volatility
 
 class RetirementPlannerTest(unittest.TestCase):
     """Comprehensive test suite for the retirement planner engine."""
@@ -703,6 +704,77 @@ class RetirementPlannerTest(unittest.TestCase):
 
         self.assertEqual(det["metrics"]["plan_sustainable"], False)
         self.assertEqual(result["metrics"]["success_rate"], 0.0)
+
+    def test_mc_volatility_zero_correlation(self):
+        """With zero correlations, portfolio volatility should equal sqrt(weighted variances)."""
+        inputs = PlannerInputs(
+            current_age=30, retirement_age=60, life_expectancy=65,
+            allocation_equity=0.6, allocation_debt=0.3, allocation_arbitrage=0.1,
+            volatility_equity=0.18, volatility_debt=0.06, volatility_arbitrage=0.08,
+            equity_debt_correlation=0.0,
+            equity_arbitrage_correlation=0.0,
+            debt_arbitrage_correlation=0.0,
+            num_simulations=100,
+            monte_carlo_seed=42,
+            adhoc_expenses=[]
+        )
+
+        we, wd, wa = 0.6, 0.3, 0.1
+        se, sd, sa = 0.18, 0.06, 0.08
+        expected_variance = (we**2 * se**2) + (wd**2 * sd**2) + (wa**2 * sa**2)
+        expected_sigma = math.sqrt(expected_variance)
+
+        actual_sigma = _get_mc_volatility(inputs, is_retired=True)
+        self.assertAlmostEqual(actual_sigma, expected_sigma, places=6)
+
+    def test_mc_volatility_perfect_positive_correlation(self):
+        """With all correlations = +1, volatility should equal the old weighted-average."""
+        inputs = PlannerInputs(
+            current_age=30, retirement_age=60, life_expectancy=65,
+            allocation_equity=0.6, allocation_debt=0.3, allocation_arbitrage=0.1,
+            volatility_equity=0.18, volatility_debt=0.06, volatility_arbitrage=0.08,
+            equity_debt_correlation=1.0,
+            equity_arbitrage_correlation=1.0,
+            debt_arbitrage_correlation=1.0,
+            num_simulations=100,
+            monte_carlo_seed=42,
+            adhoc_expenses=[]
+        )
+
+        expected_sigma = (
+            inputs.allocation_equity * inputs.volatility_equity +
+            inputs.allocation_debt * inputs.volatility_debt +
+            inputs.allocation_arbitrage * inputs.volatility_arbitrage
+        )
+
+        actual_sigma = _get_mc_volatility(inputs, is_retired=True)
+        self.assertAlmostEqual(actual_sigma, expected_sigma, places=6)
+
+    def test_mc_volatility_negative_correlation_reduces_risk(self):
+        """Negative correlations should produce lower portfolio volatility than zero correlation."""
+        inputs = PlannerInputs(
+            current_age=30, retirement_age=60, life_expectancy=65,
+            allocation_equity=0.5, allocation_debt=0.3, allocation_arbitrage=0.2,
+            volatility_equity=0.20, volatility_debt=0.10, volatility_arbitrage=0.15,
+            equity_debt_correlation=-0.5,
+            equity_arbitrage_correlation=-0.3,
+            debt_arbitrage_correlation=-0.2,
+            num_simulations=100,
+            monte_carlo_seed=42,
+            adhoc_expenses=[]
+        )
+
+        sigma_negative = _get_mc_volatility(inputs, is_retired=True)
+
+        inputs_zero_corr = inputs.model_copy(update={
+            "equity_debt_correlation": 0.0,
+            "equity_arbitrage_correlation": 0.0,
+            "debt_arbitrage_correlation": 0.0
+        })
+        sigma_zero = _get_mc_volatility(inputs_zero_corr, is_retired=True)
+
+        self.assertLess(sigma_negative, sigma_zero,
+            "Negative correlations should reduce portfolio volatility vs. zero correlation.")
 
 if __name__ == "__main__":
     unittest.main()

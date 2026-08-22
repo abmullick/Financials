@@ -44,15 +44,26 @@ We support two distributions:
 
 ### 3. Portfolio Blending
 
-Your money is split across equity, debt, and arbitrage. Each year's volatility is a weighted blend of the three, regardless of whether you're retired or not:
+Your money is split across equity, debt, and arbitrage. Each year's portfolio volatility is calculated using a **covariance-based formula** that accounts for the correlations between asset classes:
 
 ```
-portfolio_volatility = (equity% × equity_volatility) +
-                        (debt% × debt_volatility) +
-                        (arbitrage% × arbitrage_volatility)
+variance =
+    we² × σe²
+  + wd² × σd²
+  + wa² × σa²
+  + 2 × we × wd × σe × σd × ρed
+  + 2 × we × wa × σe × σa × ρea
+  + 2 × wd × wa × σd × σa × ρda
+
+portfolio_volatility = sqrt(max(variance, 0))
 ```
 
-This is applied during both accumulation and retirement phases, so your actual asset allocation directly affects the simulation's risk estimate.
+Where:
+- `we`, `wd`, `wa` = equity, debt, arbitrage weights
+- `σe`, `σd`, `σa` = equity, debt, arbitrage volatilities
+- `ρed`, `ρea`, `ρda` = correlations between each pair
+
+This is applied during both accumulation and retirement phases. Diversification benefits are captured when correlations are less than +1, and risk is amplified when correlations are positive.
 
 ### 4. Stress Scenarios
 

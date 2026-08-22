@@ -58,6 +58,9 @@ class PlannerInputs(BaseModel):
     volatility_equity: float = Field(0.18, ge=0, le=1.0, description="Annual volatility for equity allocation.")
     volatility_debt: float = Field(0.06, ge=0, le=1.0, description="Annual volatility for debt allocation.")
     volatility_arbitrage: float = Field(0.08, ge=0, le=1.0, description="Annual volatility for arbitrage allocation.")
+    equity_debt_correlation: float = Field(-0.10, ge=-1.0, le=1.0, description="Correlation between equity and debt returns.")
+    equity_arbitrage_correlation: float = Field(0.05, ge=-1.0, le=1.0, description="Correlation between equity and arbitrage returns.")
+    debt_arbitrage_correlation: float = Field(0.20, ge=-1.0, le=1.0, description="Correlation between debt and arbitrage returns.")
     return_distribution: ReturnDistribution = Field(ReturnDistribution.LOGNORMAL, description="Distribution type for return simulation: normal or lognormal.")
     monte_carlo_seed: Optional[int] = Field(None, description="Optional random seed for reproducible simulations.")
 

@@ -453,12 +453,27 @@ def _solve_for_required_returns(inputs: PlannerInputs, corpus_at_retirement: flo
     }
 
 def _get_mc_volatility(inputs: PlannerInputs, is_retired: bool) -> float:
-    """Returns the blended portfolio volatility for Monte Carlo simulation."""
-    return (
-        inputs.allocation_equity * inputs.volatility_equity +
-        inputs.allocation_debt * inputs.volatility_debt +
-        inputs.allocation_arbitrage * inputs.volatility_arbitrage
+    """Returns the covariance-based portfolio volatility for Monte Carlo simulation."""
+    we = inputs.allocation_equity
+    wd = inputs.allocation_debt
+    wa = inputs.allocation_arbitrage
+    se = inputs.volatility_equity
+    sd = inputs.volatility_debt
+    sa = inputs.volatility_arbitrage
+    rho_ed = inputs.equity_debt_correlation
+    rho_ea = inputs.equity_arbitrage_correlation
+    rho_da = inputs.debt_arbitrage_correlation
+
+    variance = (
+        (we ** 2) * (se ** 2) +
+        (wd ** 2) * (sd ** 2) +
+        (wa ** 2) * (sa ** 2) +
+        2 * we * wd * se * sd * rho_ed +
+        2 * we * wa * se * sa * rho_ea +
+        2 * wd * wa * sd * sa * rho_da
     )
+
+    return math.sqrt(max(variance, 0.0))
 
 def _get_mc_return(age: int, inputs: PlannerInputs, rng: random.Random) -> float:
     """Returns a stochastic annual return for Monte Carlo simulation."""

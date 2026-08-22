@@ -38,19 +38,33 @@ Unlike the deterministic projection, which assumes average returns every year, M
 | `volatility_equity` | 18.0% | 0–100% | Annual std dev of equity returns |
 | `volatility_debt` | 6.0% | 0–100% | Annual std dev of debt returns |
 | `volatility_arbitrage` | 8.0% | 0–100% | Annual std dev of arbitrage returns |
+| `equity_debt_correlation` | -0.10 | -1 to +1 | Correlation between equity and debt returns |
+| `equity_arbitrage_correlation` | 0.05 | -1 to +1 | Correlation between equity and arbitrage returns |
+| `debt_arbitrage_correlation` | 0.20 | -1 to +1 | Correlation between debt and arbitrage returns |
 | `monte_carlo_seed` | None | Any integer | Optional seed for reproducible results |
 
 ### How Volatility Is Applied
 
-Each year's return volatility is a weighted blend of the three asset classes based on your portfolio allocation:
+Each year's portfolio volatility is calculated using a **covariance-based formula** that accounts for the correlations between asset classes:
 
 ```
-portfolio_volatility = (equity% × equity_volatility) +
-                        (debt% × debt_volatility) +
-                        (arbitrage% × arbitrage_volatility)
+variance =
+    we² × σe²
+  + wd² × σd²
+  + wa² × σa²
+  + 2 × we × wd × σe × σd × ρed
+  + 2 × we × wa × σe × σa × ρea
+  + 2 × wd × wa × σd × σa × ρda
+
+portfolio_volatility = sqrt(max(variance, 0))
 ```
 
-This applies during **both** accumulation and retirement phases.
+Where:
+- `we`, `wd`, `wa` = equity, debt, arbitrage weights
+- `σe`, `σd`, `σa` = equity, debt, arbitrage volatilities
+- `ρed`, `ρea`, `ρda` = correlations between each pair
+
+This applies during **both** accumulation and retirement phases. Diversification benefits are captured when correlations are less than +1, and risk is amplified when correlations are positive.
 
 ### Return Distributions
 
