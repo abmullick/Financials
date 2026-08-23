@@ -585,6 +585,22 @@
             color: var(--text-1);
         }
 
+        .landing-stat-mc {
+            border-color: rgba(251, 146, 60, 0.45);
+            box-shadow: 0 0 0 0 rgba(251, 146, 60, 0.35);
+            animation: mc-card-pulse 2.2s ease-in-out infinite;
+        }
+
+        body.theme-light .landing-stat-mc {
+            border-color: rgba(234, 88, 12, 0.45);
+            box-shadow: 0 0 0 0 rgba(234, 88, 12, 0.25);
+        }
+
+        @keyframes mc-card-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(251, 146, 60, 0.35); }
+            50% { box-shadow: 0 0 0 8px rgba(251, 146, 60, 0); }
+        }
+
         .landing-stat p {
             color: var(--text-3);
         }
@@ -890,7 +906,7 @@
                 </div>
             </div>
 
-            <div class="mt-10 grid gap-4 md:grid-cols-3">
+            <div class="mt-10 grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 <div class="landing-stat">
                     <p class="landing-stat-label text-[10px] uppercase tracking-[0.16em]">Core Projection</p>
                     <p class="landing-stat-title mt-2 text-xl font-bold">Detailed Simulation</p>
@@ -909,7 +925,12 @@
                 <div class="landing-stat">
                     <p class="landing-stat-label text-[10px] uppercase tracking-[0.16em]">Advisory</p>
                     <p class="landing-stat-title mt-2 text-xl font-bold">Actionable insight</p>
-                    <p class="mt-2 text-sm">Get a readiness score and solve for the exact contribution or return rate needed to close any gap.</p>
+                    <p class="mt-2 text-sm">Get a readiness score and solve for the required return rate needed to close any gap.</p>
+                </div>
+                <div class="landing-stat landing-stat-mc">
+                    <p class="landing-stat-label text-[10px] uppercase tracking-[0.16em]">Monte Carlo</p>
+                    <p class="landing-stat-title mt-2 text-xl font-bold">Probabilistic Outcomes</p>
+                    <p class="mt-2 text-sm">Run thousands of market simulations to estimate success probability, funding fragility by age, and recommended actions.</p>
                 </div>
             </div>
 
