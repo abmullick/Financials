@@ -1616,12 +1616,6 @@
                                 <canvas id="monteCarloChart"></canvas>
                             </div>
                         </div>
-                        <div class="chart-panel p-4 rounded-2xl">
-                            <h3 class="text-md font-semibold mb-3" style="color: var(--text-2);">Corpus Distribution Over Time</h3>
-                            <div class="h-64">
-                                <canvas id="monteCarloChart"></canvas>
-                            </div>
-                        </div>
                         <div class="chart-panel p-4 rounded-2xl mt-4">
                             <h3 class="text-md font-semibold mb-3" style="color: var(--text-2);">Probability of Funding by Age</h3>
                             <p class="text-xs mb-3" style="color: var(--text-3);">Shows the % of simulations where expenses are fully funded each year. Lower values indicate fragility.</p>
@@ -2715,7 +2709,9 @@
             const metrics = data.metrics;
             const yearly = data.yearly_percentiles;
 
-            document.getElementById('monteCarloSection').classList.remove('hidden');
+            const mcSection = document.getElementById('monteCarloSection');
+            mcSection.classList.remove('hidden');
+            mcSection.setAttribute('open', '');
 
             document.getElementById('mc_success_rate').innerText = `${metrics.success_rate.toFixed(1)}%`;
             document.getElementById('mc_median_final').innerText = fmt(metrics.median_final_corpus);
