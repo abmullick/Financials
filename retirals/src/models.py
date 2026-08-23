@@ -63,6 +63,7 @@ class PlannerInputs(BaseModel):
     debt_arbitrage_correlation: float = Field(0.20, ge=-1.0, le=1.0, description="Correlation between debt and arbitrage returns.")
     return_distribution: ReturnDistribution = Field(ReturnDistribution.LOGNORMAL, description="Distribution type for return simulation: normal or lognormal.")
     monte_carlo_seed: Optional[int] = Field(None, description="Optional random seed for reproducible simulations.")
+    retirement_age_sensitivity: Optional[list[int]] = Field(None, description="Optional list of retirement ages to compare in sensitivity analysis.")
 
     @model_validator(mode="after")
     def validate_plan(self):

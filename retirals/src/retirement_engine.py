@@ -506,6 +506,7 @@ def _run_single_mc_path(inputs: PlannerInputs, rng: random.Random) -> dict:
     total_contributions = 0.0
     ad_hoc_map = {item.age: item for item in inputs.adhoc_expenses or []}
     success = True
+    first_unfunded_age = None
 
     # Pre-calculate portfolio portions for tax calculation (deterministic)
     equity_ltcg_portion = inputs.allocation_equity * inputs.equity_ltcg_split
@@ -578,6 +579,8 @@ def _run_single_mc_path(inputs: PlannerInputs, rng: random.Random) -> dict:
                 portfolio_net_withdrawal_needed = actual_net_withdrawal
                 if unfunded_expense > 0:
                     success = False
+                    if first_unfunded_age is None:
+                        first_unfunded_age = age
 
         return_rate = _get_mc_return(age, inputs, rng)
 
@@ -596,14 +599,51 @@ def _run_single_mc_path(inputs: PlannerInputs, rng: random.Random) -> dict:
 
         annual_values.append({
             "age": age,
-            "corpus": corpus
+            "corpus": corpus,
+            "funded": unfunded_expense == 0
         })
 
     return {
         "annual_values": annual_values,
         "success": success,
-        "final_corpus": corpus
+        "final_corpus": corpus,
+        "first_unfunded_age": first_unfunded_age
     }
+
+def _fmt(value):
+    if value is None:
+        return "N/A"
+    if value >= 1e7:
+        return f"₹{value/1e7:.2f} Cr"
+    if value >= 1e5:
+        return f"₹{value/1e5:.2f} L"
+    return f"₹{value:,.0f}"
+
+def _generate_recommendations(inputs: PlannerInputs, mc_summary: dict) -> list:
+    """Generates plain-language recommendations based on Monte Carlo output."""
+    recs = []
+    success_rate = mc_summary.get("success_rate", 0)
+    median_corpus = mc_summary.get("median_final_corpus", 0)
+    failure_ages = mc_summary.get("failure_age_percentiles", {})
+
+    if success_rate < 50:
+        recs.append("Your plan has a high risk of running out of money. Consider increasing contributions, reducing expenses, or delaying retirement.")
+    elif success_rate < 80:
+        recs.append("Your plan is moderately at risk. Small improvements in savings rate or retirement age can significantly increase your probability of success.")
+
+    if success_rate < 100 and failure_ages:
+        median_failure = failure_ages.get("p50")
+        if median_failure:
+            recs.append(f"Plan becomes fragile around age {median_failure}. Delaying retirement by even 1-2 years can improve outcomes.")
+
+    if inputs.current_age < inputs.retirement_age and inputs.annual_contribution > 0:
+        recommended_increase = inputs.annual_contribution * 0.10
+        recs.append(f"Increasing annual contribution by 10% (to {_fmt(inputs.annual_contribution + recommended_increase)}) may meaningfully improve success odds.")
+
+    if not recs:
+        recs.append("Your plan looks healthy. Continue monitoring annually and adjust for major life changes.")
+
+    return recs
 
 def run_monte_carlo(inputs: PlannerInputs) -> dict:
     """
@@ -623,15 +663,21 @@ def run_monte_carlo(inputs: PlannerInputs) -> dict:
     # Collect results across all simulations
     all_final_corpus = []
     all_success = []
+    all_first_unfunded_ages = []
     # year_by_year[year_index] = [corpus_value_sim1, corpus_value_sim2, ...]
     year_by_year = [[] for _ in range(num_years)]
+    year_funded_counts = [0] * num_years
 
     for _ in range(num_sims):
         path = _run_single_mc_path(inputs, rng)
         all_final_corpus.append(path["final_corpus"])
         all_success.append(path["success"])
+        if not path["success"] and path["first_unfunded_age"] is not None:
+            all_first_unfunded_ages.append(path["first_unfunded_age"])
         for i, val in enumerate(path["annual_values"]):
             year_by_year[i].append(val["corpus"])
+            if val.get("funded", False):
+                year_funded_counts[i] += 1
 
     # Calculate percentiles for each year
     percentiles = {}
@@ -643,6 +689,40 @@ def run_monte_carlo(inputs: PlannerInputs) -> dict:
             percentiles[f"p{pct}"].append(round(vals[idx], 2))
 
     success_rate = sum(all_success) / num_sims * 100.0
+    funding_probability_by_age = [round((count / num_sims) * 100.0, 2) for count in year_funded_counts]
+
+    # Years to failure percentiles
+    failure_age_percentiles = {}
+    if all_first_unfunded_ages:
+        sorted_failures = sorted(all_first_unfunded_ages)
+        for pct in [10, 25, 50, 75, 90]:
+            idx = int((pct / 100.0) * (len(sorted_failures) - 1))
+            failure_age_percentiles[f"p{pct}"] = sorted_failures[idx]
+
+    # Final corpus histogram
+    sorted_final = sorted(all_final_corpus)
+    min_corpus = sorted_final[0]
+    max_corpus = sorted_final[-1]
+    num_bins = 20
+    bin_width = (max_corpus - min_corpus) / num_bins if max_corpus > min_corpus else 1.0
+    histogram_bins = [0] * num_bins
+    histogram_labels = []
+    for i in range(num_bins):
+        low = min_corpus + i * bin_width
+        high = low + bin_width
+        histogram_labels.append(f"{_fmt(low)}-{_fmt(high)}")
+    for val in sorted_final:
+        idx = min(int((val - min_corpus) / bin_width), num_bins - 1)
+        histogram_bins[idx] += 1
+    histogram_probabilities = [round((count / num_sims) * 100.0, 2) for count in histogram_bins]
+
+    # Recommendations
+    recommendations = _generate_recommendations(inputs, {
+        "success_rate": success_rate,
+        "median_final_corpus": sorted(all_final_corpus)[num_sims // 2],
+        "failure_age_percentiles": failure_age_percentiles,
+        "funding_probability_by_age": dict(zip(years, funding_probability_by_age))
+    })
 
     return {
         "metrics": {
@@ -665,5 +745,35 @@ def run_monte_carlo(inputs: PlannerInputs) -> dict:
             "p75": percentiles["p75"],
             "p95": percentiles["p95"],
         },
-        "num_simulations": num_sims
+        "funding_probability_by_age": {
+            "ages": years,
+            "probabilities": funding_probability_by_age
+        },
+        "failure_age_percentiles": failure_age_percentiles,
+        "final_corpus_histogram": {
+            "labels": histogram_labels,
+            "probabilities": histogram_probabilities
+        },
+        "recommendations": recommendations,
+        "num_simulations": num_sims,
+        "retirement_age_sensitivity": _run_mc_sensitivity(inputs, rng, num_sims)
     }
+
+def _run_mc_sensitivity(base_inputs: PlannerInputs, base_rng: random.Random, base_num_sims: int) -> dict:
+    """Runs MC for a range of retirement ages and returns success rates."""
+    ages = base_inputs.retirement_age_sensitivity
+    if not ages:
+        return {}
+
+    results = {}
+    for ret_age in ages:
+        if ret_age <= base_inputs.current_age or ret_age > base_inputs.life_expectancy:
+            continue
+        sens_inputs = base_inputs.model_copy(update={"retirement_age": ret_age, "retirement_age_sensitivity": None})
+        sens_rng = random.Random(base_inputs.monte_carlo_seed) if base_inputs.monte_carlo_seed is not None else random.Random()
+        sens_result = run_monte_carlo(sens_inputs)
+        results[str(ret_age)] = {
+            "success_rate": sens_result["metrics"]["success_rate"],
+            "median_final_corpus": sens_result["metrics"]["median_final_corpus"]
+        }
+    return results

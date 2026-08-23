@@ -33,10 +33,10 @@ For each year of your plan, the simulation draws a random return from a probabil
 
 We support two distributions:
 
-**Lognormal (default, recommended)**
+**Lognormal (default)**
 - The standard choice for modeling asset prices.
 - It cannot produce returns below -100%, which is physically correct — you cannot lose more than 100% of your money.
-- This is the industry-standard assumption for retirement planning.
+- The simulation calibrates it so that its expected *arithmetic* return equals your selected pre- or post-retirement return.
 
 **Normal**
 - Simpler, but can theoretically produce returns below -100%, implying a negative portfolio value.
@@ -44,7 +44,14 @@ We support two distributions:
 
 ### 3. Portfolio Blending
 
-Your money is split across equity, debt, and arbitrage. Each year's portfolio volatility is calculated using a **covariance-based formula** that accounts for the correlations between asset classes:
+Your allocation across equity, debt, and arbitrage is used to calculate one **portfolio volatility** each year with a covariance-based formula that accounts for correlations between asset classes:
+
+In plain language, the calculation asks two questions:
+
+- How volatile is each part of the portfolio on its own?
+- Do those parts usually rise and fall together, or do they partly offset one another?
+
+Putting money in more than one asset class can reduce overall volatility when their returns do not move in lockstep. It is not a guarantee against losses: when assets move together, diversification offers less protection.
 
 ```
 variance =
@@ -63,7 +70,17 @@ Where:
 - `σe`, `σd`, `σa` = equity, debt, arbitrage volatilities
 - `ρed`, `ρea`, `ρda` = correlations between each pair
 
-This is applied during both accumulation and retirement phases. Diversification benefits are captured when correlations are less than +1, and risk is amplified when correlations are positive.
+Correlation ranges from `-1` to `+1`:
+
+- `+1` means two asset classes always move together, so there is no diversification benefit between them.
+- `0` means they move independently.
+- A value below `0` means they tend to move in opposite directions, which can reduce portfolio volatility.
+
+This calculation is applied during both accumulation and retirement. Positive correlation does not automatically increase risk; it reduces the diversification benefit relative to a lower correlation.
+
+The current model then draws a single return for the whole portfolio. It does **not** generate separate asset-class return paths, track individual asset balances, or model rebalancing. Your pre- and post-retirement return assumptions determine the portfolio's expected return; allocation and correlations determine its volatility (and allocation also affects the simplified withdrawal-tax calculation).
+
+Correlation inputs should be realistic as a group. Some individually valid correlations can form an invalid correlation matrix; if that happens, the calculated variance is floored at zero, which can understate risk.
 
 ### 4. Stress Scenarios
 
@@ -78,7 +95,7 @@ This lets you test whether your plan can survive a bad start to retirement, whic
 If you have a pension, it is applied every year from `pension_start_age` onward:
 - Gross pension is reduced by tax to get net pension
 - Net pension first covers living expenses
-- Any surplus is reinvested into the corpus
+- Any surplus is reinvested into the corpus only when **Reinvest pension surplus** is enabled
 - Any shortfall must come from your portfolio withdrawals
 
 Pension always helps the success rate because it reduces the burden on your investment corpus.
@@ -104,6 +121,11 @@ At the end, aggregate all paths to compute:
 - **Success rate**: % of paths where corpus never exhausted
 - **Percentiles**: 5th, 25th, 50th (median), 75th, 95th corpus values at each year and at the end
 - **Statistics**: median, mean, standard deviation, min, max of final corpus
+- **Funding probability by age**: for each age, the % of simulations where expenses were fully funded
+- **Failure age percentiles**: for failed paths, the distribution of ages at which corpus first exhausts
+- **Final corpus histogram**: 20-bin histogram of final corpus values
+- **Retirement age sensitivity**: success rates and median corpus for alternative retirement ages
+- **Recommendations**: plain-language suggestions based on the simulation output
 
 ## What the Results Mean
 
@@ -119,9 +141,12 @@ A wide gap between the 5th and 95th percentiles means your plan is highly sensit
 ## Practical Guidance
 
 - **Success rate below 50%** = high risk. Consider increasing contributions, reducing expenses, or delaying retirement.
-- **Success rate above 80%** = generally comfortable, assuming your assumptions are realistic.
+- **Success rate above 80%** = a useful starting point, but not automatically comfortable. Choose a target that reflects your risk tolerance, flexibility in spending, and ability to earn income or adjust plans.
 - **Median at ₹0** = your plan is break-even in the average market. Any bad luck and you run short.
 - **95th percentile much higher than median** = there is huge upside in good markets, but also significant downside risk.
+- **Funding probability by age** = use this to see exactly when your plan becomes fragile. If the line drops below 75% at age 72, that's a signal to shore up the plan before then.
+- **Retirement age sensitivity** = if a 2-year delay raises success rate from 48% to 82%, that's a high-leverage improvement to consider.
+- **Recommendations** = the engine suggests concrete actions such as increasing contributions or delaying retirement, but treat these as starting points rather than personalized advice.
 
 ## Assumptions and Limitations
 
@@ -129,10 +154,13 @@ A wide gap between the 5th and 95th percentiles means your plan is highly sensit
 - Inflation is fixed at your input rate. In reality, inflation varies.
 - Pension is assumed to grow at a fixed rate and be taxed at a fixed rate.
 - Taxes on withdrawals are simplified and use a blended portfolio approach.
-- The simulation does not model sequence-of-returns risk explicitly — but the percentile bands make it visible.
+- The simulation models sequence-of-returns risk: each path has a different ordered sequence of annual returns, while withdrawals continue through poor markets. It does not model serial market behavior such as momentum or mean reversion.
+- Asset-class returns, changing allocations, rebalancing, and changing tax lots are not modeled separately.
+- The lognormal distribution prevents a return below -100%, but the configured volatility is used as a log-return volatility parameter. The realised arithmetic-return volatility therefore will not exactly equal the input value.
+- Results are planning estimates, not financial, tax, or investment advice.
 
 ## Technical Notes
 
 - **Seed**: Provide a random seed to reproduce the same simulation results exactly.
 - **Simulation count**: More simulations = more stable results, but slower. 1,000–5,000 is usually sufficient.
-- **Lognormal**: The default and recommended setting. It preserves the expected return while ensuring prices cannot go negative.
+- **Lognormal**: The default setting. It preserves the configured expected arithmetic return while ensuring portfolio values cannot become negative solely because of a return below -100%.

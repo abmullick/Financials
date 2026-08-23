@@ -776,5 +776,163 @@ class RetirementPlannerTest(unittest.TestCase):
         self.assertLess(sigma_negative, sigma_zero,
             "Negative correlations should reduce portfolio volatility vs. zero correlation.")
 
+    def test_mc_funding_probability_output_structure(self):
+        """Monte Carlo should return funding_probability_by_age with correct structure."""
+        inputs = PlannerInputs(
+            current_age=30, retirement_age=60, life_expectancy=65,
+            num_simulations=100,
+            monte_carlo_seed=42,
+            adhoc_expenses=[]
+        )
+        result = run_monte_carlo(inputs)
+
+        self.assertIn("funding_probability_by_age", result)
+        fp = result["funding_probability_by_age"]
+        self.assertIn("ages", fp)
+        self.assertIn("probabilities", fp)
+        self.assertEqual(len(fp["ages"]), len(fp["probabilities"]))
+        self.assertEqual(len(fp["ages"]), 36)  # 30 to 65 inclusive
+
+        for p in fp["probabilities"]:
+            self.assertGreaterEqual(p, 0)
+            self.assertLessEqual(p, 100)
+
+    def test_mc_funding_probability_sustainable_plan(self):
+        """A sustainable plan should have high funding probability across all ages."""
+        inputs = PlannerInputs(
+            current_age=30, retirement_age=60, life_expectancy=65,
+            current_corpus=10000000,
+            current_annual_expenses=100000,
+            annual_contribution=0,
+            avg_inflation_rate=0.0,
+            pre_retirement_return=0.0,
+            post_retirement_return=0.0,
+            num_simulations=100,
+            volatility_equity=0.0,
+            volatility_debt=0.0,
+            volatility_arbitrage=0.0,
+            monte_carlo_seed=42,
+            adhoc_expenses=[]
+        )
+        result = run_monte_carlo(inputs)
+        fp = result["funding_probability_by_age"]
+
+        for age, prob in zip(fp["ages"], fp["probabilities"]):
+            if age >= 60:
+                self.assertEqual(prob, 100.0, f"Funding probability should be 100% at age {age} for a sustainable plan.")
+
+    def test_mc_funding_probability_unsustainable_plan(self):
+        """An unsustainable plan should show declining funding probability after retirement."""
+        inputs = PlannerInputs(
+            current_age=70, retirement_age=71, life_expectancy=75,
+            current_corpus=50000,
+            current_annual_expenses=150000,
+            annual_contribution=0,
+            avg_inflation_rate=0.0,
+            post_retirement_return=0.0,
+            allocation_equity=0.8,
+            allocation_debt=0.2,
+            allocation_arbitrage=0.0,
+            equity_ltcg_split=0.7,
+            equity_stcg_split=0.3,
+            tax_ltcg=0.10,
+            tax_stcg=0.20,
+            tax_debt=0.20,
+            ltcg_exemption=50000,
+            include_pension=True,
+            pension_start_age=71,
+            annual_pension=50000,
+            pension_tax_rate=0.20,
+            num_simulations=100,
+            monte_carlo_seed=42,
+            adhoc_expenses=[]
+        )
+        result = run_monte_carlo(inputs)
+        fp = result["funding_probability_by_age"]
+
+        retired_probs = [prob for age, prob in zip(fp["ages"], fp["probabilities"]) if age >= 71]
+        self.assertTrue(all(p <= 100 for p in retired_probs))
+        self.assertTrue(any(p < 100 for p in retired_probs),
+            "At least some retirement years should have less than 100% funding probability for an unsustainable plan.")
+
+    def test_mc_failure_age_percentiles_present_on_failure(self):
+        """Unsuccessful paths should report first_unfunded_age percentiles."""
+        inputs = PlannerInputs(
+            current_age=70, retirement_age=71, life_expectancy=75,
+            current_corpus=50000,
+            current_annual_expenses=150000,
+            annual_contribution=0,
+            avg_inflation_rate=0.0,
+            post_retirement_return=0.0,
+            allocation_equity=0.8, allocation_debt=0.2, allocation_arbitrage=0.0,
+            equity_ltcg_split=0.7, equity_stcg_split=0.3,
+            tax_ltcg=0.10, tax_stcg=0.20, tax_debt=0.20,
+            ltcg_exemption=50000,
+            include_pension=True,
+            pension_start_age=71,
+            annual_pension=50000,
+            pension_tax_rate=0.20,
+            num_simulations=100,
+            monte_carlo_seed=42,
+            adhoc_expenses=[]
+        )
+        result = run_monte_carlo(inputs)
+        self.assertIn("failure_age_percentiles", result)
+        self.assertLess(result["metrics"]["success_rate"], 100.0)
+
+    def test_mc_histogram_output_structure(self):
+        """Monte Carlo should return final_corpus_histogram with labels and probabilities."""
+        inputs = PlannerInputs(
+            current_age=30, retirement_age=60, life_expectancy=65,
+            num_simulations=100,
+            monte_carlo_seed=42,
+            adhoc_expenses=[]
+        )
+        result = run_monte_carlo(inputs)
+        self.assertIn("final_corpus_histogram", result)
+        hist = result["final_corpus_histogram"]
+        self.assertIn("labels", hist)
+        self.assertIn("probabilities", hist)
+        self.assertEqual(len(hist["labels"]), len(hist["probabilities"]))
+        self.assertGreaterEqual(sum(hist["probabilities"]), 95.0)
+        self.assertLessEqual(sum(hist["probabilities"]), 105.0)
+
+    def test_mc_recommendations_generated(self):
+        """Monte Carlo should return recommendations list."""
+        inputs = PlannerInputs(
+            current_age=30, retirement_age=60, life_expectancy=65,
+            current_corpus=100000,
+            current_annual_expenses=150000,
+            annual_contribution=200000,
+            num_simulations=100,
+            monte_carlo_seed=42,
+            adhoc_expenses=[]
+        )
+        result = run_monte_carlo(inputs)
+        self.assertIn("recommendations", result)
+        self.assertIsInstance(result["recommendations"], list)
+        self.assertGreater(len(result["recommendations"]), 0)
+
+    def test_mc_sensitivity_output_structure(self):
+        """Sensitivity analysis should return success rates for each retirement age."""
+        inputs = PlannerInputs(
+            current_age=30, retirement_age=60, life_expectancy=65,
+            num_simulations=100,
+            monte_carlo_seed=42,
+            retirement_age_sensitivity=[58, 62, 65],
+            adhoc_expenses=[]
+        )
+        result = run_monte_carlo(inputs)
+        self.assertIn("retirement_age_sensitivity", result)
+        sens = result["retirement_age_sensitivity"]
+        self.assertIn("58", sens)
+        self.assertIn("62", sens)
+        self.assertIn("65", sens)
+        for age, data in sens.items():
+            self.assertIn("success_rate", data)
+            self.assertIn("median_final_corpus", data)
+            self.assertGreaterEqual(data["success_rate"], 0)
+            self.assertLessEqual(data["success_rate"], 100)
+
 if __name__ == "__main__":
     unittest.main()

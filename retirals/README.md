@@ -33,7 +33,7 @@ Unlike the deterministic projection, which assumes average returns every year, M
 
 | Parameter | Default | Range | Description |
 |---|---|---|---|
-| `num_simulations` | 1,000 | 100–50,000 | Number of paths simulated per run |
+| `num_simulations` | 1,000 | 1,000 / 2,000 / 5,000 / 10,000 / 20,000 | Number of paths simulated per run |
 | `return_distribution` | Lognormal | Normal / Lognormal | Distribution used for annual returns |
 | `volatility_equity` | 18.0% | 0–100% | Annual std dev of equity returns |
 | `volatility_debt` | 6.0% | 0–100% | Annual std dev of debt returns |
@@ -42,10 +42,22 @@ Unlike the deterministic projection, which assumes average returns every year, M
 | `equity_arbitrage_correlation` | 0.05 | -1 to +1 | Correlation between equity and arbitrage returns |
 | `debt_arbitrage_correlation` | 0.20 | -1 to +1 | Correlation between debt and arbitrage returns |
 | `monte_carlo_seed` | None | Any integer | Optional seed for reproducible results |
+| `retirement_age_sensitivity` | None | Comma-separated ages | Optional list of retirement ages to compare success rates |
+
+### Outputs
+
+| Metric | Description |
+|---|---|
+| **Probability of Success** | % of simulated paths where the corpus never exhausts. |
+| **Median Final Corpus** | The middle outcome across all paths. |
+| **5th / 25th / 75th / 95th Percentiles** | Distribution bands showing worst, below-average, above-average, and best outcomes. |
+| **Funding Probability by Age** | For each age, the % of simulations where expenses are fully funded. |
+| **Failure Age Percentiles** | For failed paths, the ages at which corpus first exhausts (10th, 25th, 50th, 75th, 90th percentiles). |
+| **Final Corpus Histogram** | 20-bin histogram of final corpus values across all simulations. |
+| **Retirement Age Sensitivity** | Success rates and median corpus for alternative retirement ages. |
+| **Recommendations** | Plain-language suggestions based on MC output. |
 
 ### How Volatility Is Applied
-
-Each year's portfolio volatility is calculated using a **covariance-based formula** that accounts for the correlations between asset classes:
 
 ```
 variance =

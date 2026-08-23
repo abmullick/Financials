@@ -1221,7 +1221,13 @@
                         <div class="grid grid-cols-2 gap-3">
                             <div>
                                 <label class="block text-xs font-medium text-slate-300">Number of Simulations</label>
-                                <input type="number" id="num_simulations" value="1000" min="100" max="50000" step="100" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                                <select id="num_simulations" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 bg-white">
+                                    <option value="1000">1,000</option>
+                                    <option value="2000">2,000</option>
+                                    <option value="5000">5,000</option>
+                                    <option value="10000">10,000</option>
+                                    <option value="20000">20,000</option>
+                                </select>
                                 <p class="text-xs mt-1.5" style="color: var(--text-3);">More simulations = more accurate but slower.</p>
                             </div>
                             <div>
@@ -1266,6 +1272,11 @@
                                 <input type="number" step="0.05" id="debt_arbitrage_correlation" value="0.20" min="-1" max="1" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
                                 <p class="text-xs mt-1.5" style="color: var(--text-3);">-1 to +1</p>
                             </div>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300">Retirement Age Sensitivity (comma-separated)</label>
+                            <input type="text" id="retirement_age_sensitivity" placeholder="e.g. 58, 60, 62" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700">
+                            <p class="text-xs mt-1.5" style="color: var(--text-3);">Compare success rates across different retirement ages.</p>
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-300">Random Seed (Optional)</label>
@@ -1605,6 +1616,37 @@
                                 <canvas id="monteCarloChart"></canvas>
                             </div>
                         </div>
+                        <div class="chart-panel p-4 rounded-2xl">
+                            <h3 class="text-md font-semibold mb-3" style="color: var(--text-2);">Corpus Distribution Over Time</h3>
+                            <div class="h-64">
+                                <canvas id="monteCarloChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="chart-panel p-4 rounded-2xl mt-4">
+                            <h3 class="text-md font-semibold mb-3" style="color: var(--text-2);">Probability of Funding by Age</h3>
+                            <p class="text-xs mb-3" style="color: var(--text-3);">Shows the % of simulations where expenses are fully funded each year. Lower values indicate fragility.</p>
+                            <div class="h-64">
+                                <canvas id="fundingProbabilityChart"></canvas>
+                            </div>
+                        </div>
+                        <div id="sensitivitySection" class="chart-panel p-4 rounded-2xl mt-4 hidden">
+                            <h3 class="text-md font-semibold mb-3" style="color: var(--text-2);">Retirement Age Sensitivity</h3>
+                            <p class="text-xs mb-3" style="color: var(--text-3);">How success rate changes if you retire later.</p>
+                            <div class="h-64">
+                                <canvas id="sensitivityChart"></canvas>
+                            </div>
+                        </div>
+                        <div id="histogramSection" class="chart-panel p-4 rounded-2xl mt-4 hidden">
+                            <h3 class="text-md font-semibold mb-3" style="color: var(--text-2);">Final Corpus Distribution</h3>
+                            <p class="text-xs mb-3" style="color: var(--text-3);">Histogram of final corpus values across all simulations.</p>
+                            <div class="h-64">
+                                <canvas id="histogramChart"></canvas>
+                            </div>
+                        </div>
+                        <div id="recommendationsSection" class="chart-panel p-4 rounded-2xl mt-4 hidden">
+                            <h3 class="text-md font-semibold mb-3" style="color: var(--text-2);">Recommendations</h3>
+                            <ul id="recommendationsList" class="list-disc list-inside text-sm space-y-1" style="color: var(--text-2);"></ul>
+                        </div>
                     </div>
                 </details>
             </div>
@@ -1773,7 +1815,7 @@
             const ctx = document.getElementById(canvasId).getContext('2d');
             if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
 
-            const axisColor = isLightTheme() ? '#334155' : '#cbd5e1';
+            const axisColor = isLightTheme() ? '#334155' : '#f1f5f9';
             const gridColor = isLightTheme() ? 'rgba(148, 163, 184, 0.18)' : 'rgba(226, 232, 240, 0.18)';
 
             const prepared = datasets.map(ds => ({
@@ -1844,7 +1886,7 @@
             const ctx = document.getElementById(canvasId).getContext('2d');
             if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
 
-            const axisColor = isLightTheme() ? '#334155' : '#cbd5e1';
+            const axisColor = isLightTheme() ? '#334155' : '#f1f5f9';
             const gridColor = isLightTheme() ? 'rgba(148, 163, 184, 0.18)' : 'rgba(226, 232, 240, 0.18)';
 
             const prepared = datasets.map(ds => ({
@@ -1906,7 +1948,7 @@
             const ctx = document.getElementById(canvasId).getContext('2d');
             if (chartInstances[canvasId]) chartInstances[canvasId].destroy();
 
-            const axisColor = isLightTheme() ? '#334155' : '#cbd5e1';
+            const axisColor = isLightTheme() ? '#334155' : '#f1f5f9';
             const defaultColors = [
                 'rgba(59, 130, 246, 0.85)',   // blue-500
                 'rgba(16, 185, 129, 0.85)',   // emerald-500
@@ -2487,7 +2529,7 @@
                     'trajectoryChart', 
                     ages, 
                     trajectoryDatasets,
-                    { plugins: { legend: { display: true, labels: { color: isLightTheme() ? '#334155' : '#cbd5e1', boxWidth: 12, usePointStyle: true, pointStyle: 'circle', padding: 16, font: { weight: '700', size: 13 } } } } },
+                    { plugins: { legend: { display: true, labels: { color: isLightTheme() ? '#334155' : '#f1f5f9', boxWidth: 12, usePointStyle: true, pointStyle: 'circle', padding: 16, font: { weight: '700', size: 13 } } } } },
                     [milestonePlugin]
                 );
 
@@ -2615,6 +2657,11 @@
                 debt_arbitrage_correlation: parseFloat(document.getElementById('debt_arbitrage_correlation').value),
                 return_distribution: document.getElementById('return_distribution').value,
                 monte_carlo_seed: document.getElementById('monte_carlo_seed').value ? parseInt(document.getElementById('monte_carlo_seed').value) : null,
+                retirement_age_sensitivity: (() => {
+                    const raw = document.getElementById('retirement_age_sensitivity').value.trim();
+                    if (!raw) return null;
+                    return raw.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+                })(),
             };
 
             if (isNaN(payload.current_age) || isNaN(payload.retirement_age) || isNaN(payload.life_expectancy)) {
@@ -2675,24 +2722,124 @@
             document.getElementById('mc_p5_final').innerText = fmt(metrics.p5_final_corpus);
             document.getElementById('mc_p95_final').innerText = fmt(metrics.p95_final_corpus);
 
-            const datasets = [
-                { label: '95th %ile', data: yearly.p95, borderColor: 'rgba(16, 185, 129, 0.9)', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: false, pointRadius: 0, borderWidth: 2 },
-                { label: '75th %ile', data: yearly.p75, borderColor: 'rgba(59, 130, 246, 0.9)', backgroundColor: 'rgba(59, 130, 246, 0.08)', fill: false, pointRadius: 0, borderWidth: 2 },
-                { label: 'Median', data: yearly.p50, borderColor: '#facc15', backgroundColor: 'rgba(250, 204, 21, 0.08)', fill: false, pointRadius: 0, borderWidth: 3 },
-                { label: '25th %ile', data: yearly.p25, borderColor: 'rgba(249, 115, 22, 0.9)', backgroundColor: 'rgba(249, 115, 22, 0.08)', fill: false, pointRadius: 0, borderWidth: 2 },
-                { label: '5th %ile', data: yearly.p5, borderColor: 'rgba(239, 68, 68, 0.9)', backgroundColor: 'rgba(239, 68, 68, 0.1)', fill: false, pointRadius: 0, borderWidth: 2 }
-            ];
+            requestAnimationFrame(() => {
+                const datasets = [
+                    { label: '95th %ile', data: yearly.p95, borderColor: 'rgba(16, 185, 129, 0.9)', backgroundColor: 'rgba(16, 185, 129, 0.1)', fill: false, pointRadius: 0, borderWidth: 2 },
+                    { label: '75th %ile', data: yearly.p75, borderColor: 'rgba(59, 130, 246, 0.9)', backgroundColor: 'rgba(59, 130, 246, 0.08)', fill: false, pointRadius: 0, borderWidth: 2 },
+                    { label: 'Median', data: yearly.p50, borderColor: '#facc15', backgroundColor: 'rgba(250, 204, 21, 0.08)', fill: false, pointRadius: 0, borderWidth: 3 },
+                    { label: '25th %ile', data: yearly.p25, borderColor: 'rgba(249, 115, 22, 0.9)', backgroundColor: 'rgba(249, 115, 22, 0.08)', fill: false, pointRadius: 0, borderWidth: 2 },
+                    { label: '5th %ile', data: yearly.p5, borderColor: 'rgba(239, 68, 68, 0.9)', backgroundColor: 'rgba(239, 68, 68, 0.1)', fill: false, pointRadius: 0, borderWidth: 2 }
+                ];
 
-            makeLineChart('monteCarloChart', yearly.ages, datasets, {
-                plugins: {
-                    legend: {
-                        display: true,
-                        labels: { color: isLightTheme() ? '#334155' : '#cbd5e1', boxWidth: 12, usePointStyle: true, pointStyle: 'circle', padding: 16, font: { weight: '700', size: 13 } }
+                makeLineChart('monteCarloChart', yearly.ages, datasets, {
+                    plugins: {
+                        legend: {
+                            display: true,
+                            labels: { color: isLightTheme() ? '#334155' : '#f1f5f9', boxWidth: 12, usePointStyle: true, pointStyle: 'circle', padding: 16, font: { weight: '700', size: 13 } }
+                        }
                     }
-                }
-            });
+                });
 
-            fitAllKpiValues();
+                if (data.funding_probability_by_age && data.funding_probability_by_age.probabilities) {
+                    const fp = data.funding_probability_by_age;
+                    const ref90 = Array(fp.ages.length).fill(90);
+                    const ref75 = Array(fp.ages.length).fill(75);
+                    const ref50 = Array(fp.ages.length).fill(50);
+
+                    makeLineChart('fundingProbabilityChart', fp.ages, [
+                        { label: 'Funding Probability', data: fp.probabilities, borderColor: '#facc15', backgroundColor: 'rgba(250, 204, 21, 0.1)', fill: true, pointRadius: 0, borderWidth: 3 },
+                        { label: '90% Threshold', data: ref90, borderColor: 'rgba(52, 211, 153, 0.6)', backgroundColor: 'transparent', fill: false, pointRadius: 0, borderWidth: 1, borderDash: [6, 4] },
+                        { label: '75% Threshold', data: ref75, borderColor: 'rgba(59, 130, 246, 0.6)', backgroundColor: 'transparent', fill: false, pointRadius: 0, borderWidth: 1, borderDash: [6, 4] },
+                        { label: '50% Threshold', data: ref50, borderColor: 'rgba(239, 68, 68, 0.6)', backgroundColor: 'transparent', fill: false, pointRadius: 0, borderWidth: 1, borderDash: [6, 4] }
+                    ], {
+                        plugins: {
+                            legend: {
+                                display: true,
+                                labels: { color: isLightTheme() ? '#334155' : '#f1f5f9', boxWidth: 12, usePointStyle: true, pointStyle: 'circle', padding: 16, font: { weight: '700', size: 13 } }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                min: 0,
+                                max: 100,
+                                title: { display: true, text: 'Probability (%)', color: isLightTheme() ? '#334155' : '#f1f5f9' }
+                            }
+                        }
+                    });
+                }
+
+                if (data.retirement_age_sensitivity && Object.keys(data.retirement_age_sensitivity).length > 0) {
+                    const sens = data.retirement_age_sensitivity;
+                    const ages = Object.keys(sens).map(Number);
+                    const rates = ages.map(age => sens[age].success_rate);
+
+                    document.getElementById('sensitivitySection').classList.remove('hidden');
+
+                    makeBarChart('sensitivityChart', ages, [{
+                        label: 'Success Rate (%)',
+                        data: rates,
+                        backgroundColor: rates.map(r => r >= 80 ? 'rgba(52, 211, 153, 0.8)' : r >= 50 ? 'rgba(250, 204, 21, 0.8)' : 'rgba(239, 68, 68, 0.8)'),
+                        borderRadius: 8,
+                        borderSkipped: false,
+                        borderWidth: 2,
+                        borderColor: 'rgba(0,0,0,0.2)'
+                    }], {
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: (ctx) => `Success Rate: ${ctx.raw.toFixed(1)}%`
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                min: 0,
+                                max: 100,
+                                title: { display: true, text: 'Success Rate (%)', color: isLightTheme() ? '#334155' : '#f1f5f9' }
+                            },
+                            x: {
+                                title: { display: true, text: 'Retirement Age', color: isLightTheme() ? '#334155' : '#f1f5f9' }
+                            }
+                        }
+                    });
+                }
+
+                if (data.final_corpus_histogram && data.final_corpus_histogram.labels) {
+                    const hist = data.final_corpus_histogram;
+                    document.getElementById('histogramSection').classList.remove('hidden');
+
+                    makeBarChart('histogramChart', hist.labels, [{
+                        label: '% of Simulations',
+                        data: hist.probabilities,
+                        backgroundColor: 'rgba(102, 167, 255, 0.7)',
+                        borderRadius: 4,
+                        borderSkipped: false,
+                        borderWidth: 1,
+                        borderColor: 'rgba(0,0,0,0.1)'
+                    }], {
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: {
+                                title: { display: true, text: '% of Simulations', color: isLightTheme() ? '#334155' : '#f1f5f9' }
+                            },
+                            x: {
+                                ticks: { maxRotation: 45, minRotation: 45 }
+                            }
+                        }
+                    });
+                }
+
+                if (data.recommendations && data.recommendations.length > 0) {
+                    document.getElementById('recommendationsSection').classList.remove('hidden');
+                    const list = document.getElementById('recommendationsList');
+                    list.innerHTML = data.recommendations.map(r => `<li>${r}</li>`).join('');
+                }
+
+                fitAllKpiValues();
+            });
         }
 
         function applyTheme(theme) {
