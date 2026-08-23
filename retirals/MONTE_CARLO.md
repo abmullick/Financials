@@ -127,6 +127,17 @@ At the end, aggregate all paths to compute:
 - **Retirement age sensitivity**: success rates and median corpus for alternative retirement ages
 - **Recommendations**: plain-language suggestions based on the simulation output
 
+## Reading the Corpus Distribution Chart
+
+The **Corpus Distribution Over Time** chart shows how the simulated portfolio balance can change from your current age to life expectancy. It is a range of possible journeys, not five separate forecasts.
+
+- The **median** line is the middle outcome: half of simulations have a higher corpus at that age and half have a lower one.
+- The **5th percentile** line is a difficult outcome: 95% of simulations have a higher corpus at that age.
+- The **95th percentile** line is a favourable outcome: only 5% of simulations have a higher corpus at that age.
+- The 25th and 75th percentile lines show the middle half of outcomes.
+
+A widening gap between the lines means market outcomes have a greater effect on the plan. If the lower percentile lines approach zero early in retirement, the plan is sensitive to poor early returns even when the median path remains positive. Hover over a point to see the corpus for a particular age and percentile.
+
 ## What the Results Mean
 
 | Metric | Interpretation |
