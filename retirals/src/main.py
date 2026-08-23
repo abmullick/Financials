@@ -88,6 +88,11 @@ async def read_index():
     static_file = os.path.join(os.path.dirname(__file__), 'static', 'index.html')
     return FileResponse(static_file)
 
+@app.get("/methodology")
+async def read_methodology():
+    static_file = os.path.join(os.path.dirname(__file__), 'static', 'methodology.html')
+    return FileResponse(static_file)
+
 if __name__ == "__main__":
     port = int(getenv("PORT", 20080))
     print(f"Starting Parity Retirement Planner Server...")

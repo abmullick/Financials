@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Help &amp; Methodology — Retirement Corpus Planner</title>
+    <style>
+        :root { --bg: #f4f8ff; --surface: #fff; --text: #172033; --muted: #52627c; --accent: #2563eb; --border: #d9e3f2; --warn: #9a6700; }
+        * { box-sizing: border-box; }
+        body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+        main { max-width: 920px; margin: 0 auto; padding: 40px 20px 64px; }
+        header { border-radius: 18px; padding: 30px; color: white; background: linear-gradient(135deg, #10233b, #1d4f80); }
+        h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 2.5rem); }
+        h2 { margin: 36px 0 12px; font-size: 1.35rem; }
+        h3 { margin: 24px 0 6px; font-size: 1.05rem; }
+        p { margin: 8px 0; }
+        .lede { color: #dbeafe; margin-top: 8px; }
+        .notice, section { border: 1px solid var(--border); background: var(--surface); border-radius: 14px; padding: 20px; margin-top: 18px; }
+        .notice { border-left: 4px solid #eab308; color: #604a00; }
+        .toc { columns: 2; padding-left: 20px; }
+        a { color: var(--accent); }
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        th, td { text-align: left; vertical-align: top; padding: 10px; border-bottom: 1px solid var(--border); }
+        th { color: var(--muted); font-size: .84rem; text-transform: uppercase; letter-spacing: .04em; }
+        ul { padding-left: 22px; margin: 8px 0; }
+        .muted { color: var(--muted); }
+        @media (max-width: 620px) { .toc { columns: 1; } main { padding: 20px 14px 40px; } header { padding: 24px; } th, td { padding: 8px; } }
+    </style>
+</head>
+<body>
+    <main>
+        <header>
+            <h1>Help &amp; Methodology</h1>
+            <p class="lede">A practical guide to using the Retirement Corpus Planner and interpreting its deterministic and Monte Carlo results.</p>
+        </header>
+
+        <div class="notice"><strong>Important:</strong> this planner provides estimates for education and planning. It is not financial, tax, legal, or investment advice. Review major decisions with a qualified professional.</div>
+
+        <section>
+            <h2>In this guide</h2>
+            <ul class="toc">
+                <li><a href="#getting-started">Getting started</a></li>
+                <li><a href="#projection">Deterministic projection</a></li>
+                <li><a href="#monte-carlo">Monte Carlo simulation</a></li>
+                <li><a href="#charts">Charts and visualisations</a></li>
+                <li><a href="#metrics">Metrics and interpretation</a></li>
+                <li><a href="#assumptions">Assumptions and limitations</a></li>
+            </ul>
+        </section>
+
+        <section id="getting-started">
+            <h2>Getting started</h2>
+            <p>Enter your current age, retirement age, life expectancy, current corpus, annual expenses, annual contribution, return assumptions, and inflation. Add one-time expenses for known future costs such as education, housing, or medical care.</p>
+            <p>The planner also supports a retirement lump sum, pension income, investment allocation, withdrawal tax assumptions, and market-stress scenarios. Use the deterministic simulation for one assumed return path; use Monte Carlo to assess many possible market paths.</p>
+            <p class="muted">Amounts are treated as annual values in Indian rupees. Check that all assumptions use the same time frame and that future expenses are expressed in today's money when entering them.</p>
+        </section>
+
+        <section id="projection">
+            <h2>Deterministic projection</h2>
+            <p>The retirement projection applies the selected pre- and post-retirement return each year. It adds contributions before retirement, inflates expenses, applies pension income and withdrawal taxes, then updates the corpus. It is useful for understanding the cash-flow mechanics of one scenario, but it does not show the range of possible market outcomes.</p>
+            <h3>Stress scenarios</h3>
+            <p>Mild and severe stress scenarios replace the first two retirement-year returns with fixed negative returns. They are designed to show the effect of a poor start to retirement.</p>
+            <h3>Pension and tax treatment</h3>
+            <p>Net pension first funds recurring expenses. A pension surplus is reinvested only when that option is selected. Withdrawal taxes use a simplified blended allocation approach and an annual LTCG exemption; they do not track individual tax lots or cost basis.</p>
+        </section>
+
+        <section id="monte-carlo">
+            <h2>Monte Carlo simulation</h2>
+            <p>Monte Carlo runs 100 to 50,000 simulated annual-return paths. Every path follows the same contributions, expenses, pension, tax, and withdrawal rules, but its market returns differ. The success rate is the share of paths that fund all required expenses through life expectancy.</p>
+            <p>The simulation uses either a normal or lognormal return distribution. Lognormal is the default because it cannot produce a return below −100%. A random seed makes a run reproducible; leaving it blank produces a new random set of paths.</p>
+            <h3>Allocation and volatility</h3>
+            <p>Equity, debt, and arbitrage weights, volatilities, and correlations are combined into one covariance-based portfolio volatility. The current model draws one return for the total portfolio; it does not simulate separate asset-class balances or rebalancing.</p>
+        </section>
+
+        <section id="charts">
+            <h2>Charts and visualisations</h2>
+            <table>
+                <thead><tr><th>Chart</th><th>What it shows</th><th>How to use it</th></tr></thead>
+                <tbody>
+                    <tr><td>Wealth Growth &amp; Depletion</td><td>The deterministic corpus path by age.</td><td>Use it to see when the corpus peaks, declines, or exhausts under your selected assumptions.</td></tr>
+                    <tr><td>Cash Flow, Expenses, Returns, and Balance</td><td>Annual contributions, withdrawals, taxes, ad-hoc costs, returns, and closing corpus.</td><td>Use these charts to locate the years that create the largest pressure on the plan.</td></tr>
+                    <tr><td>Portfolio Allocation and Effective Tax Contribution</td><td>Input allocation and the simplified tax-rate contribution of each asset class.</td><td>They explain model inputs; they are not a record of holdings or realised tax lots.</td></tr>
+                    <tr><td>Corpus Distribution Over Time</td><td>The 5th, 25th, 50th, 75th, and 95th percentile corpus paths across Monte Carlo simulations.</td><td>A widening band means outcomes are more sensitive to market returns. Lower bands approaching zero indicate vulnerability to poor early returns.</td></tr>
+                    <tr><td>Probability of Funding by Age</td><td>The percentage of simulations that fully fund expenses at each age.</td><td>Use it to identify when the plan becomes fragile. This is not the same as the final success rate.</td></tr>
+                    <tr><td>Final Corpus Distribution</td><td>A histogram of final corpus values across simulations.</td><td>Use it to see clustering, skew, and the chance of ending with a very low balance.</td></tr>
+                    <tr><td>Retirement Age Sensitivity</td><td>Success rates for the retirement ages you enter for comparison.</td><td>Use it to evaluate whether postponing retirement materially improves resilience.</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="metrics">
+            <h2>Metrics and interpretation</h2>
+            <table>
+                <thead><tr><th>Metric</th><th>Meaning</th></tr></thead>
+                <tbody>
+                    <tr><td>Retirement readiness</td><td>Projected corpus at retirement divided by the estimated minimum corpus required. It is a deterministic coverage indicator, not a probability.</td></tr>
+                    <tr><td>Probability of success</td><td>Percentage of Monte Carlo paths with no unfunded expenses through life expectancy. Choose an acceptable target based on your risk tolerance and flexibility; no single threshold fits everyone.</td></tr>
+                    <tr><td>Median final corpus</td><td>The middle final outcome: half of paths finish above it and half below it.</td></tr>
+                    <tr><td>5th and 95th percentiles</td><td>Respectively difficult and favourable outcomes. The 5th percentile is exceeded by 95% of paths; only 5% exceed the 95th percentile.</td></tr>
+                    <tr><td>Funding probability by age</td><td>The chance that expenses are fully funded in a particular year. It helps show the timing of failure risk.</td></tr>
+                    <tr><td>Failure-age percentiles</td><td>For paths that fail, these show when the first unfunded expense occurs. They do not describe paths that remain funded.</td></tr>
+                    <tr><td>Recommendations</td><td>Rule-based prompts generated from the results. Treat them as ideas to investigate, not personalised advice.</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="assumptions">
+            <h2>Assumptions and limitations</h2>
+            <ul>
+                <li>Returns are independently sampled each year; the model does not represent momentum, mean reversion, or changing market regimes.</li>
+                <li>Inflation, pension growth, and tax rates remain fixed at the values entered.</li>
+                <li>Monte Carlo paths model sequence-of-returns risk because withdrawals continue while return order varies.</li>
+                <li>Asset-class paths, rebalancing, changing allocations, individual tax lots, and changes in spending or health costs are not separately modelled.</li>
+                <li>Correlation inputs must be realistic as a group. Some individually valid combinations are not mathematically valid together and can understate calculated risk.</li>
+                <li>More simulations reduce random sampling noise but do not make uncertain assumptions certain.</li>
+            </ul>
+        </section>
+
+        <p class="muted" style="text-align: center; margin-top: 32px; font-size: .9rem;">© 2026 Abhisek Basu Mullick. All rights reserved.</p>
+    </main>
+</body>
+</html>
