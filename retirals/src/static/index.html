@@ -207,6 +207,7 @@
             transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
             letter-spacing: 0.01em;
         }
+            animation: primary-pulse 2.4s ease-in-out infinite;
 
         .ledger-table-wrap {
             background: rgba(7, 15, 24, 0.9);
@@ -296,6 +297,10 @@
             box-shadow: 0 16px 28px rgba(15, 23, 42, 0.26), inset 0 1px 0 rgba(255,255,255,0.15);
             filter: brightness(1.04);
         }
+        @keyframes primary-pulse {
+            0%, 100% { box-shadow: 0 12px 22px rgba(15, 23, 42, 0.32), inset 0 1px 0 rgba(255,255,255,0.12), 0 0 0 0 rgba(59, 130, 246, 0.45); }
+            50% { box-shadow: 0 12px 22px rgba(15, 23, 42, 0.32), inset 0 1px 0 rgba(255,255,255,0.12), 0 0 0 10px rgba(59, 130, 246, 0); }
+        }
 
         .secondary-button {
             background: var(--glass);
@@ -307,6 +312,15 @@
         .secondary-button:hover {
             background: rgba(102, 167, 255, 0.1);
             color: var(--accent);
+        }
+
+        #mcRunBtn {
+            animation: secondary-pulse 2.4s ease-in-out infinite;
+        }
+
+        @keyframes secondary-pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(102, 167, 255, 0.35); }
+            50% { box-shadow: 0 0 0 8px rgba(102, 167, 255, 0); }
         }
 
         .chart-panel {
@@ -623,24 +637,43 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 0.25rem;
-            opacity: 0.85;
+            gap: 0.35rem;
+            opacity: 0.95;
             animation: scroll-bounce 1.8s ease-in-out infinite;
             pointer-events: none;
+            background: rgba(0, 0, 0, 0.65);
+            border-radius: 9999px;
+            padding: 0.5rem 1rem;
+            box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.35);
+            animation: scroll-bounce 1.8s ease-in-out infinite, scroll-glow 2.2s ease-in-out infinite;
+        }
+
+        body.theme-light .scroll-indicator {
+            background: rgba(255, 255, 255, 0.85);
+            box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.15);
         }
 
         .scroll-indicator span {
             font-size: 10px;
-            font-weight: 600;
-            letter-spacing: 0.12em;
+            font-weight: 700;
+            letter-spacing: 0.14em;
             text-transform: uppercase;
-            color: var(--text-3);
+            color: #ffffff;
+        }
+
+        body.theme-light .scroll-indicator span {
+            color: #1e293b;
         }
 
         .scroll-indicator svg {
-            width: 20px;
-            height: 20px;
-            color: var(--text-3);
+            width: 22px;
+            height: 22px;
+            color: #eab308;
+            filter: drop-shadow(0 0 4px rgba(234, 179, 8, 0.6));
+        }
+
+        .scroll-indicator.scroll-up svg {
+            transform: rotate(180deg);
         }
 
         @keyframes scroll-bounce {
@@ -648,16 +681,27 @@
             50% { transform: translateX(-50%) translateY(6px); }
         }
 
+        @keyframes scroll-glow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(234, 179, 8, 0); }
+        }
+
         .landing-cta {
             background: linear-gradient(135deg, #1d4ed8, #2563eb 35%, #3b82f6 100%);
             border: 1px solid rgba(255,255,255,0.14);
             box-shadow: 0 18px 26px rgba(37, 99, 235, 0.28);
             transition: transform 0.2s ease, box-shadow 0.2s ease;
+            animation: cta-pulse 2.4s ease-in-out infinite;
         }
 
         .landing-cta:hover {
             transform: translateY(-1px);
             box-shadow: 0 20px 30px rgba(37, 99, 235, 0.34);
+        }
+
+        @keyframes cta-pulse {
+            0%, 100% { box-shadow: 0 18px 26px rgba(37, 99, 235, 0.28), 0 0 0 0 rgba(59, 130, 246, 0.45); }
+            50% { box-shadow: 0 18px 26px rgba(37, 99, 235, 0.28), 0 0 0 10px rgba(59, 130, 246, 0); }
         }
 
         .hidden {
@@ -1819,6 +1863,12 @@
                 <!-- Footer is intentionally left blank as per design. -->
             </footer>
 
+            <div class="scroll-indicator" aria-hidden="true">
+                <span>Scroll</span>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+                </svg>
+            </div>
         </div>
     </div>
     </div>
@@ -3275,6 +3325,52 @@
                 if (plannerApp) plannerApp.classList.add('hidden');
             }
         };
+
+        // Scroll indicator direction logic
+        (function() {
+            const indicators = document.querySelectorAll('.scroll-indicator');
+            if (!indicators.length) return;
+
+            function updateScrollIndicators() {
+                const scrollTop = window.scrollY || document.documentElement.scrollTop;
+                const scrollHeight = document.documentElement.scrollHeight;
+                const clientHeight = document.documentElement.clientHeight;
+                const nearBottom = scrollTop + clientHeight >= scrollHeight - 20;
+
+                indicators.forEach(indicator => {
+                    const parent = indicator.parentElement;
+                    const isLanding = parent && parent.id === 'landingScreen';
+                    const isPlanner = parent && parent.closest('#plannerApp') !== null;
+
+                    let visible = false;
+                    if (isLanding && landingScreen && !landingScreen.classList.contains('hidden')) {
+                        visible = true;
+                    }
+                    if (isPlanner && plannerApp && !plannerApp.classList.contains('hidden')) {
+                        visible = true;
+                    }
+
+                    if (!visible) {
+                        indicator.style.display = 'none';
+                        return;
+                    }
+                    indicator.style.display = '';
+
+                    const label = indicator.querySelector('span');
+                    if (nearBottom) {
+                        indicator.classList.add('scroll-up');
+                        if (label) label.textContent = 'Up';
+                    } else {
+                        indicator.classList.remove('scroll-up');
+                        if (label) label.textContent = 'Scroll';
+                    }
+                });
+            }
+
+            window.addEventListener('scroll', updateScrollIndicators, { passive: true });
+            window.addEventListener('resize', updateScrollIndicators);
+            updateScrollIndicators();
+        })();
     </script>
     <div id="mcOverlay" class="mc-overlay">
         <div class="mc-overlay-spinner"></div>

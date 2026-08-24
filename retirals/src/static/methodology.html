@@ -24,6 +24,47 @@
         th { color: var(--muted); font-size: .84rem; text-transform: uppercase; letter-spacing: .04em; }
         ul { padding-left: 22px; margin: 8px 0; }
         .muted { color: var(--muted); }
+        .scroll-indicator {
+            position: fixed;
+            bottom: 1.25rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.35rem;
+            opacity: 0.95;
+            animation: scroll-bounce 1.8s ease-in-out infinite, scroll-glow 2.2s ease-in-out infinite;
+            pointer-events: none;
+            background: rgba(0, 0, 0, 0.65);
+            border-radius: 9999px;
+            padding: 0.5rem 1rem;
+        }
+        .scroll-indicator span {
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #ffffff;
+        }
+        .scroll-indicator svg {
+            width: 22px;
+            height: 22px;
+            color: #eab308;
+            filter: drop-shadow(0 0 4px rgba(234, 179, 8, 0.6));
+        }
+        .scroll-indicator.scroll-up svg {
+            transform: rotate(180deg);
+        }
+        @keyframes scroll-bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(6px); }
+        }
+        @keyframes scroll-glow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(234, 179, 8, 0); }
+        }
         @media (max-width: 620px) { .toc { columns: 1; } main { padding: 20px 14px 40px; } header { padding: 24px; } th, td { padding: 8px; } }
     </style>
 </head>
@@ -173,6 +214,40 @@
         </section>
 
         <p class="muted" style="text-align: center; margin-top: 32px; font-size: .9rem;">© 2026 Abhisek Basu Mullick. All rights reserved.</p>
+
+        <div class="scroll-indicator" aria-hidden="true">
+            <span>Scroll</span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+            </svg>
+        </div>
     </main>
+
+    <script>
+        (function() {
+            const indicator = document.querySelector('.scroll-indicator');
+            if (!indicator) return;
+
+            function updateScrollIndicator() {
+                const scrollTop = window.scrollY || document.documentElement.scrollTop;
+                const scrollHeight = document.documentElement.scrollHeight;
+                const clientHeight = document.documentElement.clientHeight;
+                const nearBottom = scrollTop + clientHeight >= scrollHeight - 20;
+
+                const label = indicator.querySelector('span');
+                if (nearBottom) {
+                    indicator.classList.add('scroll-up');
+                    if (label) label.textContent = 'Up';
+                } else {
+                    indicator.classList.remove('scroll-up');
+                    if (label) label.textContent = 'Scroll';
+                }
+            }
+
+            window.addEventListener('scroll', updateScrollIndicator, { passive: true });
+            window.addEventListener('resize', updateScrollIndicator);
+            updateScrollIndicator();
+        })();
+    </script>
 </body>
 </html>
