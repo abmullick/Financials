@@ -40,6 +40,7 @@
             <h2>In this guide</h2>
             <ul class="toc">
                 <li><a href="#getting-started">Getting started</a></li>
+                <li><a href="#input-settings">Input settings reference</a></li>
                 <li><a href="#projection">Deterministic projection</a></li>
                 <li><a href="#monte-carlo">Monte Carlo simulation</a></li>
                 <li><a href="#charts">Charts and visualisations</a></li>
@@ -55,6 +56,45 @@
             <p class="muted">Amounts are treated as annual values in Indian rupees. Check that all assumptions use the same time frame and that future expenses are expressed in today's money when entering them.</p>
         </section>
 
+        <section id="input-settings">
+            <h2>Input Settings Reference</h2>
+            <p class="muted">Use this reference when filling in the planner parameters. Values marked as default are shown in the UI, but you can change any of them.</p>
+            <table>
+                <thead><tr><th>Setting</th><th>Default</th><th>What it means</th></tr></thead>
+                <tbody>
+                    <tr><td>Current age</td><td>23</td><td>Your present age. The projection starts from this year.</td></tr>
+                    <tr><td>Retirement age</td><td>58</td><td>The age at which contributions stop and withdrawals begin.</td></tr>
+                    <tr><td>Life expectancy</td><td>85</td><td>The final age the plan must fund. The model runs to this age.</td></tr>
+                    <tr><td>Current annual expenses</td><td>₹600,000</td><td>Your present-day yearly spending. This is inflated each year in retirement.</td></tr>
+                    <tr><td>Average inflation rate</td><td>6.0%</td><td>Annual inflation applied to expenses and ad-hoc expenses. Use a realistic long-term expectation.</td></tr>
+                    <tr><td>Current corpus</td><td>₹100,000</td><td>Existing investible wealth available today.</td></tr>
+                    <tr><td>Annual contribution</td><td>₹200,000</td><td>Amount saved each year before retirement. Contributions stop at retirement.</td></tr>
+                    <tr><td>Contribution increase</td><td>1.0%</td><td>Annual growth applied to your contribution amount. Set to 0% for fixed contributions.</td></tr>
+                    <tr><td>One-time lump sum</td><td>₹0</td><td>A future cash injection at retirement, such as gratuity or PF proceeds.</td></tr>
+                    <tr><td>Pre-retirement return</td><td>9.0%</td><td>Expected annual return on the portfolio while you are still contributing.</td></tr>
+                    <tr><td>Post-retirement return</td><td>8.0%</td><td>Expected annual return on the portfolio after retirement.</td></tr>
+                    <tr><td>Equity allocation</td><td>60%</td><td>Share of the portfolio in equity. Affects both deterministic tax treatment and Monte Carlo volatility.</td></tr>
+                    <tr><td>Debt allocation</td><td>30%</td><td>Share in debt instruments.</td></tr>
+                    <tr><td>Arbitrage allocation</td><td>10%</td><td>Share in arbitrage strategies.</td></tr>
+                    <tr><td>Equity LTCG split</td><td>70%</td><td>Portion of equity returns treated as long-term capital gains.</td></tr>
+                    <tr><td>Equity STCG split</td><td>30%</td><td>Portion of equity returns treated as short-term capital gains.</td></tr>
+                    <tr><td>LTCG tax rate</td><td>12.5%</td><td>Tax rate applied to long-term capital gains.</td></tr>
+                    <tr><td>STCG tax rate</td><td>20.0%</td><td>Tax rate applied to short-term capital gains.</td></tr>
+                    <tr><td>Debt tax rate</td><td>20.0%</td><td>Tax rate applied to debt returns.</td></tr>
+                    <tr><td>Arbitrage tax rate</td><td>20.0%</td><td>Tax rate applied to arbitrage returns.</td></tr>
+                    <tr><td>LTCG exemption</td><td>₹125,000</td><td>Annual exemption amount subtracted from taxable LTCG before applying the LTCG rate.</td></tr>
+                    <tr><td>Stress scenario</td><td>Normal</td><td>Choose Normal, Mild Crash, or Severe Crash to override the first two retirement-year returns.</td></tr>
+                    <tr><td>Include pension</td><td>Off</td><td>Enable if you expect regular pension income after a chosen start age.</td></tr>
+                    <tr><td>Pension start age</td><td>60</td><td>Age from which gross pension begins. It can be before or after retirement.</td></tr>
+                    <tr><td>Annual pension</td><td>₹600,000</td><td>Gross annual pension at the start age. It grows each year by the pension increase rate.</td></tr>
+                    <tr><td>Pension increase</td><td>5.0%</td><td>Annual growth rate applied to the pension amount.</td></tr>
+                    <tr><td>Pension tax rate</td><td>20.0%</td><td>Tax deducted from gross pension to arrive at net pension.</td></tr>
+                    <tr><td>Reinvest pension surplus</td><td>On</td><td>When enabled, any pension amount not needed for expenses is reinvested into the corpus.</td></tr>
+                    <tr><td>Ad-hoc expenses</td><td>None by default</td><td>Optional one-time future expenses by age, such as a house purchase or medical procedure. Each can use either general inflation or a custom rate.</td></tr>
+                </tbody>
+            </table>
+        </section>
+
         <section id="projection">
             <h2>Deterministic projection</h2>
             <p>The retirement projection applies the selected pre- and post-retirement return each year. It adds contributions before retirement, inflates expenses, applies pension income and withdrawal taxes, then updates the corpus. It is useful for understanding the cash-flow mechanics of one scenario, but it does not show the range of possible market outcomes.</p>
@@ -68,6 +108,22 @@
             <h2>Monte Carlo simulation</h2>
             <p>Monte Carlo runs 100 to 50,000 simulated annual-return paths. Every path follows the same contributions, expenses, pension, tax, and withdrawal rules, but its market returns differ. The success rate is the share of paths that fund all required expenses through life expectancy.</p>
             <p>The simulation uses either a normal or lognormal return distribution. Lognormal is the default because it cannot produce a return below −100%. A random seed makes a run reproducible; leaving it blank produces a new random set of paths.</p>
+            <h3>Monte Carlo parameters</h3>
+            <table>
+                <thead><tr><th>Setting</th><th>Default</th><th>What it means</th></tr></thead>
+                <tbody>
+                    <tr><td>Number of simulations</td><td>1,000</td><td>How many random market paths to simulate. More paths reduce sampling noise but take longer.</td></tr>
+                    <tr><td>Return distribution</td><td>Lognormal</td><td>Lognormal keeps returns above −100%. Normal is simpler but can produce unrealistic negative portfolio values at high volatility.</td></tr>
+                    <tr><td>Equity volatility</td><td>18.0%</td><td>Annual standard deviation of equity returns.</td></tr>
+                    <tr><td>Debt volatility</td><td>6.0%</td><td>Annual standard deviation of debt returns.</td></tr>
+                    <tr><td>Arbitrage volatility</td><td>8.0%</td><td>Annual standard deviation of arbitrage returns.</td></tr>
+                    <tr><td>Equity ↔ Debt correlation</td><td>-0.10</td><td>How equity and debt returns move together. Negative values mean they tend to offset each other.</td></tr>
+                    <tr><td>Equity ↔ Arbitrage correlation</td><td>0.05</td><td>How equity and arbitrage returns move together. Near-zero values mean they are largely independent.</td></tr>
+                    <tr><td>Debt ↔ Arbitrage correlation</td><td>0.20</td><td>How debt and arbitrage returns move together. Positive values mean they tend to rise and fall together.</td></tr>
+                    <tr><td>Random seed</td><td>None</td><td>Optional fixed seed for reproducible results. Same inputs + same seed = identical output.</td></tr>
+                    <tr><td>Retirement age sensitivity</td><td>None</td><td>Comma-separated alternative retirement ages to compare success rates. Useful for "how much longer should I work?" analysis.</td></tr>
+                </tbody>
+            </table>
             <h3>Allocation and volatility</h3>
             <p>Equity, debt, and arbitrage weights, volatilities, and correlations are combined into one covariance-based portfolio volatility. The current model draws one return for the total portfolio; it does not simulate separate asset-class balances or rebalancing.</p>
         </section>

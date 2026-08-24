@@ -614,6 +614,40 @@
             color: var(--text-1);
         }
 
+        .scroll-indicator {
+            position: fixed;
+            bottom: 1.25rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            opacity: 0.85;
+            animation: scroll-bounce 1.8s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        .scroll-indicator span {
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--text-3);
+        }
+
+        .scroll-indicator svg {
+            width: 20px;
+            height: 20px;
+            color: var(--text-3);
+        }
+
+        @keyframes scroll-bounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(6px); }
+        }
+
         .landing-cta {
             background: linear-gradient(135deg, #1d4ed8, #2563eb 35%, #3b82f6 100%);
             border: 1px solid rgba(255,255,255,0.14);
@@ -944,6 +978,13 @@
                     </div>
                 </div>
             </div>
+        </div>
+
+        <div class="scroll-indicator" aria-hidden="true">
+            <span>Scroll</span>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
+            </svg>
         </div>
     </div>
 
