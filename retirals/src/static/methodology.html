@@ -88,6 +88,8 @@
                 <li><a href="#charts">Charts and visualisations</a></li>
                 <li><a href="#metrics">Metrics and interpretation</a></li>
                 <li><a href="#assumptions">Assumptions and limitations</a></li>
+                <li><a href="#references">References and data sources</a></li>
+                <li><a href="#feedback">Feedback</a></li>
             </ul>
         </section>
 
@@ -214,6 +216,55 @@
             </ul>
         </section>
 
+        <section id="references">
+            <h2>References and data sources</h2>
+            <p class="muted">Use these links to check current market levels, inflation, interest rates, and historical return data when setting your assumptions.</p>
+            <table>
+                <thead><tr><th>Category</th><th>Source</th><th>What to look for</th></tr></thead>
+                <tbody>
+                    <tr><td>Indian equity indices</td><td><a href="https://www.niftyindices.com/" target="_blank">NSE Indices</a>, <a href="https://www.bseindia.com/indices" target="_blank">BSE Indices</a></td><td>Nifty 50, Sensex, Nifty Next 50, Nifty 500 for long-term equity return assumptions.</td></tr>
+                    <tr><td>Indian debt / interest rates</td><td><a href="https://www.rbi.org.in/" target="_blank">RBI</a>, <a href="https://www.ccilindia.com/" target="_blank">CCIL</a></td><td>RBI repo rate, G-sec yields, and bond market levels for debt return assumptions.</td></tr>
+                    <tr><td>Gold prices</td><td><a href="https://www.mcxindia.com/" target="_blank">MCX</a>, <a href="https://www.londonbullionmarket.org/" target="_blank">LBMA</a></td><td>Spot gold and gold futures for commodity exposure or hedging assumptions.</td></tr>
+                    <tr><td>Crude oil prices</td><td><a href="https://www.eia.gov/" target="_blank">EIA</a>, <a href="https://www.brentcrude.price/" target="_blank">Brent Crude</a></td><td>Brent and WTI crude for inflation and macro context.</td></tr>
+                    <tr><td>US monetary policy</td><td><a href="https://www.federalreserve.gov/" target="_blank">Federal Reserve</a></td><td>Fed funds rate, dot plot, and FOMC statements for global liquidity context.</td></tr>
+                    <tr><td>Indian inflation</td><td><a href="https://mospi.gov.in/" target="_blank">MoSPI</a>, <a href="https://www.rbi.org.in/" target="_blank">RBI</a></td><td>CPI and WPI inflation data for realistic expense-inflation assumptions.</td></tr>
+                    <tr><td>Currency</td><td><a href="https://www.rbi.org.in/" target="_blank">RBI</a>, <a href="https://www.liveusd.inr-rate.com/" target="_blank">USD/INR</a></td><td>Exchange rate trends if you hold foreign assets or travel plans.</td></tr>
+                    <tr><td>Historical returns</td><td><a href="https://www.valueresearchonline.com/" target="_blank">Value Research</a>, <a href="https://www.morningstar.in/" target="_blank">Morningstar India</a>, <a href="https://www.nseindia.com/" target="_blank">NSE</a></td><td>10-year and 20-year rolling returns for equity, debt, and gold to calibrate return and volatility inputs.</td></tr>
+                    <tr><td>Tax rules</td><td><a href="https://www.incometax.gov.in/" target="_blank">Income Tax India</a>, <a href="https://www.rbi.org.in/" target="_blank">RBI</a></td><td>Current LTCG, STCG, debt taxation, and exemption limits.</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="feedback">
+            <h2>Feedback</h2>
+            <p class="muted">Found a bug, have a suggestion, or want to share how the planner helped you? Use the form below. It opens your email client with a pre-filled message to <a href="mailto:abmullick@gmail.com">abmullick@gmail.com</a>.</p>
+            <form id="feedback-form" style="margin-top: 14px; display: grid; gap: 12px; max-width: 560px;">
+                <div>
+                    <label for="fb-name" style="display:block; font-weight:600; margin-bottom:4px;">Name</label>
+                    <input id="fb-name" name="name" placeholder="Your name" style="width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; font: inherit;">
+                </div>
+                <div>
+                    <label for="fb-email" style="display:block; font-weight:600; margin-bottom:4px;">Email</label>
+                    <input id="fb-email" name="email" type="email" placeholder="you@example.com" style="width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; font: inherit;">
+                </div>
+                <div>
+                    <label for="fb-type" style="display:block; font-weight:600; margin-bottom:4px;">Type</label>
+                    <select id="fb-type" name="type" style="width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; font: inherit;">
+                        <option value="Feedback">Feedback</option>
+                        <option value="Bug report">Bug report</option>
+                        <option value="Feature request">Feature request</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="fb-message" style="display:block; font-weight:600; margin-bottom:4px;">Message</label>
+                    <textarea id="fb-message" name="message" rows="4" required placeholder="Tell us what you think..." style="width:100%; padding:10px 12px; border:1px solid var(--border); border-radius:10px; font: inherit; resize: vertical;"></textarea>
+                </div>
+                <button type="submit" style="justify-self: start; padding: 10px 16px; border: 0; border-radius: 10px; background: var(--accent); color: white; font-weight: 600; cursor: pointer;">Send feedback</button>
+                <p id="fb-status" class="muted" style="margin: 0;"></p>
+            </form>
+        </section>
+
         <p class="muted" style="text-align: center; margin-top: 32px; font-size: .9rem;">© 2026 Abhisek Basu Mullick. All rights reserved.</p>
 
         <div class="scroll-indicator" aria-hidden="true">
@@ -255,6 +306,52 @@
                     window.scrollTo({ top: 0, behavior: 'smooth' });
                 } else {
                     window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
+                }
+            });
+        })();
+
+        (function() {
+            const form = document.getElementById('feedback-form');
+            const status = document.getElementById('fb-status');
+            const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
+            if (!form || !status || !submitBtn) return;
+
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                status.textContent = 'Opening your email client...';
+                status.style.color = 'var(--muted)';
+                submitBtn.disabled = true;
+
+                const name = (form.querySelector('#fb-name')?.value || '').trim();
+                const email = (form.querySelector('#fb-email')?.value || '').trim();
+                const type = form.querySelector('#fb-type')?.value || 'Feedback';
+                const message = (form.querySelector('#fb-message')?.value || '').trim();
+                const page = window.location.pathname || 'methodology.html';
+
+                const subject = encodeURIComponent(`[Retirement Planner] ${type}${name ? ` - ${name}` : ''}`);
+                const body = encodeURIComponent(
+`Name: ${name || 'Anonymous'}
+Email: ${email || 'N/A'}
+Type: ${type}
+Page: ${page}
+
+Message:
+${message || '(no message)'}`
+                );
+
+                const mailtoUrl = `mailto:abmullick@gmail.com?subject=${subject}&body=${body}`;
+
+                try {
+                    window.location.href = mailtoUrl;
+                    status.textContent = 'If your email client did not open, please email abmullick@gmail.com directly.';
+                    status.style.color = 'var(--accent)';
+                } catch (err) {
+                    status.textContent = 'Unable to open email client. Please email abmullick@gmail.com directly.';
+                    status.style.color = '#b45309';
+                    console.error('Mailto error:', err);
+                } finally {
+                    submitBtn.disabled = false;
+                    form.reset();
                 }
             });
         })();
