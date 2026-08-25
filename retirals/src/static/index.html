@@ -330,6 +330,45 @@
             50% { box-shadow: 0 0 0 8px rgba(234, 179, 8, 0); }
         }
 
+        .hamburger-button {
+            background: transparent;
+            border: 1px solid var(--stroke);
+            color: var(--text-2);
+            border-radius: 0.5rem;
+            cursor: pointer;
+        }
+
+        .hamburger-button:hover {
+            background: rgba(102, 167, 255, 0.1);
+            color: var(--accent);
+        }
+
+        #flyout-menu {
+            min-width: 12rem;
+        }
+
+        #flyout-menu a {
+            display: block;
+            text-decoration: none;
+            color: var(--text-2);
+            border-radius: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        #flyout-menu a:hover {
+            background: rgba(102, 167, 255, 0.12);
+            color: var(--accent);
+        }
+
+        @media (max-width: 639px) {
+            #flyout-menu {
+                right: 0;
+                left: auto;
+            }
+        }
+
         .chart-panel {
             background: var(--chart-panel-bg);
             border: 1px solid var(--stroke);
@@ -1054,9 +1093,15 @@
                 <div class="flex items-center gap-4">
                     <div class="relative w-full">
                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-2 sm:absolute sm:top-0 sm:right-0">
-                            <a href="/methodology" target="_blank" rel="noopener noreferrer" class="secondary-button rounded-lg px-3 py-2 text-sm font-semibold" aria-label="Open Help and Methodology in a new tab">
-                                Help &amp; Methodology ↗
-                            </a>
+                            <div class="relative">
+                                <button id="menu-toggle" type="button" class="hamburger-button flex items-center justify-center p-2 rounded-lg border border-white/10 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/30" aria-label="Open menu" aria-expanded="false" aria-controls="flyout-menu">
+                                    <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                                    </svg>
+                                </button>
+                            </div>
                             <div class="flex items-center gap-2 text-slate-300">
                                 <span class="text-[10px] font-semibold uppercase tracking-[0.18em]">Mode</span>
                                 <button id="themeToggleBtn" class="theme-toggle" type="button" aria-label="Toggle between dark and bright mode">
@@ -3387,6 +3432,69 @@
             });
         })();
     </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const toggle = document.getElementById('menu-toggle');
+            const menu = document.getElementById('flyout-menu');
+            if (!toggle || !menu) return;
+
+            function openMenu() {
+                const rect = toggle.getBoundingClientRect();
+                menu.style.top = (rect.bottom + 8) + 'px';
+                menu.style.right = (window.innerWidth - rect.right) + 'px';
+                menu.style.left = 'auto';
+                menu.classList.remove('hidden');
+                toggle.setAttribute('aria-expanded', 'true');
+                toggle.setAttribute('aria-label', 'Close menu');
+            }
+
+            function closeMenu() {
+                menu.classList.add('hidden');
+                toggle.setAttribute('aria-expanded', 'false');
+                toggle.setAttribute('aria-label', 'Open menu');
+            }
+
+            toggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isOpen = !menu.classList.contains('hidden');
+                if (isOpen) {
+                    closeMenu();
+                } else {
+                    openMenu();
+                }
+            });
+
+            menu.querySelectorAll('a').forEach(link => {
+                link.addEventListener('click', () => {
+                    closeMenu();
+                });
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!menu.contains(e.target) && e.target !== toggle) {
+                    closeMenu();
+                }
+            });
+
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeMenu();
+                }
+            });
+
+            window.addEventListener('resize', () => {
+                if (!menu.classList.contains('hidden')) {
+                    closeMenu();
+                }
+            });
+        });
+    </script>
+    <div id="flyout-menu" class="hidden fixed w-48 rounded-xl border border-white/10 p-2 shadow-xl backdrop-blur-sm z-[9999]" style="background: var(--panel-strong);">
+        <a href="/methodology" target="_blank" rel="noopener noreferrer" class="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/10" style="color: var(--text-2);">Help &amp; Methodology</a>
+        <a href="/methodology#about" target="_blank" rel="noopener noreferrer" class="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/10" style="color: var(--text-2);">About</a>
+        <a href="/methodology#contact" target="_blank" rel="noopener noreferrer" class="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/10" style="color: var(--text-2);">Contact</a>
+        <a href="/methodology#feedback" target="_blank" rel="noopener noreferrer" class="block rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/10" style="color: var(--text-2);">Feedback</a>
+    </div>
     <div id="mcOverlay" class="mc-overlay">
         <div class="mc-overlay-spinner"></div>
         <div class="mc-overlay-text">Calculating Monte Carlo simulation...</div>
