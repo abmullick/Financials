@@ -1541,8 +1541,8 @@
                     <button onclick="downloadReport('pdf')" class="secondary-button w-full font-semibold py-2 rounded-xl text-sm" aria-label="Download PDF Report">
                         📄 Download PDF
                     </button>
-                    <button onclick="downloadReport('html')" class="secondary-button w-full font-semibold py-2 rounded-xl text-sm" aria-label="Download HTML Report">
-                        🌐 Download HTML
+                    <button onclick="downloadReport('json')" class="secondary-button w-full font-semibold py-2 rounded-xl text-sm" aria-label="Download JSON Report">
+                        📄 Download JSON
                     </button>
                 </div>
 
@@ -1882,6 +1882,7 @@
 
     <script>
         const chartInstances = {};
+        let lastCalculationResult = null;
 
         function buildAdHocRow(age = '', amount = '', category = 'Other', inflation = null) {
             const row = document.createElement('div');
@@ -2216,37 +2217,29 @@
                 return;
             }
 
-            if (type === 'html') {
-                const clone = document.documentElement.cloneNode(true);
+            if (type === 'json') {
+                if (!lastCalculationResult) {
+                    showCalculationError('Please run a simulation first before downloading results.');
+                    return;
+                }
 
-                // Preserve the current light/dark theme
-                clone.querySelector('body').className = document.body.className;
-
-                // Replace charts with images
-                const originalCanvases = document.querySelectorAll('canvas');
-                const clonedCanvases = clone.querySelectorAll('canvas');
-
-                originalCanvases.forEach((canvas, index) => {
-                    const img = document.createElement('img');
-                    img.src = canvas.toDataURL('image/png');
-                    img.style.width = '100%';
-                    img.style.height = 'auto';
-                    if (clonedCanvases[index]) {
-                        clonedCanvases[index].replaceWith(img);
-                    }
-                });
-
-                const html = '<!DOCTYPE html>\n' + clone.outerHTML;
+                const { payload, data } = lastCalculationResult;
+                const exportData = {
+                    generated_at: new Date().toISOString(),
+                    mode: lastCalculationResult ? lastCalculationResult.mode : 'deterministic',
+                    inputs: payload,
+                    outputs: data
+                };
 
                 const blob = new Blob(
-                    [html],
-                    { type: 'text/html;charset=utf-8' }
+                    [JSON.stringify(exportData, null, 2)],
+                    { type: 'application/json;charset=utf-8' }
                 );
 
                 const url = URL.createObjectURL(blob);
                 const link = document.createElement('a');
                 link.href = url;
-                link.download = 'retirement-plan.html';
+                link.download = 'retirement-plan.json';
                 document.body.appendChild(link);
                 link.click();
                 link.remove();
@@ -2369,6 +2362,8 @@
                 }
 
                 const data = await response.json();
+
+                lastCalculationResult = { mode: 'deterministic', payload, data };
 
                 // --- Update KPIs with conditional coloring ---
                 const finalCorpusEl = document.getElementById('kpi_final_corpus');
@@ -2943,6 +2938,8 @@
                 }
 
                 const data = await response.json();
+
+                lastCalculationResult = { mode: 'monte_carlo', payload, data };
                 renderMonteCarloResults(data);
             } catch (error) {
                 console.error('Monte Carlo calculation error:', error);
