@@ -620,25 +620,58 @@ def _fmt(value):
     return f"₹{value:,.0f}"
 
 def _generate_recommendations(inputs: PlannerInputs, mc_summary: dict) -> list:
-    """Generates plain-language recommendations based on Monte Carlo output."""
+    """Generates plain-language recommendations based on Monte Carlo and deterministic projection output."""
     recs = []
     success_rate = mc_summary.get("success_rate", 0)
-    median_corpus = mc_summary.get("median_final_corpus", 0)
+    readiness = mc_summary.get("readiness_percent", 0)
+    gap = mc_summary.get("gap_at_retirement", 0)
+    minimum_corpus = mc_summary.get("minimum_corpus_required", 0)
+    target_contribution = mc_summary.get("target_annual_contribution_for_gap", 0)
+    req_pre_return = mc_summary.get("required_pre_retirement_return", 0)
+    req_post_return = mc_summary.get("required_post_retirement_return", 0)
     failure_ages = mc_summary.get("failure_age_percentiles", {})
+    median_failure = failure_ages.get("p50") if failure_ages else None
+
+    gap_ratio = (gap / minimum_corpus) if minimum_corpus > 0 else 0
+
+    if success_rate >= 95 and readiness >= 100:
+        recs.append("Your plan looks healthy. Continue monitoring annually and adjust for major life changes.")
+        return recs
 
     if success_rate < 50:
         recs.append("Your plan has a high risk of running out of money. Consider increasing contributions, reducing expenses, or delaying retirement.")
     elif success_rate < 80:
         recs.append("Your plan is moderately at risk. Small improvements in savings rate or retirement age can significantly increase your probability of success.")
+    elif success_rate < 95:
+        recs.append("Your plan is fragile. A poor market sequence or higher-than-expected expenses could deplete your corpus.")
 
-    if success_rate < 100 and failure_ages:
-        median_failure = failure_ages.get("p50")
-        if median_failure:
-            recs.append(f"Plan becomes fragile around age {median_failure}. Delaying retirement by even 1-2 years can improve outcomes.")
+    if median_failure and success_rate < 100:
+        recs.append(f"Plan becomes fragile around age {median_failure}. Delaying retirement by even 1-2 years can improve outcomes.")
 
-    if inputs.current_age < inputs.retirement_age and inputs.annual_contribution > 0:
-        recommended_increase = inputs.annual_contribution * 0.10
-        recs.append(f"Increasing annual contribution by 10% (to {_fmt(inputs.annual_contribution + recommended_increase)}) may meaningfully improve success odds.")
+    if gap > 0:
+        if gap_ratio < 0.10 and success_rate >= 50:
+            recs.append(f"Your corpus is slightly below the target. A small increase in annual savings or delaying retirement by 1 year can close the gap.")
+        elif gap_ratio < 0.30:
+            increase = inputs.annual_contribution * 0.15
+            recs.append(f"Consider increasing annual contribution by 15% (to {_fmt(inputs.annual_contribution + increase)}) to improve your odds.")
+        else:
+            increase = inputs.annual_contribution * 0.20
+            recs.append(f"Significant gap detected. Consider increasing annual contribution by 20% (to {_fmt(inputs.annual_contribution + increase)}), reducing expenses, or delaying retirement.")
+
+        if 0 < req_pre_return <= 0.50 and req_pre_return > inputs.pre_retirement_return + 0.01:
+            recs.append(f"To reach your goal without extra savings, pre-retirement returns would need to be around {req_pre_return * 100:.1f}% instead of {inputs.pre_retirement_return * 100:.1f}%.")
+        
+        if 0 < req_post_return <= 0.50 and req_post_return > inputs.post_retirement_return + 0.01:
+            recs.append(f"Post-retirement returns would need to be around {req_post_return * 100:.1f}% instead of {inputs.post_retirement_return * 100:.1f}% to close the gap.")
+
+        if target_contribution > inputs.annual_contribution:
+            recs.append(f"Based on your timeline, consider saving an additional {_fmt(target_contribution - inputs.annual_contribution)} per year.")
+
+    if success_rate < 50 and readiness >= 90:
+        recs.append("Your plan looks adequate on paper but is vulnerable to market volatility. Consider building a larger buffer or reducing volatility in your portfolio.")
+
+    if inputs.include_pension and inputs.annual_pension > 0 and success_rate < 80:
+        recs.append("Reviewing your pension assumptions or exploring additional income sources in retirement could reduce pressure on your corpus.")
 
     if not recs:
         recs.append("Your plan looks healthy. Continue monitoring annually and adjust for major life changes.")
@@ -716,12 +749,23 @@ def run_monte_carlo(inputs: PlannerInputs) -> dict:
         histogram_bins[idx] += 1
     histogram_probabilities = [round((count / num_sims) * 100.0, 2) for count in histogram_bins]
 
+    # Deterministic projection metrics for recommendations
+    projection = run_projection(inputs)
+    det_metrics = projection.get("metrics", {})
+    
     # Recommendations
     recommendations = _generate_recommendations(inputs, {
         "success_rate": success_rate,
         "median_final_corpus": sorted(all_final_corpus)[num_sims // 2],
         "failure_age_percentiles": failure_age_percentiles,
-        "funding_probability_by_age": dict(zip(years, funding_probability_by_age))
+        "funding_probability_by_age": dict(zip(years, funding_probability_by_age)),
+        "readiness_percent": det_metrics.get("readiness_percent", 0),
+        "corpus_at_retirement": det_metrics.get("corpus_at_retirement", 0),
+        "minimum_corpus_required": det_metrics.get("minimum_corpus_required", 0),
+        "gap_at_retirement": det_metrics.get("gap_at_retirement", 0),
+        "target_annual_contribution_for_gap": det_metrics.get("target_annual_contribution_for_gap", 0),
+        "required_pre_retirement_return": det_metrics.get("required_pre_retirement_return", 0),
+        "required_post_retirement_return": det_metrics.get("required_post_retirement_return", 0),
     })
 
     return {
