@@ -5,18 +5,35 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Help &amp; Methodology — Retirement Corpus Planner</title>
     <style>
-        :root { --bg: #f4f8ff; --surface: #fff; --text: #172033; --muted: #52627c; --accent: #2563eb; --border: #d9e3f2; --warn: #9a6700; }
+        :root { 
+            --bg: #f4f8ff; --surface: #fff; --text: #172033; --muted: #52627c; --accent: #2563eb; --border: #d9e3f2; --warn: #9a6700; 
+            --header-bg: linear-gradient(135deg, #10233b, #1d4f80);
+            --header-text: #ffffff;
+            --section-bg: #fff;
+            --summary-text: #172033;
+            --code-bg: #f1f5f9;
+        }
+        body.dark-mode { 
+            --bg: #0b1220; --surface: #111827; --text: #e5e7eb; --muted: #9ca3af; --accent: #60a5fa; --border: #1f2937; --warn: #fbbf24; 
+            --header-bg: linear-gradient(135deg, #0f172a, #1e3a5f);
+            --header-text: #e5e7eb;
+            --section-bg: #111827;
+            --summary-text: #e5e7eb;
+            --code-bg: #1f2937;
+        }
         * { box-sizing: border-box; }
-        body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+        body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; transition: background 0.2s ease, color 0.2s ease; }
         main { max-width: 920px; margin: 0 auto; padding: 40px 20px 64px; }
-        header { border-radius: 18px; padding: 30px; color: white; background: linear-gradient(135deg, #10233b, #1d4f80); }
+        header { border-radius: 18px; padding: 30px; color: var(--header-text); background: var(--header-bg); }
         h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 2.5rem); }
         h2 { margin: 36px 0 12px; font-size: 1.35rem; }
         h3 { margin: 24px 0 6px; font-size: 1.05rem; }
         p { margin: 8px 0; }
         .lede { color: #dbeafe; margin-top: 8px; }
-        .notice, section { border: 1px solid var(--border); background: var(--surface); border-radius: 14px; padding: 20px; margin-top: 18px; }
+        body.dark-mode .lede { color: #93c5fd; }
+        .notice, section { border: 1px solid var(--border); background: var(--surface); border-radius: 14px; padding: 20px; margin-top: 18px; transition: background 0.2s ease, border-color 0.2s ease; }
         .notice { border-left: 4px solid #eab308; color: #604a00; }
+        body.dark-mode .notice { color: #fde68a; border-left-color: #fbbf24; }
         .toc { columns: 2; padding-left: 20px; }
         a { color: var(--accent); }
         table { width: 100%; border-collapse: collapse; margin-top: 12px; }
@@ -24,6 +41,24 @@
         th { color: var(--muted); font-size: .84rem; text-transform: uppercase; letter-spacing: .04em; }
         ul { padding-left: 22px; margin: 8px 0; }
         .muted { color: var(--muted); }
+        details { border: 1px solid var(--border); background: var(--surface); border-radius: 14px; padding: 20px; margin-top: 18px; transition: background 0.2s ease, border-color 0.2s ease; }
+        summary { font-weight: 600; cursor: pointer; color: var(--summary-text); font-size: 1.1rem; }
+        details[open] summary { margin-bottom: 12px; }
+        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
+        .toolbar a, .toolbar button { font-size: 0.9rem; }
+        .theme-toggle-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; }
+        .print-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; text-decoration: none; display: inline-block; }
+        .example-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 12px; }
+        .example-card { border: 1px solid var(--border); background: var(--surface); border-radius: 12px; padding: 16px; }
+        .example-card h4 { margin: 0 0 8px; font-size: 1rem; }
+        .example-card p { margin: 4px 0; font-size: 0.95rem; }
+        .example-card .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; background: rgba(37,99,235,0.1); color: var(--accent); font-size: 0.8rem; font-weight: 600; margin-top: 8px; }
+        .glossary dt { font-weight: 600; margin-top: 10px; }
+        .glossary dd { margin-left: 0; color: var(--muted); }
+        .faq-item { border-bottom: 1px solid var(--border); padding: 12px 0; }
+        .faq-item:last-child { border-bottom: none; }
+        .faq-item summary { font-size: 1rem; }
+        code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
         .scroll-indicator {
             position: fixed;
             bottom: 1.25rem;
@@ -66,7 +101,12 @@
             0%, 100% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.4); }
             50% { box-shadow: 0 0 0 10px rgba(234, 179, 8, 0); }
         }
-        @media (max-width: 620px) { .toc { columns: 1; } main { padding: 20px 14px 40px; } header { padding: 24px; } th, td { padding: 8px; } }
+        @media print {
+            .toolbar, .scroll-indicator, #theme-toggle, #print-btn { display: none !important; }
+            body { background: #fff; color: #000; }
+            details { border: 1px solid #ccc; background: #fff; }
+        }
+        @media (max-width: 620px) { .toc { columns: 1; } main { padding: 20px 14px 40px; } header { padding: 24px; } th, td { padding: 8px; } .example-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
@@ -78,6 +118,16 @@
 
         <div class="notice"><strong>Important:</strong> this planner provides estimates for education and planning. It is not financial, tax, legal, or investment advice. Review major decisions with a qualified professional.</div>
 
+        <div class="toolbar">
+            <a href="/">← Back to Planner</a>
+            <div style="display:flex; gap:8px;">
+                <button id="theme-toggle" class="theme-toggle-btn" onclick="toggleTheme()">🌙 Dark mode</button>
+                <button id="print-btn" class="print-btn" onclick="window.print()">🖨️ Print / PDF</button>
+            </div>
+        </div>
+
+        <details open>
+        <summary><strong>📋 In this guide</strong></summary>
         <section>
             <h2>In this guide</h2>
             <ul class="toc">
@@ -87,6 +137,10 @@
                 <li><a href="#monte-carlo">Monte Carlo simulation</a></li>
                 <li><a href="#charts">Charts and visualisations</a></li>
                 <li><a href="#metrics">Metrics and interpretation</a></li>
+                <li><a href="#examples">Example scenarios</a></li>
+                <li><a href="#best-practices">Best practices</a></li>
+                <li><a href="#faq">FAQ</a></li>
+                <li><a href="#glossary">Glossary</a></li>
                 <li><a href="#assumptions">Assumptions and limitations</a></li>
                 <li><a href="#about">About</a></li>
                 <li><a href="#contact">Contact</a></li>
@@ -94,30 +148,37 @@
                 <li><a href="#feedback">Feedback</a></li>
             </ul>
         </section>
+</details>
 
-        <section id="getting-started">
+<details open>
+<summary><strong>🚀 Getting started</strong></summary>
+<section id="getting-started">
             <h2>Getting started</h2>
+            <p>The default inputs show a realistic mid-career scenario: age 35, planning to retire at 60, with ₹15 lakh annual expenses, ₹40 lakh current corpus, ₹5 lakh annual contribution growing at 8%, and a 60/30/10 equity-debt-arbitrage allocation. This is a plausible starting point for many Indian professionals, but it is intentionally set slightly below full readiness so you can see how the tool identifies gaps and recommends actions.</p>
             <p>Enter your current age, retirement age, life expectancy, current corpus, annual expenses, annual contribution, return assumptions, and inflation. Add one-time expenses for known future costs such as education, housing, or medical care.</p>
             <p>The planner also supports a retirement lump sum, pension income, investment allocation, withdrawal tax assumptions, and market-stress scenarios. Use the deterministic simulation for one assumed return path; use Monte Carlo to assess many possible market paths.</p>
             <p class="muted">Amounts are treated as annual values in Indian rupees. Check that all assumptions use the same time frame and that future expenses are expressed in today's money when entering them.</p>
         </section>
+</details>
 
-        <section id="input-settings">
+        <details open>
+<summary><strong>⚙️ Input Settings Reference</strong></summary>
+<section id="input-settings">
             <h2>Input Settings Reference</h2>
             <p class="muted">Use this reference when filling in the planner parameters. Values marked as default are shown in the UI, but you can change any of them.</p>
             <table>
                 <thead><tr><th>Setting</th><th>Default</th><th>What it means</th></tr></thead>
                 <tbody>
-                    <tr><td>Current age</td><td>23</td><td>Your present age. The projection starts from this year.</td></tr>
-                    <tr><td>Retirement age</td><td>58</td><td>The age at which contributions stop and withdrawals begin.</td></tr>
+                    <tr><td>Current age</td><td>35</td><td>Your present age. The projection starts from this year.</td></tr>
+                    <tr><td>Retirement age</td><td>60</td><td>The age at which contributions stop and withdrawals begin.</td></tr>
                     <tr><td>Life expectancy</td><td>85</td><td>The final age the plan must fund. The model runs to this age.</td></tr>
-                    <tr><td>Current annual expenses</td><td>₹600,000</td><td>Your present-day yearly spending. This is inflated each year in retirement.</td></tr>
+                    <tr><td>Current annual expenses</td><td>₹1,500,000</td><td>Your present-day yearly spending. This is inflated each year in retirement.</td></tr>
                     <tr><td>Average inflation rate</td><td>6.0%</td><td>Annual inflation applied to expenses and ad-hoc expenses. Use a realistic long-term expectation.</td></tr>
-                    <tr><td>Current corpus</td><td>₹100,000</td><td>Existing investible wealth available today.</td></tr>
-                    <tr><td>Annual contribution</td><td>₹200,000</td><td>Amount saved each year before retirement. Contributions stop at retirement.</td></tr>
-                    <tr><td>Contribution increase</td><td>1.0%</td><td>Annual growth applied to your contribution amount. Set to 0% for fixed contributions.</td></tr>
+                    <tr><td>Current corpus</td><td>₹4,000,000</td><td>Existing investible wealth available today.</td></tr>
+                    <tr><td>Annual contribution</td><td>₹500,000</td><td>Amount saved each year before retirement. Contributions stop at retirement.</td></tr>
+                    <tr><td>Contribution increase</td><td>8.0%</td><td>Annual growth applied to your contribution amount. Set to 0% for fixed contributions.</td></tr>
                     <tr><td>One-time lump sum</td><td>₹0</td><td>A future cash injection at retirement, such as gratuity or PF proceeds.</td></tr>
-                    <tr><td>Pre-retirement return</td><td>9.0%</td><td>Expected annual return on the portfolio while you are still contributing.</td></tr>
+                    <tr><td>Pre-retirement return</td><td>10.0%</td><td>Expected annual return on the portfolio while you are still contributing.</td></tr>
                     <tr><td>Post-retirement return</td><td>8.0%</td><td>Expected annual return on the portfolio after retirement.</td></tr>
                     <tr><td>Equity allocation</td><td>60%</td><td>Share of the portfolio in equity. Affects both deterministic tax treatment and Monte Carlo volatility.</td></tr>
                     <tr><td>Debt allocation</td><td>30%</td><td>Share in debt instruments.</td></tr>
@@ -132,7 +193,7 @@
                     <tr><td>Stress scenario</td><td>Normal</td><td>Choose Normal, Mild Crash, or Severe Crash to override the first two retirement-year returns.</td></tr>
                     <tr><td>Include pension</td><td>Off</td><td>Enable if you expect regular pension income after a chosen start age.</td></tr>
                     <tr><td>Pension start age</td><td>60</td><td>Age from which gross pension begins. It can be before or after retirement.</td></tr>
-                    <tr><td>Annual pension</td><td>₹600,000</td><td>Gross annual pension at the start age. It grows each year by the pension increase rate.</td></tr>
+                    <tr><td>Annual pension</td><td>₹600,000</td><td>Gross annual pension at the start age. It grows each year by the pension increase rate. Disabled by default.</td></tr>
                     <tr><td>Pension increase</td><td>5.0%</td><td>Annual growth rate applied to the pension amount.</td></tr>
                     <tr><td>Pension tax rate</td><td>20.0%</td><td>Tax deducted from gross pension to arrive at net pension.</td></tr>
                     <tr><td>Reinvest pension surplus</td><td>On</td><td>When enabled, any pension amount not needed for expenses is reinvested into the corpus.</td></tr>
@@ -140,8 +201,11 @@
                 </tbody>
             </table>
         </section>
+</details>
 
-        <section id="projection">
+        <details open>
+<summary><strong>📊 Deterministic projection</strong></summary>
+<section id="projection">
             <h2>Deterministic projection</h2>
             <p>The retirement projection applies the selected pre- and post-retirement return each year. It adds contributions before retirement, inflates expenses, applies pension income and withdrawal taxes, then updates the corpus. It is useful for understanding the cash-flow mechanics of one scenario, but it does not show the range of possible market outcomes.</p>
             <h3>Stress scenarios</h3>
@@ -149,8 +213,11 @@
             <h3>Pension and tax treatment</h3>
             <p>Net pension first funds recurring expenses. A pension surplus is reinvested only when that option is selected. Withdrawal taxes use a simplified blended allocation approach and an annual LTCG exemption; they do not track individual tax lots or cost basis.</p>
         </section>
+</details>
 
-        <section id="monte-carlo">
+        <details open>
+<summary><strong>🎲 Monte Carlo simulation</strong></summary>
+<section id="monte-carlo">
             <h2>Monte Carlo simulation</h2>
             <p>Monte Carlo runs 100 to 50,000 simulated annual-return paths. Every path follows the same contributions, expenses, pension, tax, and withdrawal rules, but its market returns differ. The success rate is the share of paths that fund all required expenses through life expectancy.</p>
             <p>The simulation uses either a normal or lognormal return distribution. Lognormal is the default because it cannot produce a return below −100%. A random seed makes a run reproducible; leaving it blank produces a new random set of paths.</p>
@@ -173,8 +240,11 @@
             <h3>Allocation and volatility</h3>
             <p>Equity, debt, and arbitrage weights, volatilities, and correlations are combined into one covariance-based portfolio volatility. The current model draws one return for the total portfolio; it does not simulate separate asset-class balances or rebalancing.</p>
         </section>
+</details>
 
-        <section id="charts">
+        <details open>
+<summary><strong>📈 Charts and visualisations</strong></summary>
+<section id="charts">
             <h2>Charts and visualisations</h2>
             <table>
                 <thead><tr><th>Chart</th><th>What it shows</th><th>How to use it</th></tr></thead>
@@ -189,8 +259,11 @@
                 </tbody>
             </table>
         </section>
+</details>
 
-        <section id="metrics">
+        <details open>
+<summary><strong>📏 Metrics and interpretation</strong></summary>
+<section id="metrics">
             <h2>Metrics and interpretation</h2>
             <table>
                 <thead><tr><th>Metric</th><th>Meaning</th></tr></thead>
@@ -205,8 +278,170 @@
                 </tbody>
             </table>
         </section>
+</details>
 
-        <section id="assumptions">
+        <details open>
+<summary><strong>💡 Example scenarios</strong></summary>
+<section id="examples">
+            <h2>Example scenarios</h2>
+            <p class="muted">These walkthroughs show how the planner behaves with common Indian retirement profiles. Use them as sanity checks for your own inputs.</p>
+            <div class="example-grid">
+                <div class="example-card">
+                    <h4>Young professional, high growth</h4>
+                    <p><strong>Age:</strong> 23 → retire at 58</p>
+                    <p><strong>Expenses:</strong> ₹6L/year</p>
+                    <p><strong>Corpus:</strong> ₹1L</p>
+                    <p><strong>Contribution:</strong> ₹2L/year (+1%)</p>
+                    <p><strong>Result:</strong> Readiness ~44%, corpus exhausts around 68. Early saving is critical.</p>
+                    <span class="tag">Aggressive saving needed</span>
+                </div>
+                <div class="example-card">
+                    <h4>Mid-career, on track</h4>
+                    <p><strong>Age:</strong> 35 → retire at 60</p>
+                    <p><strong>Expenses:</strong> ₹15L/year</p>
+                    <p><strong>Corpus:</strong> ₹40L</p>
+                    <p><strong>Contribution:</strong> ₹5L/year (+8%)</p>
+                    <p><strong>Result:</strong> Readiness ~95%, small gap. Plan is fragile but improvable.</p>
+                    <span class="tag">Gap-closing tweak</span>
+                </div>
+                <div class="example-card">
+                    <h4>Near retirement, well funded</h4>
+                    <p><strong>Age:</strong> 50 → retire at 55</p>
+                    <p><strong>Expenses:</strong> ₹15L/year</p>
+                    <p><strong>Corpus:</strong> ₹5Cr</p>
+                    <p><strong>Contribution:</strong> ₹0</p>
+                    <p><strong>Result:</strong> Readiness ~154%, sustainable. Strong final corpus.</p>
+                    <span class="tag">Healthy plan</span>
+                </div>
+                <div class="example-card">
+                    <h4>High expenses, low corpus</h4>
+                    <p><strong>Age:</strong> 65 → retire at 70</p>
+                    <p><strong>Expenses:</strong> ₹20L/year</p>
+                    <p><strong>Corpus:</strong> ₹5L</p>
+                    <p><strong>Contribution:</strong> ₹0</p>
+                    <p><strong>Result:</strong> Readiness ~4%, exhausts at 70. Major changes needed.</p>
+                    <span class="tag">High risk</span>
+                </div>
+                <div class="example-card">
+                    <h4>Conservative, stress-tested</h4>
+                    <p><strong>Age:</strong> 45 → retire at 60</p>
+                    <p><strong>Expenses:</strong> ₹8L/year</p>
+                    <p><strong>Allocation:</strong> 30/60/10</p>
+                    <p><strong>Stress:</strong> Mild crash</p>
+                    <p><strong>Result:</strong> Readiness ~78%, exhausts at 80. Low returns + crash = fragile.</p>
+                    <span class="tag">Low-volatility risk</span>
+                </div>
+                <div class="example-card">
+                    <h4>Pension + ad-hoc goals</h4>
+                    <p><strong>Age:</strong> 40 → retire at 60</p>
+                    <p><strong>Pension:</strong> ₹6L/year from 60</p>
+                    <p><strong>Ad-hoc:</strong> ₹10L at 45, ₹20L at 55</p>
+                    <p><strong>Result:</strong> Pension reduces withdrawal pressure; ad-hoc expenses create temporary gaps.</p>
+                    <span class="tag">Multi-source income</span>
+                </div>
+            </div>
+        </section>
+</details>
+
+        <details open>
+<summary><strong>✅ Best practices</strong></summary>
+<section id="best-practices">
+            <h2>Best practices</h2>
+            <ul>
+                <li><strong>Use real returns when possible:</strong> If you expect 10% nominal returns and 6% inflation, your real return is roughly 4%. The planner inflates expenses automatically, so nominal returns are usually easier to reason about.</li>
+                <li><strong>Test stress scenarios early:</strong> Run Normal, Mild Crash, and Severe Crash before locking in your plan. If a mild crash breaks your plan, you are running too close to the edge.</li>
+                <li><strong>Keep simulations realistic:</strong> 1,000–5,000 simulations are usually enough for stable results. More simulations reduce noise but do not remove model uncertainty.</li>
+                <li><strong>Update annually:</strong> Re-run the planner every year with actual values. Assumptions drift, salaries change, and markets move.</li>
+                <li><strong>Separate known and unknown expenses:</strong> Use ad-hoc expenses for known future costs (education, house, medical) and keep regular expenses in the main expense field.</li>
+                <li><strong>Check the funding probability curve:</strong> The final success rate is a summary. The year-by-year funding probability shows exactly when your plan becomes fragile.</li>
+                <li><strong>Use sensitivity analysis:</strong> Try retiring 1–3 years earlier and later. A small change in retirement age often has a large impact on success probability.</li>
+            </ul>
+        </section>
+</details>
+
+        <details open>
+<summary><strong>❓ Frequently asked questions</strong></summary>
+<section id="faq">
+            <h2>Frequently asked questions</h2>
+            <div class="faq-item">
+                <details>
+                    <summary>What return rate should I use — 6%, 8%, 10%?</summary>
+                    <p>Use a return rate you believe is realistic for your portfolio mix over the long run. Historical Indian equity returns are around 10–12% nominal, but future returns may be lower. A conservative blended assumption of 8–10% pre-retirement and 7–9% post-retirement is common. The planner's default is 10% pre and 8% post.</p>
+                </details>
+            </div>
+            <div class="faq-item">
+                <details>
+                    <summary>Why is my readiness below 100%? Does that mean I cannot retire?</summary>
+                    <p>Readiness below 100% means your projected corpus is below the deterministic minimum required. It does not mean retirement is impossible — it means the plan is fragile and likely to fail under adverse markets. Use Monte Carlo to see the actual success probability and identify specific actions to close the gap.</p>
+                </details>
+            </div>
+            <div class="faq-item">
+                <details>
+                    <summary>What is a good Monte Carlo success rate?</summary>
+                    <p>There is no universal threshold. Many planners target 80–90% for a moderate risk tolerance and 90–95% for a conservative one. If your success rate is below 70%, the plan is fragile. Below 50%, it is high risk. Consider your ability to reduce expenses, delay retirement, or increase savings before settling on a lower threshold.</p>
+                </details>
+            </div>
+            <div class="faq-item">
+                <details>
+                    <summary>How much should I save each year?</summary>
+                    <p>There is no fixed percentage, but a common starting point is 15–20% of income for Indian professionals in their 30s and 40s. The planner's default of ₹5L on a ₹15L expense base is about 33% of expenses, which is aggressive but achievable for many. Use the recommendations to estimate the exact additional amount needed for your situation.</p>
+                </details>
+            </div>
+            <div class="faq-item">
+                <details>
+                    <summary>Should I include a pension?</summary>
+                    <p>Include it only if you are certain of the amount and timing. Government and corporate pensions are relatively predictable in India, but private pensions vary. The planner assumes pension grows with inflation and is taxed at the rate you enter. If you are unsure, model both with and without pension to see the impact.</p>
+                </details>
+            </div>
+            <div class="faq-item">
+                <details>
+                    <summary>What are LTCG and STCG?</summary>
+                    <p>LTCG = Long-Term Capital Gains (taxed at 12.5% for Indian equities above ₹1.25L). STCG = Short-Term Capital Gains (taxed at 20% for Indian equities). Debt fund gains are taxed as per your income slab after 3 years. The planner blends these based on your equity/debt/arbitrage allocation and equity LTCG/STCG split.</p>
+                </details>
+            </div>
+            <div class="faq-item">
+                <details>
+                    <summary>How does the withdrawal tax work?</summary>
+                    <p>The planner estimates tax each year by blending your asset-class tax rates according to your allocation. It also applies the annual LTCG exemption. This is a simplification — it does not track individual cost basis or tax lots — but it is sufficient for projection purposes.</p>
+                </details>
+            </div>
+            <div class="faq-item">
+                <details>
+                    <summary>Why does the planner show a gap even when I have a large corpus?</summary>
+                    <p>A large corpus can still fall short if expenses are high, inflation is long, returns are lower than expected, or you live longer than planned. The planner compares your corpus against the minimum required to fund your specific expense and longevity assumptions. A gap means the plan is sensitive to bad luck or assumptions.</p>
+                </details>
+            </div>
+        </section>
+</details>
+
+        <details open>
+<summary><strong>📖 Glossary</strong></summary>
+<section id="glossary">
+            <h2>Glossary</h2>
+            <dl class="glossary">
+                <dt>Corpus</dt>
+                <dd>The total investible wealth available to fund retirement. It grows with returns and contributions, and shrinks with withdrawals and expenses.</dd>
+                <dt>Readiness</dt>
+                <dd>Deterministic coverage ratio: projected corpus at retirement divided by minimum corpus required. 100% means the deterministic projection breaks even.</dd>
+                <dt>Success rate</dt>
+                <dd>In Monte Carlo, the percentage of simulated paths where expenses are fully funded through life expectancy.</dd>
+                <dt>Blended tax rate</dt>
+                <dd>A weighted average of LTCG, STCG, debt, and arbitrage tax rates based on your portfolio allocation and equity split.</dd>
+                <dt>Annuity due</dt>
+                <dd>A payment stream where cash flows occur at the beginning of each period. In this planner, expenses are treated as an annuity due because they are incurred throughout the year.</dd>
+                <dt>Sequence-of-returns risk</dt>
+                <dd>The danger that poor market returns in the early retirement years permanently reduce a portfolio's ability to recover, even if later returns are strong.</dd>
+                <dt>LTCG exemption</dt>
+                <dd>The annual amount of long-term capital gains that is tax-free. For Indian equities, it is ₹1.25 lakh per year.</dd>
+                <dt>Ad-hoc expense</dt>
+                <dd>A one-time future cost entered by age, such as a house down payment, medical procedure, or child's education.</dd>
+                <dt>Monte Carlo simulation</dt>
+                <dd>A method that runs many random return paths to estimate the range of possible outcomes, rather than a single deterministic path.</dd>
+                <dt>Percentile bands</dt>
+                <dd>In Monte Carlo output, the 5th, 25th, 50th, 75th, and 95th percentile corpus values at each age, showing the spread of outcomes.</dd>
+            </dl>
+        </section>
+</details>
             <h2>Assumptions and limitations</h2>
             <ul>
                 <li>Returns are independently sampled each year; the model does not represent momentum, mean reversion, or changing market regimes.</li>
@@ -217,8 +452,11 @@
                 <li>More simulations reduce random sampling noise but do not make uncertain assumptions certain.</li>
             </ul>
         </section>
+</details>
 
-        <section id="about">
+        <details open>
+<summary><strong>ℹ️ About</strong></summary>
+<section id="about">
             <h2>About</h2>
             <p><strong>Dynamic Retirement Corpus Planner</strong> is built to help individuals and families in India plan for a financially secure retirement. It combines deterministic projection with Monte Carlo simulation to answer two core questions:</p>
             <ul>
@@ -228,8 +466,11 @@
             <p>The tool models contributions, expenses, inflation, pension income, ad-hoc costs, withdrawal taxes, and market stress scenarios. It is designed for Indian investors and reflects common asset classes, tax rules, and retirement income sources.</p>
             <p class="muted">This is a planning and education tool. It does not provide personalised financial, tax, or investment advice. Always review major decisions with a qualified professional.</p>
         </section>
+</details>
 
-        <section id="references">
+        <details open>
+<summary><strong>🔗 References and data sources</strong></summary>
+<section id="references">
             <h2>References and data sources</h2>
             <p class="muted">Use these links to check current market levels, inflation, interest rates, and historical return data when setting your assumptions.</p>
             <table>
@@ -247,8 +488,11 @@
                 </tbody>
             </table>
         </section>
+</details>
 
-        <section id="contact">
+        <details open>
+<summary><strong>📧 Contact</strong></summary>
+<section id="contact">
             <h2>Contact</h2>
             <p>For questions, feedback, bug reports, or feature requests, reach out directly:</p>
             <ul>
@@ -257,8 +501,11 @@
             </ul>
             <p class="muted">I read every message. Response times vary, but I usually reply within a few days.</p>
         </section>
+</details>
 
-        <section id="feedback">
+        <details open>
+<summary><strong>💬 Feedback</strong></summary>
+<section id="feedback">
             <h2>Feedback</h2>
             <p class="muted">Found a bug, have a suggestion, or want to share how the planner helped you? Use the form below. It opens your email client with a pre-filled message to <a href="mailto:abmullick@gmail.com">abmullick@gmail.com</a>.</p>
             <form id="feedback-form" style="margin-top: 14px; display: grid; gap: 12px; max-width: 560px;">
@@ -287,6 +534,7 @@
                 <p id="fb-status" class="muted" style="margin: 0;"></p>
             </form>
         </section>
+</details>
 
         <p class="muted" style="text-align: center; margin-top: 32px; font-size: .9rem;">© 2026 Abhisek Basu Mullick. All rights reserved.</p>
 
@@ -377,6 +625,24 @@ ${message || '(no message)'}`
                     form.reset();
                 }
             });
+        })();
+    </script>
+    <script>
+        function toggleTheme() {
+            const body = document.body;
+            const btn = document.getElementById('theme-toggle');
+            const isDark = body.classList.toggle('dark-mode');
+            localStorage.setItem('methodology-theme', isDark ? 'dark' : 'light');
+            btn.textContent = isDark ? '☀️ Light mode' : '🌙 Dark mode';
+        }
+
+        (function() {
+            const saved = localStorage.getItem('methodology-theme');
+            if (saved === 'dark') {
+                document.body.classList.add('dark-mode');
+                const btn = document.getElementById('theme-toggle');
+                if (btn) btn.textContent = '☀️ Light mode';
+            }
         })();
     </script>
 </body>
