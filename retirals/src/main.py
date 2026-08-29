@@ -16,6 +16,7 @@ import logging
 
 from models import PlannerInputs
 from retirement_engine import run_projection, run_monte_carlo
+from ai_insights import AIInsightRequest, AIInsightResponse, AIInsightService
 
 # Start the FastAPI application 
 
@@ -83,9 +84,29 @@ def calculate_monte_carlo(request: Request, inputs: PlannerInputs):
         logger.error("An unexpected error occurred during Monte Carlo calculation.", exc_info=True)
         raise HTTPException(status_code=500, detail="An unexpected error occurred while running Monte Carlo simulation.")
 
+
+@app.post("/api/ai-insight")
+@limiter.limit("5/minute")
+def ai_insight(request: Request, payload: AIInsightRequest):
+    try:
+        return AIInsightService.process_insight_request(payload)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except RuntimeError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+    except Exception:
+        logger.error("An unexpected error occurred during AI insight processing.", exc_info=True)
+        raise HTTPException(status_code=500, detail="The AI service is temporarily unavailable. Please try again later.")
+
+
 @app.get("/")
 async def read_index():
     static_file = os.path.join(os.path.dirname(__file__), 'static', 'index.html')
+    return FileResponse(static_file)
+
+@app.get("/ai-insights")
+async def read_ai_insights():
+    static_file = os.path.join(os.path.dirname(__file__), 'static', 'ai-insights.html')
     return FileResponse(static_file)
 
 @app.get("/methodology")

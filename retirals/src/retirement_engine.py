@@ -434,7 +434,7 @@ def _solve_for_required_returns(inputs: PlannerInputs, corpus_at_retirement: flo
         def get_min_corpus(rate):
             # Calculates min_corpus_required for a given post-retirement return rate
             # This is a simplified version of the main _calculate_minimum_corpus function
-            return _calculate_minimum_corpus(inputs.copy(update={"post_retirement_return": rate}), ad_hoc_map)
+            return _calculate_minimum_corpus(inputs.model_copy(update={"post_retirement_return": rate}), ad_hoc_map)
 
         # Bisection method to find the rate
         low, high = inputs.post_retirement_return, 0.50 # Search up to 50%

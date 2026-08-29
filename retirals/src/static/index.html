@@ -543,8 +543,165 @@
             text-shadow: none;
         }
 
+        .ai-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: rgba(15, 23, 42, 0.55);
+            backdrop-filter: blur(2px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        body.theme-light .ai-overlay {
+            background: rgba(255, 255, 255, 0.55);
+        }
+
+        .ai-overlay.active {
+            display: flex;
+        }
+
+        .ai-overlay-spinner {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, #4285F4, #EA4335, #FBBC05, #34A853, #4285F4);
+            mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #fff calc(100% - 4px));
+            -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #fff calc(100% - 4px));
+            animation: ai-spin 0.8s linear infinite;
+        }
+
+        body.theme-light .ai-overlay-spinner {
+            mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #1e293b calc(100% - 4px));
+            -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #1e293b calc(100% - 4px));
+        }
+
+        .ai-overlay-text {
+            color: #f8fafc;
+            font-size: 16px;
+            font-weight: 600;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        body.theme-light .ai-overlay-text {
+            color: #1e293b;
+            text-shadow: none;
+        }
+
+        @keyframes ai-spin {
+            to { transform: rotate(360deg); }
+        }
+
         @keyframes mc-spin {
             to { transform: rotate(360deg); }
+        }
+
+        #aiInsightBtn {
+            background: linear-gradient(135deg, rgba(66, 133, 244, 0.25), rgba(234, 67, 53, 0.25) 35%, rgba(251, 188, 5, 0.25) 72%, rgba(52, 168, 83, 0.25));
+            border: 1px solid rgba(255,255,255,0.08);
+            color: rgba(255, 255, 255, 0.7);
+            box-shadow: none;
+            animation: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #aiInsightBtn::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.05), transparent 60%);
+            pointer-events: none;
+        }
+
+        #aiInsightBtn:hover:not(:disabled) {
+            background: linear-gradient(135deg, #4285F4, #EA4335 35%, #FBBC05 72%, #34A853);
+            border-color: rgba(255,255,255,0.2);
+            color: #ffffff;
+            transform: translateY(-1px);
+            box-shadow: 0 12px 22px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255,255,255,0.2), 0 0 0 0 rgba(66, 133, 244, 0.35);
+            animation: ai-pulse 2.4s ease-in-out infinite;
+        }
+
+        #aiInsightBtn:disabled,
+        #aiInsightBtn.ai-disabled {
+            background: linear-gradient(135deg, rgba(66, 133, 244, 0.18), rgba(234, 67, 53, 0.18) 35%, rgba(251, 188, 5, 0.18) 72%, rgba(52, 168, 83, 0.18));
+            border-color: rgba(255,255,255,0.05);
+            color: rgba(255, 255, 255, 0.4);
+            box-shadow: none;
+            animation: none;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        #aiInsightBtn:disabled::before,
+        #aiInsightBtn.ai-disabled::before {
+            display: none;
+        }
+
+        #aiInsightBtn.ai-loading {
+            pointer-events: none;
+            background: linear-gradient(135deg, #4285F4, #EA4335 35%, #FBBC05 72%, #34A853);
+            border-color: rgba(255,255,255,0.2);
+            color: #ffffff;
+            animation: ai-pulse-loading 1.4s ease-out infinite;
+        }
+
+        #aiInsightBtn.ai-loading .ai-btn-text {
+            opacity: 0.9;
+        }
+
+        #aiInsightBtn.ai-loading .ai-spinner {
+            opacity: 1;
+        }
+
+        @keyframes ai-pulse {
+            0%, 100% { box-shadow: 0 12px 22px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255,255,255,0.2), 0 0 0 0 rgba(66, 133, 244, 0.35); }
+            50% { box-shadow: 0 12px 22px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255,255,255,0.2), 0 0 0 10px rgba(66, 133, 244, 0); }
+        }
+
+        @keyframes ai-pulse-loading {
+            0% { box-shadow: 0 12px 22px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255,255,255,0.2), 0 0 0 0 rgba(66, 133, 244, 0.45); }
+            70% { box-shadow: 0 12px 22px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255,255,255,0.2), 0 0 0 10px rgba(66, 133, 244, 0); }
+            100% { box-shadow: 0 12px 22px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255,255,255,0.2), 0 0 0 0 rgba(66, 133, 244, 0); }
+        }
+
+        .ai-spinner {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, #4285F4, #EA4335, #FBBC05, #34A853, #4285F4);
+            mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #fff calc(100% - 3px));
+            -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #fff calc(100% - 3px));
+            animation: ai-spin 0.75s linear infinite;
+            margin-right: 10px;
+            vertical-align: middle;
+            flex-shrink: 0;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+
+        @keyframes ai-spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .ai-powered-label {
+            display: block;
+            text-align: center;
+            margin-top: 6px;
+            font-size: 10px;
+            font-weight: 500;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        body.theme-light .ai-powered-label {
+            color: rgba(0, 0, 0, 0.45);
         }
 
         .chevron-toggle {
@@ -1573,6 +1730,14 @@
                     <p class="text-xs mt-2" style="color: var(--text-3);">Probabilistic analysis with market volatility</p>
                 </div>
 
+                <div class="text-center pt-2">
+                    <button id="aiInsightBtn" disabled class="ai-disabled w-full font-semibold py-3 rounded-xl text-base" aria-label="Get AI Insight" aria-disabled="true" onclick="getAiInsight()">
+                        <span class="ai-spinner"></span>
+                        <span class="ai-btn-text">✨ Get AI Insight</span>
+                    </button>
+                    <span class="ai-powered-label">Powered by Gemini</span>
+                </div>
+
                 <div class="grid grid-cols-2 gap-3 pt-4">
                     <button onclick="downloadReport('pdf')" class="secondary-button w-full font-semibold py-2 rounded-xl text-sm" aria-label="Download PDF Report">
                         📄 Download PDF
@@ -1919,6 +2084,147 @@
     <script>
         const chartInstances = {};
         let lastCalculationResult = null;
+        let deterministicResult = null;
+        let monteCarloResult = null;
+        let aiInsightLoading = false;
+        let aiInsightResult = null;
+
+        function invalidateAiInsightResults() {
+            deterministicResult = null;
+            monteCarloResult = null;
+            updateAiInsightButtonState();
+        }
+
+        function updateAiInsightButtonState() {
+            const btn = document.getElementById('aiInsightBtn');
+            if (!btn) return;
+
+            const hasBoth = deterministicResult !== null && monteCarloResult !== null;
+            if (hasBoth && !aiInsightLoading) {
+                btn.disabled = false;
+                btn.classList.remove('ai-disabled');
+            } else {
+                btn.disabled = true;
+                btn.classList.add('ai-disabled');
+            }
+        }
+
+        async function getAiInsight() {
+            if (aiInsightLoading) return;
+            if (!deterministicResult || !monteCarloResult) return;
+            if (!lastCalculationResult || !lastCalculationResult.payload) return;
+
+            const btn = document.getElementById('aiInsightBtn');
+            const aiOverlay = document.getElementById('aiOverlay');
+            aiInsightLoading = true;
+            btn.disabled = true;
+            btn.classList.add('ai-disabled');
+            btn.querySelector('.ai-btn-text').textContent = '⏳ Getting AI Insight...';
+            aiOverlay.classList.add('active');
+
+            clearCalculationError();
+
+            const userInputs = lastCalculationResult.payload;
+
+            const predictiveAnalysis = {
+                readiness_percent: deterministicResult.metrics.readiness_percent,
+                plan_sustainable: deterministicResult.metrics.plan_sustainable,
+                corpus_at_retirement: deterministicResult.metrics.corpus_at_retirement,
+                minimum_corpus_required: deterministicResult.metrics.minimum_corpus_required,
+                gap_at_retirement: deterministicResult.metrics.gap_at_retirement,
+                years_in_retirement: deterministicResult.metrics.years_in_retirement,
+                corpus_exhaustion_age: deterministicResult.metrics.corpus_exhaustion_age,
+                total_contributions: deterministicResult.metrics.total_contributions,
+                total_pension_received: deterministicResult.metrics.total_pension_received,
+                average_pension_coverage: deterministicResult.metrics.average_pension_coverage,
+                required_pre_retirement_return: deterministicResult.metrics.required_pre_retirement_return,
+                required_post_retirement_return: deterministicResult.metrics.required_post_retirement_return
+            };
+
+            const fpba = monteCarloResult.funding_probability_by_age || {};
+            const fundingProbabilityByAge = {};
+            if (fpba.ages && fpba.probabilities) {
+                fpba.ages.forEach((age, i) => {
+                    fundingProbabilityByAge[age] = fpba.probabilities[i];
+                });
+            }
+
+            const monteCarloAnalysis = {
+                success_rate: monteCarloResult.metrics.success_rate,
+                median_final_corpus: monteCarloResult.metrics.median_final_corpus,
+                mean_final_corpus: monteCarloResult.metrics.mean_final_corpus,
+                std_final_corpus: monteCarloResult.metrics.std_final_corpus,
+                p5_final_corpus: monteCarloResult.metrics.p5_final_corpus,
+                p95_final_corpus: monteCarloResult.metrics.p95_final_corpus,
+                failure_age_percentiles: monteCarloResult.failure_age_percentiles || {},
+                funding_probability_by_age: fundingProbabilityByAge,
+                final_corpus_histogram: monteCarloResult.final_corpus_histogram || {},
+                num_simulations: monteCarloResult.num_simulations,
+                retirement_age_sensitivity: monteCarloResult.retirement_age_sensitivity || {},
+                existing_recommendations: monteCarloResult.recommendations || []
+            };
+
+            const methodology = {
+                success_definition: "A simulation is successful if the portfolio funds all required expenses through life expectancy without depletion.",
+                failure_definition: "A simulation fails if the corpus reaches zero before life expectancy and an expense cannot be fully funded.",
+                percentile_explanation: "The 5th percentile is exceeded by 95% of paths.",
+                funding_probability_explanation: "The probability that expenses are fully funded in a particular year.",
+                recommended_success_threshold: "Target 80-90% for moderate risk tolerance."
+            };
+
+            const payload = {
+                user_inputs: userInputs,
+                predictive_analysis: predictiveAnalysis,
+                monte_carlo_analysis: monteCarloAnalysis,
+                methodology: methodology
+            };
+
+            try {
+                const response = await fetch('/api/ai-insight', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    let message = 'The AI Insight could not be generated.';
+                    try {
+                        const errorBody = await response.json();
+                        if (errorBody.detail) {
+                            message = errorBody.detail;
+                        }
+                    } catch (jsonError) {
+                        // Ignore JSON parsing failures and keep the default message.
+                    }
+                    throw new Error(message);
+                }
+
+                const data = await response.json();
+                aiInsightResult = data;
+
+                try {
+                    localStorage.setItem('aiInsightResult', JSON.stringify(data));
+                } catch (storageError) {
+                    console.warn('Unable to store AI insight result in localStorage.', storageError);
+                }
+
+                window.open('/ai-insights', '_blank');
+            } catch (error) {
+                console.error('AI Insight error:', error);
+                showCalculationError(error.message || 'Unexpected error while generating AI insight.');
+                aiInsightResult = null;
+            } finally {
+                aiInsightLoading = false;
+                const aiOverlay = document.getElementById('aiOverlay');
+                if (aiOverlay) {
+                    aiOverlay.classList.remove('active');
+                }
+                btn.disabled = false;
+                btn.classList.remove('ai-disabled');
+                btn.querySelector('.ai-btn-text').textContent = '✨ Get AI Insight';
+                updateAiInsightButtonState();
+            }
+        }
 
         function buildAdHocRow(age = '', amount = '', category = 'Other', inflation = null) {
             const row = document.createElement('div');
@@ -2400,6 +2706,8 @@
                 const data = await response.json();
 
                 lastCalculationResult = { mode: 'deterministic', payload, data };
+                deterministicResult = data;
+                updateAiInsightButtonState();
 
                 // --- Update KPIs with conditional coloring ---
                 const finalCorpusEl = document.getElementById('kpi_final_corpus');
@@ -2976,6 +3284,8 @@
                 const data = await response.json();
 
                 lastCalculationResult = { mode: 'monte_carlo', payload, data };
+                monteCarloResult = data;
+                updateAiInsightButtonState();
                 renderMonteCarloResults(data);
             } catch (error) {
                 console.error('Monte Carlo calculation error:', error);
@@ -3350,6 +3660,11 @@
         setupAllocationSliders();
         setupStepper();
         setupCurrencyInputs(); // Initial setup for all static currency inputs
+
+        if (plannerApp) {
+            plannerApp.addEventListener('input', invalidateAiInsightResults);
+            plannerApp.addEventListener('change', invalidateAiInsightResults);
+        }
         
         // Handle direct URL access to the planner
         window.onload = function() {
@@ -3493,6 +3808,8 @@
                     closeMenu();
                 }
             });
+
+            updateAiInsightButtonState();
         });
     </script>
     <div id="flyout-menu" class="hidden fixed w-48 rounded-xl border border-white/10 p-2 shadow-xl backdrop-blur-sm z-[9999]" style="background: var(--panel-strong);">
@@ -3504,6 +3821,10 @@
     <div id="mcOverlay" class="mc-overlay">
         <div class="mc-overlay-spinner"></div>
         <div class="mc-overlay-text">Calculating Monte Carlo simulation...</div>
+    </div>
+    <div id="aiOverlay" class="ai-overlay">
+        <div class="ai-overlay-spinner"></div>
+        <div class="ai-overlay-text">⏳ Getting AI Insight...</div>
     </div>
 </body>
 </html>

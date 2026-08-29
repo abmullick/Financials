@@ -135,6 +135,7 @@
                 <li><a href="#input-settings">Input settings reference</a></li>
                 <li><a href="#projection">Deterministic projection</a></li>
                 <li><a href="#monte-carlo">Monte Carlo simulation</a></li>
+                <li><a href="#ai-insights">AI Insights</a></li>
                 <li><a href="#charts">Charts and visualisations</a></li>
                 <li><a href="#metrics">Metrics and interpretation</a></li>
                 <li><a href="#examples">Example scenarios</a></li>
@@ -239,6 +240,33 @@
             </table>
             <h3>Allocation and volatility</h3>
             <p>Equity, debt, and arbitrage weights, volatilities, and correlations are combined into one covariance-based portfolio volatility. The current model draws one return for the total portfolio; it does not simulate separate asset-class balances or rebalancing.</p>
+        </section>
+</details>
+
+        <details open>
+<summary><strong>🤖 AI Insights</strong></summary>
+<section id="ai-insights">
+            <h2>AI Insights</h2>
+            <p>After running both a Predictive Analysis and a Monte Carlo simulation, you can generate an AI-powered interpretation of your results. The AI acts as an interpreter of the engine's outputs — it does not recalculate your plan or invent new numbers.</p>
+            <h3>How to use</h3>
+            <p>Run a Predictive Analysis, then run a Monte Carlo simulation. Once both results are available, the <strong>✨ Get AI Insight</strong> button becomes enabled. Click it to send your inputs and analysis summaries to the AI provider for interpretation. The insight opens in a new browser tab, so you can keep the planner results visible alongside the AI analysis.</p>
+            <h3>What the AI does</h3>
+            <ul>
+                <li>Interprets the deterministic projection and Monte Carlo results in plain language.</li>
+                <li>Distinguishes between engine facts and interpretation.</li>
+                <li>Explains pension, ad-hoc expenses, one-time income, and cash-flow implications.</li>
+                <li>Identifies primary and secondary risks based on the supplied data.</li>
+                <li>Provides evidence-based actions grounded in the actual results.</li>
+            </ul>
+            <h3>Data and privacy</h3>
+            <p>Your inputs and calculation results are sent to the configured AI provider (Groq or Gemini) for analysis. The AI response is stored temporarily in your browser's local storage and displayed on a separate AI Insights tab. No data is stored on the server beyond the normal API request logs. Numerical recommendations are only provided when explicitly present in the engine's output; otherwise, the AI offers qualitative guidance only.</p>
+            <h3>Limitations</h3>
+            <ul>
+                <li>The AI does not provide guaranteed financial advice or product recommendations.</li>
+                <li>All numerical values are preserved exactly as produced by the engine; no rounding or recalculation occurs.</li>
+                <li>The AI respects Indian currency units (rupees, lakhs, crores) and does not invent intervention amounts.</li>
+                <li>If the AI provider is unavailable, the request will fail gracefully without affecting your calculation results.</li>
+            </ul>
         </section>
 </details>
 

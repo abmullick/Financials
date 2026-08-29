@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Retirement Insights</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --bg-1: #071521;
+            --bg-2: #0d1d2d;
+            --bg-3: #0f2438;
+            --bg-4: #132c42;
+            --panel: rgba(11, 22, 35, 0.72);
+            --panel-strong: rgba(15, 26, 39, 0.86);
+            --text-1: #f8fbff;
+            --text-2: #dfeafc;
+            --text-3: #b7c8dc;
+            --stroke: rgba(148, 163, 184, 0.18);
+            --primary: #cfe2ff;
+            --accent: #66a7ff;
+            --success: #32d296;
+            --warning: #f5b75c;
+            --danger: #ff6b6b;
+            --purple: #a78bfa;
+            --glass: rgba(255,255,255,0.04);
+        }
+
+        body.theme-light {
+            --bg-1: #edf5ff;
+            --bg-2: #f8fbff;
+            --bg-3: #eff6ff;
+            --bg-4: #f3f8ff;
+            --panel: rgba(255, 255, 255, 0.82);
+            --panel-strong: rgba(255, 255, 255, 0.96);
+            --text-1: #0b1320;
+            --text-2: #1f2d3d;
+            --text-3: #53657c;
+            --stroke: rgba(148, 163, 184, 0.18);
+            --primary: #1d4ed8;
+            --accent: #2563eb;
+            --success: #0f9f6e;
+            --warning: #b7791f;
+            --danger: #dc2626;
+            --purple: #7c3aed;
+            --glass: rgba(255,255,255,0.52);
+        }
+
+        body {
+            background:
+                radial-gradient(circle at top left, rgba(102, 167, 255, 0.18), transparent 22%),
+                radial-gradient(circle at top right, rgba(50, 210, 150, 0.10), transparent 26%),
+                linear-gradient(135deg, var(--bg-1), var(--bg-2) 45%, var(--bg-3));
+            color: var(--text-1);
+            font-family: Inter, "Segoe UI", sans-serif;
+            letter-spacing: -0.015em;
+            color-scheme: light;
+            transition: background 0.2s ease, color 0.2s ease;
+            opacity: 0;
+            animation: 1s ease 0.2s forwards fadeIn;
+        }
+
+        body:not(.theme-light) {
+            color-scheme: dark;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .panel-3d {
+            background: var(--panel-bg);
+            border: 1px solid var(--stroke);
+            box-shadow:
+                0 24px 42px rgba(2, 8, 18, 0.12),
+                inset 0 1px 0 rgba(255,255,255,0.06);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            color: var(--text-1);
+        }
+
+        .gemini-gradient-text {
+            background: linear-gradient(135deg, #4285F4, #EA4335 35%, #FBBC05 72%, #34A853);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .gemini-gradient-border {
+            border: 1px solid transparent;
+            background: linear-gradient(var(--panel-bg), var(--panel-bg)) padding-box,
+                        linear-gradient(135deg, #4285F4, #EA4335 35%, #FBBC05 72%, #34A853) border-box;
+        }
+
+        .section-card {
+            border: 1px solid var(--stroke);
+            background: var(--glass);
+            border-radius: 0.75rem;
+            padding: 1.25rem;
+        }
+
+        .rating-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-radius: 9999px;
+            padding: 0.35rem 0.9rem;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            border: 1px solid var(--stroke);
+            background: var(--glass);
+            color: var(--text-2);
+        }
+
+        .risk-severity-high {
+            color: #ff6b6b;
+            border-color: rgba(255, 107, 107, 0.35);
+            background: rgba(255, 107, 107, 0.08);
+        }
+
+        .risk-severity-medium {
+            color: #f5b75c;
+            border-color: rgba(245, 183, 93, 0.35);
+            background: rgba(245, 183, 93, 0.08);
+        }
+
+        .risk-severity-low {
+            color: #32d296;
+            border-color: rgba(50, 210, 150, 0.35);
+            background: rgba(50, 210, 150, 0.08);
+        }
+
+        .bullet-item::before {
+            content: "•";
+            margin-right: 0.6rem;
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .action-item {
+            border: 1px solid var(--stroke);
+            background: var(--glass);
+            border-radius: 0.75rem;
+            padding: 1rem;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <div class="mx-auto max-w-3xl px-4 py-10 sm:px-6 lg:px-8">
+        <div class="panel-3d rounded-2xl p-6 sm:p-8 space-y-6">
+            <div class="text-center">
+                <h1 class="text-3xl font-black tracking-tight sm:text-4xl gemini-gradient-text">
+                    AI Retirement Insights
+                </h1>
+                <p class="mt-2 text-base" style="color: var(--text-2);">
+                    Powered by Gemini
+                </p>
+            </div>
+
+            <div id="aiInsightContainer" class="space-y-5"></div>
+
+            <div class="text-center">
+                <a href="/" class="inline-flex items-center rounded-xl px-5 py-3 text-sm font-semibold" style="background: var(--glass); border: 1px solid var(--stroke); color: var(--text-2);">
+                    ← Back to Planner
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const container = document.getElementById('aiInsightContainer');
+            if (!container) return;
+
+            function setText(el, text) {
+                if (!el) return;
+                el.textContent = text;
+            }
+
+            function createElement(tag, className, styles) {
+                const el = document.createElement(tag);
+                if (className) el.className = className;
+                if (styles) Object.assign(el.style, styles);
+                return el;
+            }
+
+            function renderSection(title, contentEl) {
+                if (!contentEl) return;
+                const section = createElement('div', 'section-card');
+                const heading = createElement('h2', 'text-xs font-semibold uppercase tracking-widest', { color: 'var(--text-3)', marginBottom: '0.75rem' });
+                setText(heading, title);
+                section.appendChild(heading);
+                section.appendChild(contentEl);
+                container.appendChild(section);
+            }
+
+            function renderParagraph(text, extraClass) {
+                const p = createElement('p', 'text-sm leading-relaxed ' + (extraClass || ''), { color: 'var(--text-2)' });
+                setText(p, text);
+                return p;
+            }
+
+            function renderBullets(items) {
+                const ul = createElement('ul', 'space-y-2');
+                items.forEach(function(text) {
+                    const li = createElement('li', 'text-sm bullet-item', { color: 'var(--text-2)' });
+                    setText(li, text);
+                    ul.appendChild(li);
+                });
+                return ul;
+            }
+
+            function renderEmptyState() {
+                container.innerHTML = '';
+                const wrapper = createElement('div', 'text-center space-y-3');
+                const title = createElement('p', 'text-lg font-semibold', { color: 'var(--text-2)' });
+                setText(title, 'No AI insight is available for this calculation.');
+                const desc = createElement('p', 'text-sm', { color: 'var(--text-3)' });
+                setText(desc, 'Run both Predictive and Monte Carlo analyses, then request an AI insight from the planner.');
+                wrapper.appendChild(title);
+                wrapper.appendChild(desc);
+                container.appendChild(wrapper);
+            }
+
+            let stored = null;
+            try {
+                const raw = localStorage.getItem('aiInsightResult');
+                if (raw) {
+                    stored = JSON.parse(raw);
+                    localStorage.removeItem('aiInsightResult');
+                }
+            } catch (e) {
+                stored = null;
+            }
+
+            if (!stored || !stored.overall_assessment) {
+                renderEmptyState();
+                return;
+            }
+
+            const ratingMap = {
+                'strong': 'Strong Plan',
+                'moderate': 'Moderate',
+                'at_risk': 'At Risk',
+                'high_risk': 'High Risk'
+            };
+
+            const severityMap = {
+                'high': 'High',
+                'medium': 'Medium',
+                'low': 'Low'
+            };
+
+            // 1. Overall Assessment
+            const overall = stored.overall_assessment || {};
+            const ratingText = ratingMap[overall.rating] || overall.rating || 'Moderate';
+            const overallContent = createElement('div', 'space-y-3');
+            const headline = createElement('p', 'text-xl font-bold', { color: 'var(--text-1)' });
+            setText(headline, overall.headline || 'AI Insight ready.');
+            const badge = createElement('span', 'rating-badge');
+            setText(badge, ratingText);
+            const summary = createElement('p', 'text-sm leading-relaxed', { color: 'var(--text-2)' });
+            setText(summary, overall.summary || '');
+            overallContent.appendChild(headline);
+            overallContent.appendChild(badge);
+            if (overall.summary) {
+                overallContent.appendChild(summary);
+            }
+            renderSection('Overall Assessment', overallContent);
+
+            // 2. Predictive Analysis
+            const det = stored.deterministic_interpretation || {};
+            if (det.assessment || (det.key_points && det.key_points.length > 0)) {
+                const detContent = createElement('div', 'space-y-2');
+                if (det.assessment) {
+                    detContent.appendChild(renderParagraph(det.assessment));
+                }
+                if (det.key_points && det.key_points.length > 0) {
+                    detContent.appendChild(renderBullets(det.key_points));
+                }
+                renderSection('Predictive Analysis', detContent);
+            }
+
+            // 3. Monte Carlo Analysis
+            const mc = stored.monte_carlo_interpretation || {};
+            if (mc.assessment || (mc.key_points && mc.key_points.length > 0)) {
+                const mcContent = createElement('div', 'space-y-2');
+                if (mc.assessment) {
+                    mcContent.appendChild(renderParagraph(mc.assessment));
+                }
+                if (mc.key_points && mc.key_points.length > 0) {
+                    mcContent.appendChild(renderBullets(mc.key_points));
+                }
+                renderSection('Monte Carlo Analysis', mcContent);
+            }
+
+            // 4. What the Two Analyses Tell You
+            const comp = stored.comparison || {};
+            if (comp.what_deterministic_shows || comp.what_monte_carlo_adds || comp.why_the_results_differ) {
+                const compContent = createElement('div', 'space-y-2');
+                const items = [
+                    { label: 'What the deterministic analysis shows:', value: comp.what_deterministic_shows },
+                    { label: 'What the Monte Carlo analysis adds:', value: comp.what_monte_carlo_adds },
+                    { label: 'Why the results may differ:', value: comp.why_the_results_differ }
+                ];
+                items.forEach(function(item) {
+                    if (!item.value) return;
+                    const wrapper = createElement('div');
+                    const label = createElement('span', 'text-xs font-semibold uppercase tracking-widest', { color: 'var(--text-3)', display: 'block', marginBottom: '0.25rem' });
+                    setText(label, item.label);
+                    wrapper.appendChild(label);
+                    wrapper.appendChild(renderParagraph(item.value));
+                    compContent.appendChild(wrapper);
+                });
+                renderSection('What the Two Analyses Tell You', compContent);
+            }
+
+            // 5. Cash Flow Insights
+            const cf = stored.cash_flow_insights || {};
+            const cfFields = [
+                { key: 'pension', label: 'Pension' },
+                { key: 'adhoc_expenses', label: 'Ad-hoc Expenses' },
+                { key: 'one_time_retirement_income', label: 'One-Time Retirement Income' },
+                { key: 'retirement_expenses', label: 'Retirement Expenses' }
+            ];
+            const cfItems = cfFields.filter(function(f) { return cf[f.key]; });
+            if (cfItems.length > 0) {
+                const cfContent = createElement('div', 'space-y-3');
+                cfItems.forEach(function(field) {
+                    const wrapper = createElement('div');
+                    const label = createElement('span', 'text-xs font-semibold uppercase tracking-widest', { color: 'var(--text-3)', display: 'block', marginBottom: '0.25rem' });
+                    setText(label, field.label);
+                    wrapper.appendChild(label);
+                    wrapper.appendChild(renderParagraph(cf[field.key]));
+                    cfContent.appendChild(wrapper);
+                });
+                renderSection('Cash Flow Insights', cfContent);
+            }
+
+            // 6. Strengths
+            if (stored.strengths && stored.strengths.length > 0) {
+                renderSection('Strengths', renderBullets(stored.strengths));
+            }
+
+            // 7. Key Risks
+            if (stored.risks && stored.risks.length > 0) {
+                const risksContent = createElement('div', 'space-y-3');
+                stored.risks.forEach(function(risk) {
+                    const card = createElement('div', 'action-item');
+                    const header = createElement('div', 'flex items-center gap-2 mb-1');
+                    const title = createElement('span', 'font-semibold text-sm', { color: 'var(--text-1)' });
+                    setText(title, risk.risk || 'Risk');
+                    const sev = createElement('span', 'text-xs font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full');
+                    const sevText = severityMap[risk.severity] || risk.severity || 'Medium';
+                    setText(sev, sevText);
+                    sev.classList.add('risk-severity-' + (risk.severity || 'medium'));
+                    header.appendChild(title);
+                    header.appendChild(sev);
+                    card.appendChild(header);
+                    const explanation = createElement('p', 'text-sm', { color: 'var(--text-2)' });
+                    setText(explanation, risk.explanation || '');
+                    card.appendChild(explanation);
+                    risksContent.appendChild(card);
+                });
+                renderSection('Key Risks', risksContent);
+            }
+
+            // 8. Key Insights
+            if (stored.key_insights && stored.key_insights.length > 0) {
+                renderSection('Key Insights', renderBullets(stored.key_insights));
+            }
+
+            // 9. Suggested Actions
+            if (stored.actions && stored.actions.length > 0) {
+                const actionsContent = createElement('div', 'space-y-3');
+                stored.actions.forEach(function(action) {
+                    const card = createElement('div', 'action-item');
+                    const title = createElement('p', 'text-sm font-semibold', { color: 'var(--text-1)', marginBottom: '0.25rem' });
+                    setText(title, action.action || '');
+                    const reason = createElement('p', 'text-sm', { color: 'var(--text-2)' });
+                    setText(reason, action.reason || '');
+                    card.appendChild(title);
+                    card.appendChild(reason);
+                    actionsContent.appendChild(card);
+                });
+                renderSection('Suggested Actions', actionsContent);
+            }
+
+            // 10. Assumption Warnings
+            if (stored.assumption_warnings && stored.assumption_warnings.length > 0) {
+                renderSection('Assumption Warnings', renderBullets(stored.assumption_warnings));
+            }
+
+            // 11. Bottom Line
+            if (stored.bottom_line) {
+                const bottomContent = createElement('div', 'gemini-gradient-border section-card');
+                const text = createElement('p', 'text-sm leading-relaxed', { color: 'var(--text-1)' });
+                setText(text, stored.bottom_line);
+                bottomContent.appendChild(text);
+                container.appendChild(bottomContent);
+            }
+        })();
+    </script>
+</body>
+</html>

@@ -11,6 +11,7 @@ A web-based retirement planning tool that combines deterministic projection with
 - **Goal-Seek & Advisory** — Required return analysis and retirement readiness scoring.
 - **Dark/Light Theme** — Persistent theme with responsive charts and collapsible sections.
 - **Report Export** — Download results as PDF or HTML.
+- **AI Insights** — AI-powered interpretation of deterministic and Monte Carlo results, with evidence-based actions and risk analysis.
 
 ## Quick Start
 
@@ -130,6 +131,18 @@ A simulation path is marked as a **failure** if, during retirement, the corpus e
 |---|---|---|---|
 | `POST` | `/calculate` | 10/min | Deterministic retirement projection |
 | `POST` | `/calculate-mc` | 5/min | Monte Carlo simulation |
+| `POST` | `/api/ai-insight` | 5/min | AI-powered retirement insight generation |
+
+## Environment Variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `GROQ_API_KEY` | Yes* | Groq API key for AI Insights |
+| `GROQ_MODEL` | No | Groq model name (default: `openai/gpt-oss-120b`) |
+| `GEMINI_API_KEY` | Yes* | Google Gemini API key for AI Insights (alternative to Groq) |
+| `GEMINI_MODEL` | No | Gemini model name (default: `gemini-3.6-flash`) |
+
+\* Either `GROQ_API_KEY` or `GEMINI_API_KEY` must be set. Groq is preferred when both are present.
 
 ## Running Tests
 
@@ -142,4 +155,6 @@ PYTHONPATH=/home/abmul/projects/financials/retirals/src python3 -m unittest test
 
 - **Backend**: FastAPI (`src/main.py`) with Pydantic validation (`src/models.py`)
 - **Engine**: Deterministic projection + Monte Carlo simulation (`src/retirement_engine.py`)
+- **AI Insights**: AI-powered analysis service (`src/ai_insights.py`) with provider abstraction (Groq or Gemini)
 - **Frontend**: Single-page HTML/JS app (`src/static/index.html`) with Chart.js for visualization
+- **AI Insights Page**: Separate results page (`src/static/ai-insights.html`) for AI-generated analysis

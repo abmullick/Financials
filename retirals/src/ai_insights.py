@@ -1,0 +1,652 @@
+"""
+AI Insights module.
+
+This module provides the isolated service layer for AI-generated retirement insights.
+It defines the request/response contract between the existing calculator and the future
+AI service (e.g., Groq or Gemini).
+
+Step 2: Integrates Groq/Gemini API with strict JSON schema validation.
+Provider-specific code lives in this module.
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+import os
+import re
+import time
+import copy
+from typing import Any, Literal
+
+from groq import Groq, RateLimitError, APIStatusError, APIConnectionError
+from google import genai
+from google.genai import errors
+from pydantic import BaseModel, Field, ValidationError
+from models import PlannerInputs
+
+logger = logging.getLogger(__name__)
+
+SYSTEM_INSTRUCTION = """You are an interpreter of an existing deterministic retirement-planning engine and Monte Carlo engine. You must NOT independently recalculate the retirement plan. Your job is to understand the supplied user inputs, deterministic results, Monte Carlo results, and methodology; identify meaningful relationships between them; explain the results clearly to the user; and provide evidence-based actions grounded in the supplied data. The supplied engine outputs are authoritative.
+
+RULES
+1. NUMERICAL INTEGRITY: Never invent, calculate, derive, interpolate, estimate, round, or otherwise create numerical recommendations. You may only state numbers that appear verbatim in `existing_recommendations` or explicit sensitivity results. If a useful number is not supplied, use qualitative language. Never describe an AI-generated calculation as "engine analysis" or imply the engine produced a recommendation it did not.
+2. CURRENCY: Preserve rupee values exactly. 1 crore = ₹10,000,000; 1 lakh = ₹100,000. Do not change magnitudes. For human-readable amounts, use crore/lakh notation only when unambiguous.
+3. FACTS VS INTERPRETATION: Clearly separate engine facts (readiness %, corpus, gap, exhaustion age, success rate, percentiles, probabilities) from AI interpretation (sequence-of-returns risk, spending pressure, margin of safety). Never present interpretation as engine fact.
+4. ANALYSIS FRAMING: Deterministic results assume constant returns — describe them as projected/modeled, not guaranteed. Monte Carlo results are probabilities across simulated paths — never describe them as guarantees. Explain failure-age percentiles correctly (e.g., "p50 failure age is 73" means median of the failure-age distribution). Explain sequence-of-returns risk only when supported by the data.
+5. CASH-FLOW INTERPRETATION: Cover pension (timing, amount, tax, surplus reinvestment), ad-hoc expenses (timing, magnitude, impact), one-time retirement income (presence/absence and funding effect), and recurring retirement expenses (inflation impact). State when a feature is absent from the scenario rather than implying it does not exist for the user.
+6. ALLOCATION, TAX, METHODOLOGY: Connect asset allocation, volatilities, correlations, and return distribution to the results. Do not make generic claims. Use the supplied `methodology` object as authoritative. Do not invent tax calculations.
+7. RECOMMENDATIONS: Actions must correspond to actual weaknesses in the supplied results. Prioritize primary risks (directly responsible for poor outcomes) over secondary risks. Use uncertainty language (projected, modeled, estimated, simulated). Do not recommend specific products. Do not manufacture problems or actions when the plan is strong.
+8. OUTPUT STRUCTURE: Produce the exact `AIInsightResponse` JSON object with these fields: overall_assessment, deterministic_interpretation, monte_carlo_interpretation, comparison, cash_flow_insights, strengths, risks, key_insights, actions, assumption_warnings, bottom_line. Use exact field names. Never flatten, rename, or omit required fields. `overall_assessment`, `comparison`, `cash_flow_insights` must be objects; `risks` and `actions` must be lists of objects with their required sub-fields.
+9. REPORT DEPTH: Fill every field with scenario-specific content. Do not return empty strings or empty lists. Provide 3–5 key insights, 3 prioritized actions, 3 prioritized risks, 2–4 assumption warnings. The bottom_line must be a 3–4 sentence conclusion that names the priority decision and next step. Personalize to THIS plan using input → result → implication chains.
+10. FINAL SELF-CHECK: Before returning JSON, verify: numbers are accurate and sourced, currency units are correct, deterministic and Monte Carlo results are distinguished, pension/ad-hoc/one-time income are correctly interpreted, methodology is respected, no invented numbers or recommendations, risks are prioritized, projections are not presented as guarantees. Return ONLY the JSON object. No Markdown, no code fences, no explanatory text before or after the JSON.
+
+CURRENCY FORMATTING
+Always include the ₹ symbol. For amounts ≥ ₹1 crore, prefer crore notation (e.g., ₹12.06 crore). For amounts below ₹1 crore, use lakh notation where natural. Include exact raw amounts in parentheses when precision is useful. Never apply Indian comma grouping manually to decimal amounts.
+"""
+
+
+class OverallAssessment(BaseModel):
+    rating: Literal["strong", "moderate", "at_risk", "high_risk"] = Field(..., description="Overall plan rating.")
+    headline: str = Field(..., description="One-line headline for the overall assessment.")
+    summary: str = Field(..., description="2-3 sentence summary of the plan's status.")
+
+
+class DeterministicInterpretation(BaseModel):
+    assessment: str = Field(..., description="Plain-language interpretation of the deterministic/predictive analysis.")
+    key_points: list[str] = Field(..., description="Bullet-style key takeaways from the predictive projection.")
+
+
+class MonteCarloInterpretation(BaseModel):
+    assessment: str = Field(..., description="Plain-language interpretation of the Monte Carlo analysis.")
+    key_points: list[str] = Field(..., description="Bullet-style key takeaways from the Monte Carlo results.")
+
+
+class Comparison(BaseModel):
+    what_deterministic_shows: str = Field(..., description="What the deterministic projection tells us.")
+    what_monte_carlo_adds: str = Field(..., description="What the Monte Carlo analysis adds beyond deterministic.")
+    why_the_results_differ: str = Field(..., description="Why the deterministic and Monte Carlo conclusions may differ.")
+
+
+class CashFlowInsights(BaseModel):
+    pension: str = Field(..., description="Interpretation of pension coverage, timing, and sustainability.")
+    adhoc_expenses: str = Field(..., description="Interpretation of planned ad-hoc expenses and their impact.")
+    one_time_retirement_income: str = Field(..., description="Interpretation of one-time retirement income / lumpsum.")
+    retirement_expenses: str = Field(..., description="Interpretation of recurring retirement expenses and inflation.")
+
+
+class RiskItem(BaseModel):
+    severity: Literal["high", "medium", "low"] = Field(..., description="Severity of the risk.")
+    risk: str = Field(..., description="Short title for the risk.")
+    explanation: str = Field(..., description="Explanation of the risk based on the supplied data.")
+
+
+class ActionItem(BaseModel):
+    action: str = Field(..., description="Suggested action the user could consider.")
+    reason: str = Field(..., description="Why this action is suggested based on the analysis.")
+
+
+class AIInsightResponse(BaseModel):
+    overall_assessment: OverallAssessment = Field(..., description="Overall assessment of the retirement plan.")
+    deterministic_interpretation: DeterministicInterpretation = Field(..., description="Interpretation of the predictive/deterministic analysis.")
+    monte_carlo_interpretation: MonteCarloInterpretation = Field(..., description="Interpretation of the Monte Carlo analysis.")
+    comparison: Comparison = Field(..., description="Comparison of the two analyses.")
+    cash_flow_insights: CashFlowInsights = Field(..., description="Insights about the user's cash flows.")
+    strengths: list[str] = Field(..., description="Strengths of the plan supported by the data.")
+    risks: list[RiskItem] = Field(..., description="Key risks identified from the analysis.")
+    key_insights: list[str] = Field(..., description="Additional key insights.")
+    actions: list[ActionItem] = Field(..., description="Suggested actions the user could consider.")
+    assumption_warnings: list[str] = Field(..., description="Warnings about assumptions or data limitations.")
+    bottom_line: str = Field(..., description="One-paragraph bottom-line summary for the user.")
+
+
+class PredictiveAnalysisSummary(BaseModel):
+    """Summary of deterministic/predictive retirement calculation results."""
+
+    readiness_percent: float = Field(..., description="Retirement readiness percentage (corpus_at_retirement / minimum_corpus_required * 100).")
+    plan_sustainable: bool = Field(..., description="Whether the plan is sustainable through life expectancy.")
+    corpus_at_retirement: float = Field(..., description="Projected corpus at the start of retirement.")
+    minimum_corpus_required: float = Field(..., description="Minimum corpus required to fund the plan.")
+    gap_at_retirement: float = Field(..., description="Shortfall or surplus at retirement (negative = surplus).")
+    years_in_retirement: int = Field(..., description="Number of years in retirement (life_expectancy - retirement_age).")
+    corpus_exhaustion_age: int | None = Field(None, description="Age at which corpus depletes, if applicable.")
+    total_contributions: float = Field(..., description="Total contributions made during accumulation phase.")
+    total_pension_received: float = Field(..., description="Total pension income received during retirement.")
+    average_pension_coverage: float = Field(..., description="Average percentage of recurring expenses covered by pension.")
+    required_pre_retirement_return: float = Field(..., description="Pre-retirement return rate required to close any gap (%).")
+    required_post_retirement_return: float = Field(..., description="Post-retirement return rate required to close any gap (%.)")
+
+
+class MonteCarloAnalysisSummary(BaseModel):
+    """Summary of Monte Carlo simulation results."""
+
+    success_rate: float = Field(..., description="Percentage of simulations where the plan succeeds (0-100).")
+    median_final_corpus: float = Field(..., description="Median final corpus across all simulations.")
+    mean_final_corpus: float = Field(..., description="Mean final corpus across all simulations.")
+    std_final_corpus: float = Field(..., description="Standard deviation of final corpus across simulations.")
+    p5_final_corpus: float = Field(..., description="5th percentile final corpus (95% of paths exceed this).")
+    p95_final_corpus: float = Field(..., description="95th percentile final corpus (only 5% of paths exceed this).")
+    failure_age_percentiles: dict[str, float] = Field(default_factory=dict, description="Percentiles of the age at which corpus exhausts in failed simulations.")
+    funding_probability_by_age: dict[str, float] = Field(default_factory=dict, description="Probability that expenses are fully funded in each year, keyed by age.")
+    final_corpus_histogram: dict[str, Any] = Field(default_factory=dict, description="Histogram of final corpus values with labels and probabilities.")
+    num_simulations: int = Field(..., description="Number of Monte Carlo simulations run.")
+    retirement_age_sensitivity: dict[str, Any] = Field(default_factory=dict, description="Success rates for alternative retirement ages, if sensitivity analysis was run.")
+    existing_recommendations: list[str] = Field(default_factory=list, description="Recommendations already generated by the Monte Carlo engine.")
+
+
+class MethodologyContext(BaseModel):
+    """Definitions necessary for an AI model to correctly interpret Monte Carlo results."""
+
+    success_definition: str = Field(..., description="Clear definition of what constitutes a successful simulation.")
+    failure_definition: str = Field(..., description="Clear definition of what constitutes a failed simulation.")
+    percentile_explanation: str = Field(..., description="Explanation of percentile bands (e.g., p5, p95) in the context of this analysis.")
+    funding_probability_explanation: str = Field(..., description="Explanation of what funding_probability_by_age means and how it differs from success_rate.")
+    recommended_success_threshold: str = Field(..., description="Recommended minimum success rate for a healthy vs fragile plan.")
+
+
+class AIInsightRequest(BaseModel):
+    """Request model for AI-powered retirement insight generation."""
+
+    user_inputs: PlannerInputs = Field(..., description="The original user-provided retirement plan inputs.")
+    predictive_analysis: PredictiveAnalysisSummary = Field(..., description="Summary outputs from the deterministic/predictive calculation.")
+    monte_carlo_analysis: MonteCarloAnalysisSummary = Field(..., description="Summary outputs from the Monte Carlo simulation.")
+    methodology: MethodologyContext = Field(..., description="Contextual definitions for interpreting the analysis results.")
+
+
+def _get_gemini_config() -> tuple[str, str]:
+    api_key = os.environ.get("GEMINI_API_KEY")
+    if not api_key:
+        raise ValueError("GEMINI_API_KEY is not set.")
+    model = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
+    return api_key, model
+
+
+def _get_groq_config() -> tuple[str, str]:
+    api_key = os.environ.get("GROQ_API_KEY")
+    if not api_key:
+        raise ValueError("GROQ_API_KEY is not set.")
+    model = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
+    return api_key, model
+
+
+def _get_provider_config() -> tuple[str, str, str]:
+    groq_key = os.environ.get("GROQ_API_KEY")
+    if groq_key:
+        model = os.environ.get("GROQ_MODEL", "openai/gpt-oss-120b")
+        return groq_key, model, "groq"
+    gemini_key = os.environ.get("GEMINI_API_KEY")
+    if gemini_key:
+        model = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
+        return gemini_key, model, "gemini"
+    raise ValueError("Either GROQ_API_KEY or GEMINI_API_KEY must be set.")
+
+
+def _extract_json_from_text(text: str) -> dict[str, Any]:
+    """Extract JSON from provider response text, handling markdown code blocks and extra text."""
+    text = text.strip()
+    if text.startswith("```"):
+        text = re.sub(r"^```(?:json)?\n?", "", text)
+        text = re.sub(r"\n?```$", "", text)
+        return json.loads(text)
+    
+    # Try to find JSON object in text
+    json_match = re.search(r'\{.*\}', text, re.DOTALL)
+    if json_match:
+        return json.loads(json_match.group())
+    
+    return json.loads(text)
+
+
+def _repair_ai_insight_response(parsed: Any) -> dict[str, Any]:
+    """Fill missing required fields with safe defaults so Pydantic validation succeeds."""
+    if not isinstance(parsed, dict):
+        return {}
+
+    defaults: dict[str, Any] = {
+        "overall_assessment": {"rating": "moderate", "headline": "", "summary": ""},
+        "deterministic_interpretation": {"assessment": "", "key_points": []},
+        "monte_carlo_interpretation": {"assessment": "", "key_points": []},
+        "comparison": {
+            "what_deterministic_shows": "",
+            "what_monte_carlo_adds": "",
+            "why_the_results_differ": "",
+        },
+        "cash_flow_insights": {
+            "pension": "",
+            "adhoc_expenses": "",
+            "one_time_retirement_income": "",
+            "retirement_expenses": "",
+        },
+        "strengths": [],
+        "risks": [],
+        "key_insights": [],
+        "actions": [],
+        "assumption_warnings": [],
+        "bottom_line": "",
+    }
+    for key, default in defaults.items():
+        if key not in parsed or parsed[key] is None:
+            parsed[key] = default
+    return parsed
+
+
+def _is_quota_exhausted(exc: genai.errors.APIError) -> bool:
+    """Check if a Gemini APIError is a daily/project quota exhaustion (not a transient rate limit)."""
+    if getattr(exc, "code", None) != 429:
+        return False
+
+    response = getattr(exc, "response", None)
+    if response is not None:
+        status = getattr(response, "status", None)
+        if status == "RESOURCE_EXHAUSTED":
+            return True
+
+    text = str(exc).lower()
+    quota_markers = [
+        "resourse_exhausted",
+        "quota exceeded",
+        "generaterequestsperday",
+        "freetier",
+        "quotafailure",
+        "quotaValue",
+    ]
+    if any(marker in text for marker in quota_markers):
+        return True
+
+    return False
+
+
+def _is_rate_limited(exc: Exception) -> bool:
+    """Check if a provider APIError is a rate limit / TPM / quota exhaustion."""
+    status_code = getattr(exc, "status_code", None)
+    if status_code not in (429, 413):
+        return False
+
+    text = str(exc).lower()
+    quota_markers = [
+        "quota exceeded",
+        "rate_limit",
+        "rate-limit",
+        "too many requests",
+        "daily limit",
+        "monthly limit",
+        "free tier",
+        "freetier",
+        "tokens per minute",
+        "tpm",
+        "request too large",
+        "rate_limit_exceeded",
+    ]
+    if any(marker in text for marker in quota_markers):
+        return True
+
+    return False
+
+
+def _call_groq(api_key: str, model_name: str, prompt: str) -> AIInsightResponse:
+    """Call Groq API and return validated response, with retries on transient errors."""
+    client = Groq(api_key=api_key)
+    max_retries = 2
+    base_delay = 1.0
+    last_exception = None
+
+    schema = copy.deepcopy(AIInsightResponse.model_json_schema())
+
+    def _add_additional_properties_false(obj: Any) -> None:
+        if isinstance(obj, dict):
+            if obj.get("type") == "object" and "properties" in obj:
+                obj["additionalProperties"] = False
+            for value in obj.values():
+                _add_additional_properties_false(value)
+        elif isinstance(obj, list):
+            for item in obj:
+                _add_additional_properties_false(item)
+
+    _add_additional_properties_false(schema)
+
+    schema_str = json.dumps(schema)
+    system_chars = len(SYSTEM_INSTRUCTION)
+    prompt_chars = len(prompt)
+    schema_chars = len(schema_str)
+    combined_chars = system_chars + prompt_chars + schema_chars
+
+    logger.info(
+        "Groq diagnostic: model=%s, schema_mode=json_schema, system_chars=%d, prompt_chars=%d, schema_chars=%d, combined_chars=%d",
+        model_name,
+        system_chars,
+        prompt_chars,
+        schema_chars,
+        combined_chars,
+    )
+
+    for attempt in range(max_retries + 1):
+        try:
+            response = client.chat.completions.create(
+                model=model_name,
+                messages=[
+                    {"role": "system", "content": SYSTEM_INSTRUCTION},
+                    {"role": "user", "content": prompt},
+                ],
+                response_format={
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "AIInsightResponse",
+                        "schema": schema,
+                        "strict": False,
+                    },
+                },
+                max_completion_tokens=4096,
+                temperature=0.3,
+            )
+            raw_text = response.choices[0].message.content or ""
+            if not raw_text.strip():
+                raise ValueError("Groq returned an empty response.")
+
+            parsed = _extract_json_from_text(raw_text)
+            parsed = _repair_ai_insight_response(parsed)
+            return AIInsightResponse(**parsed)
+
+        except RateLimitError as exc:
+            last_exception = exc
+            if _is_rate_limited(exc):
+                break
+
+            if attempt == max_retries:
+                break
+            delay = base_delay * (2 ** attempt)
+            time.sleep(delay)
+
+        except APIConnectionError as exc:
+            last_exception = exc
+            if attempt == max_retries:
+                break
+            delay = base_delay * (2 ** attempt)
+            time.sleep(delay)
+
+        except APIStatusError as exc:
+            last_exception = exc
+            status_code = getattr(exc, "status_code", None)
+            retryable = status_code == 429 or (isinstance(status_code, int) and status_code >= 500)
+
+            if not retryable or attempt == max_retries:
+                break
+            delay = base_delay * (2 ** attempt)
+            time.sleep(delay)
+
+        except Exception as exc:
+            last_exception = exc
+            break
+
+    if last_exception:
+        raise last_exception
+    raise RuntimeError("An unexpected error occurred while processing AI insight request.")
+
+
+def _call_gemini(api_key: str, model_name: str, prompt: str) -> AIInsightResponse:
+    """Call Gemini API and return validated response, with retries on transient errors."""
+    client = genai.Client(api_key=api_key)
+    max_retries = 2
+    base_delay = 1.0
+    last_exception = None
+
+    for attempt in range(max_retries + 1):
+        try:
+            response = client.models.generate_content(
+                model=model_name,
+                contents=prompt,
+                config=genai.types.GenerateContentConfig(
+                    system_instruction=SYSTEM_INSTRUCTION,
+                    response_mime_type="application/json",
+                    response_schema=AIInsightResponse,
+                    temperature=0.3,
+                    max_output_tokens=4096,
+                ),
+            )
+            raw_text = response.text or ""
+            if not raw_text.strip():
+                raise ValueError("Gemini returned an empty response.")
+
+            parsed = _extract_json_from_text(raw_text)
+            return AIInsightResponse(**parsed)
+
+        except genai.errors.APIError as exc:
+            last_exception = exc
+            if _is_quota_exhausted(exc):
+                break
+
+            status_code = getattr(exc, "code", None)
+            retryable = status_code == 429 or (isinstance(status_code, int) and status_code >= 500)
+            if not retryable or attempt == max_retries:
+                break
+
+            delay = base_delay * (2 ** attempt)
+            time.sleep(delay)
+
+    if last_exception:
+        raise last_exception
+    raise RuntimeError("An unexpected error occurred while processing AI insight request.")
+
+
+def _build_user_prompt(request: AIInsightRequest) -> str:
+    """Build the user prompt for the AI provider from the validated request."""
+    return json.dumps(request.model_dump(mode="json"), indent=2)
+
+
+def _compact_funding_probability(funding_probability_by_age: dict[str, float]) -> dict[str, float]:
+    """Reduce funding_probability_by_age to meaningful milestone ages."""
+    if not funding_probability_by_age:
+        return {}
+    ages = sorted(int(k) for k in funding_probability_by_age.keys())
+    if len(ages) <= 6:
+        return {str(k): funding_probability_by_age[str(k)] for k in ages}
+    target = 6
+    step = max(1, (len(ages) + target - 1) // target)
+    compact: dict[str, float] = {}
+    for i in range(0, len(ages), step):
+        compact[str(ages[i])] = funding_probability_by_age[str(ages[i])]
+    compact[str(ages[-1])] = funding_probability_by_age[str(ages[-1])]
+    return compact
+
+
+def _build_compact_prompt(request: AIInsightRequest) -> str:
+    """Build a compact AI-specific prompt that stays within Groq TPM limits."""
+    user_inputs = request.user_inputs
+    compact_user_inputs = {
+        "current_age": user_inputs.current_age,
+        "retirement_age": user_inputs.retirement_age,
+        "life_expectancy": user_inputs.life_expectancy,
+        "current_annual_expenses": user_inputs.current_annual_expenses,
+        "avg_inflation_rate": user_inputs.avg_inflation_rate,
+        "current_corpus": user_inputs.current_corpus,
+        "annual_contribution": user_inputs.annual_contribution,
+        "contribution_increase": user_inputs.contribution_increase,
+        "pre_retirement_return": user_inputs.pre_retirement_return,
+        "post_retirement_return": user_inputs.post_retirement_return,
+        "ltcg_exemption": user_inputs.ltcg_exemption,
+        "one_time_lumpsum": user_inputs.one_time_lumpsum,
+        "allocation_equity": user_inputs.allocation_equity,
+        "allocation_debt": user_inputs.allocation_debt,
+        "allocation_arbitrage": user_inputs.allocation_arbitrage,
+        "equity_ltcg_split": user_inputs.equity_ltcg_split,
+        "equity_stcg_split": user_inputs.equity_stcg_split,
+        "include_pension": user_inputs.include_pension,
+        "pension_start_age": user_inputs.pension_start_age,
+        "annual_pension": user_inputs.annual_pension,
+        "pension_increase": user_inputs.pension_increase,
+        "pension_tax_rate": user_inputs.pension_tax_rate,
+        "reinvest_pension_surplus": user_inputs.reinvest_pension_surplus,
+        "adhoc_expenses": [
+            {"age": e.age, "amount": e.amount}
+            for e in user_inputs.adhoc_expenses
+        ],
+        "num_simulations": user_inputs.num_simulations,
+        "volatility_equity": user_inputs.volatility_equity,
+        "volatility_debt": user_inputs.volatility_debt,
+        "volatility_arbitrage": user_inputs.volatility_arbitrage,
+        "equity_debt_correlation": user_inputs.equity_debt_correlation,
+        "equity_arbitrage_correlation": user_inputs.equity_arbitrage_correlation,
+        "debt_arbitrage_correlation": user_inputs.debt_arbitrage_correlation,
+        "return_distribution": user_inputs.return_distribution.value if hasattr(user_inputs.return_distribution, "value") else str(user_inputs.return_distribution),
+    }
+
+    compact_mc = {
+        "success_rate": request.monte_carlo_analysis.success_rate,
+        "median_final_corpus": request.monte_carlo_analysis.median_final_corpus,
+        "mean_final_corpus": request.monte_carlo_analysis.mean_final_corpus,
+        "std_final_corpus": request.monte_carlo_analysis.std_final_corpus,
+        "p5_final_corpus": request.monte_carlo_analysis.p5_final_corpus,
+        "p95_final_corpus": request.monte_carlo_analysis.p95_final_corpus,
+        "failure_age_percentiles": request.monte_carlo_analysis.failure_age_percentiles,
+        "funding_probability_by_age": _compact_funding_probability(request.monte_carlo_analysis.funding_probability_by_age),
+        "num_simulations": request.monte_carlo_analysis.num_simulations,
+        "existing_recommendations": request.monte_carlo_analysis.existing_recommendations,
+        "retirement_age_sensitivity": request.monte_carlo_analysis.retirement_age_sensitivity,
+    }
+
+    compact = {
+        "user_inputs": compact_user_inputs,
+        "predictive_analysis": {
+            "readiness_percent": request.predictive_analysis.readiness_percent,
+            "plan_sustainable": request.predictive_analysis.plan_sustainable,
+            "corpus_at_retirement": request.predictive_analysis.corpus_at_retirement,
+            "minimum_corpus_required": request.predictive_analysis.minimum_corpus_required,
+            "gap_at_retirement": request.predictive_analysis.gap_at_retirement,
+            "corpus_exhaustion_age": request.predictive_analysis.corpus_exhaustion_age,
+            "average_pension_coverage": request.predictive_analysis.average_pension_coverage,
+        },
+        "monte_carlo_analysis": compact_mc,
+        "methodology": request.methodology.model_dump(mode="json"),
+    }
+    return json.dumps(compact, indent=2)
+
+
+def _extract_numbers(text: str) -> set[float]:
+    """Extract all numeric values from text."""
+    numbers: set[float] = set()
+    for match in re.finditer(r'[\d,]+(?:\.\d+)?', text):
+        try:
+            numbers.add(float(match.group().replace(',', '')))
+        except ValueError:
+            pass
+    return numbers
+
+
+def _get_allowed_numbers(request: AIInsightRequest) -> set[float]:
+    """Get numbers that are explicitly supplied by the engine."""
+    allowed: set[float] = set()
+
+    for rec in request.monte_carlo_analysis.existing_recommendations:
+        allowed.update(_extract_numbers(rec))
+
+    if request.monte_carlo_analysis.retirement_age_sensitivity:
+        for age, data in request.monte_carlo_analysis.retirement_age_sensitivity.items():
+            try:
+                allowed.add(float(age))
+            except (ValueError, TypeError):
+                pass
+            if isinstance(data, dict):
+                for value in data.values():
+                    if isinstance(value, (int, float)):
+                        allowed.add(float(value))
+
+    for field_name, value in request.predictive_analysis.model_dump().items():
+        if isinstance(value, (int, float)):
+            allowed.add(float(value))
+
+    for field_name, value in request.user_inputs.model_dump().items():
+        if isinstance(value, (int, float)):
+            allowed.add(float(value))
+
+    return allowed
+
+
+def _validate_numerical_recommendations(response: AIInsightResponse, request: AIInsightRequest) -> None:
+    """Ensure numerical recommendations only use engine-supplied numbers."""
+    allowed = _get_allowed_numbers(request)
+
+    recommendation_patterns = [
+        r'increase\s+.*?\s+by\s+[₹$]?\s*([\d,]+(?:\.\d+)?)',
+        r'decrease\s+.*?\s+by\s+[₹$]?\s*([\d,]+(?:\.\d+)?)',
+        r'reduce\s+.*?\s+by\s+[₹$]?\s*([\d,]+(?:\.\d+)?)',
+        r'raise\s+.*?\s+by\s+[₹$]?\s*([\d,]+(?:\.\d+)?)',
+        r'lower\s+.*?\s+by\s+[₹$]?\s*([\d,]+(?:\.\d+)?)',
+        r'adjust\s+.*?\s+by\s+[₹$]?\s*([\d,]+(?:\.\d+)?)',
+        r'contribute\s+[₹$]?\s*([\d,]+(?:\.\d+)?)',
+        r'save\s+(?:an\s+additional\s+)?[₹$]?\s*([\d,]+(?:\.\d+)?)',
+        r'spend\s+[₹$]?\s*([\d,]+(?:\.\d+)?)',
+        r'withdraw\s+[₹$]?\s*([\d,]+(?:\.\d+)?)',
+        r'delay\s+.*?\s+by\s+([\d,]+(?:\.\d+)?)\s+years?',
+        r'retire\s+.*?\s+by\s+([\d,]+(?:\.\d+)?)\s+years?',
+        r'extend\s+.*?\s+by\s+([\d,]+(?:\.\d+)?)\s+years?',
+        r'shorten\s+.*?\s+by\s+([\d,]+(?:\.\d+)?)\s+years?',
+        r'target\s+([\d,]+(?:\.\d+)?)',
+        r'achieve\s+([\d,]+(?:\.\d+)?)',
+        r'reach\s+([\d,]+(?:\.\d+)?)',
+        r'close\s+.*?\s+gap\s+.*?[₹$]?\s*([\d,]+(?:\.\d+)?)',
+        r'allocate\s+([\d,]+(?:\.\d+)?)\s*%',
+        r'invest\s+[₹$]?\s*([\d,]+(?:\.\d+)?)',
+        r'limit\s+.*?\s+to\s+[₹$]?\s*([\d,]+(?:\.\d+)?)',
+        r'maintain\s+([\d,]+(?:\.\d+)?)',
+    ]
+
+    for action in response.actions:
+        combined_text = (action.action + ' ' + action.reason).lower()
+        
+        for pattern in recommendation_patterns:
+            matches = re.findall(pattern, combined_text)
+            for match in matches:
+                try:
+                    number = float(match.replace(',', ''))
+                except ValueError:
+                    continue
+                
+                if number not in allowed:
+                    raise ValueError(
+                        f"Action contains unsupported numerical recommendation: {number}. "
+                        f"Numerical recommendations must appear verbatim in existing_recommendations or sensitivity results."
+                    )
+
+
+class AIInsightService:
+    """
+    Isolated service for AI-generated retirement insights.
+
+    Supports Groq and Gemini providers with strict JSON schema validation.
+    """
+
+    @staticmethod
+    def process_insight_request(request: AIInsightRequest) -> AIInsightResponse:
+        """
+        Process an AI insight request by calling the configured provider.
+
+        Raises:
+            ValueError: If no API key is configured or the provider returns an invalid response.
+            RuntimeError: If the provider API call fails.
+        """
+        api_key, model_name, provider = _get_provider_config()
+        if provider == "gemini":
+            prompt = _build_user_prompt(request)
+        else:
+            prompt = _build_compact_prompt(request)
+
+        try:
+            if provider == "gemini":
+                response = _call_gemini(api_key, model_name, prompt)
+            else:
+                response = _call_groq(api_key, model_name, prompt)
+            _validate_numerical_recommendations(response, request)
+            return response
+        except (RateLimitError, APIConnectionError, APIStatusError) as exc:
+            logger.error("Groq API error: %s", exc, exc_info=True)
+            raise RuntimeError("The AI service is temporarily unavailable. Please try again later.") from exc
+        except genai.errors.APIError as exc:
+            logger.error("Gemini API error: %s", exc, exc_info=True)
+            raise RuntimeError("The AI service is temporarily unavailable. Please try again later.") from exc
+        except ValueError as exc:
+            logger.error("AI insight validation/parse error: %s", exc, exc_info=True)
+            raise RuntimeError("The AI service returned an invalid response. Please try again.") from exc
+        except RuntimeError:
+            raise
+        except Exception:
+            logger.error("An unexpected error occurred during AI insight processing.", exc_info=True)
+            raise RuntimeError("The AI service is temporarily unavailable. Please try again later.") from None
