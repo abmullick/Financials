@@ -189,12 +189,15 @@ def _extract_json_from_text(text: str) -> dict[str, Any]:
         text = re.sub(r"^```(?:json)?\n?", "", text)
         text = re.sub(r"\n?```$", "", text)
         return json.loads(text)
-    
-    # Try to find JSON object in text
-    json_match = re.search(r'\{.*\}', text, re.DOTALL)
-    if json_match:
-        return json.loads(json_match.group())
-    
+
+    start = text.find('{')
+    if start != -1:
+        try:
+            obj, _ = json.JSONDecoder().raw_decode(text, start)
+            return obj
+        except json.JSONDecodeError:
+            pass
+
     return json.loads(text)
 
 

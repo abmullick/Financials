@@ -2126,6 +2126,7 @@
             btn.disabled = true;
             btn.classList.add('ai-disabled');
             btn.querySelector('.ai-btn-text').textContent = '⏳ Getting AI Insight...';
+            btn.classList.add('ai-loading');
             aiOverlay.classList.add('active');
 
             clearCalculationError();
@@ -2227,6 +2228,7 @@
                 }
                 btn.disabled = false;
                 btn.classList.remove('ai-disabled');
+                btn.classList.remove('ai-loading');
                 btn.querySelector('.ai-btn-text').textContent = '✨ Get AI Insight';
                 updateAiInsightButtonState();
             }

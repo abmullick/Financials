@@ -1313,6 +1313,10 @@ class TestExtractJson(unittest.TestCase):
         raw = 'Here is the result: {"key": "value"} Hope this helps!'
         self.assertEqual(_extract_json_from_text(raw), {"key": "value"})
 
+    def test_json_with_trailing_text_and_braces(self):
+        raw = '{"key": "value"} Additional explanation {with braces}'
+        self.assertEqual(_extract_json_from_text(raw), {"key": "value"})
+
 
 class TestCompactPrompt(unittest.TestCase):
     def test_compact_funding_probability_under_threshold(self):
