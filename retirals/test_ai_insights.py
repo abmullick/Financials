@@ -1539,6 +1539,56 @@ class TestAIInsightModels(unittest.TestCase):
         with self.assertRaises(ValueError):
             _validate_numerical_recommendations(response, request)
 
+    def test_expense_reduction_by_at_least_percentage_rejected(self):
+        request = AIInsightRequest(**_make_payload(
+            user_inputs=_make_request(current_annual_expenses=1500000)
+        ))
+        self.assertEqual(request.user_inputs.current_annual_expenses, 1500000)
+        response = AIInsightResponse(
+            overall_assessment=OverallAssessment(rating="moderate", headline="Test", summary="Test"),
+            deterministic_interpretation=DeterministicInterpretation(assessment="Test", key_points=[]),
+            monte_carlo_interpretation=MonteCarloInterpretation(assessment="Test", key_points=[]),
+            comparison=Comparison(what_deterministic_shows="Test", what_monte_carlo_adds="Test", why_the_results_differ="Test"),
+            cash_flow_insights=CashFlowInsights(pension="Test", adhoc_expenses="Test", one_time_retirement_income="Test", retirement_expenses="Test"),
+            strengths=[],
+            risks=[],
+            key_insights=[],
+            actions=[ActionItem(
+                action="Reduce projected annual expenses by at least 10%",
+                reason="This would improve outcomes."
+            )],
+            assumption_warnings=[],
+            bottom_line="Test"
+        )
+        from src.ai_insights import _validate_numerical_recommendations
+        with self.assertRaises(ValueError):
+            _validate_numerical_recommendations(response, request)
+
+    def test_expense_reduction_to_lakh_target_rejected(self):
+        request = AIInsightRequest(**_make_payload(
+            user_inputs=_make_request(current_annual_expenses=1500000)
+        ))
+        self.assertEqual(request.user_inputs.current_annual_expenses, 1500000)
+        response = AIInsightResponse(
+            overall_assessment=OverallAssessment(rating="moderate", headline="Test", summary="Test"),
+            deterministic_interpretation=DeterministicInterpretation(assessment="Test", key_points=[]),
+            monte_carlo_interpretation=MonteCarloInterpretation(assessment="Test", key_points=[]),
+            comparison=Comparison(what_deterministic_shows="Test", what_monte_carlo_adds="Test", why_the_results_differ="Test"),
+            cash_flow_insights=CashFlowInsights(pension="Test", adhoc_expenses="Test", one_time_retirement_income="Test", retirement_expenses="Test"),
+            strengths=[],
+            risks=[],
+            key_insights=[],
+            actions=[ActionItem(
+                action="Reduce projected annual expenses to ₹13.5 lakh",
+                reason="This would improve outcomes."
+            )],
+            assumption_warnings=[],
+            bottom_line="Test"
+        )
+        from src.ai_insights import _validate_numerical_recommendations
+        with self.assertRaises(ValueError):
+            _validate_numerical_recommendations(response, request)
+
     def test_engine_supplied_recommendation_accepted(self):
         request = AIInsightRequest(**_make_payload())
         request.monte_carlo_analysis.existing_recommendations = ["Save an additional ₹182000 per year."]
