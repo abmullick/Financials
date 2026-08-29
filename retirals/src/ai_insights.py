@@ -593,22 +593,45 @@ def _validate_numerical_recommendations(response: AIInsightResponse, request: AI
         r'maintain\s+([\d,]+(?:\.\d+)?)',
     ]
 
-    for action in response.actions:
-        combined_text = (action.action + ' ' + action.reason).lower()
-        
+    def _check_text(text: str, context: str) -> None:
+        combined = text.lower()
         for pattern in recommendation_patterns:
-            matches = re.findall(pattern, combined_text)
+            matches = re.findall(pattern, combined)
             for match in matches:
                 try:
                     number = float(match.replace(',', ''))
                 except ValueError:
                     continue
-                
+
                 if number not in allowed:
                     raise ValueError(
-                        f"Action contains unsupported numerical recommendation: {number}. "
+                        f"{context} contains unsupported numerical recommendation: {number}. "
                         f"Numerical recommendations must appear verbatim in existing_recommendations or sensitivity results."
                     )
+
+    for action in response.actions:
+        combined_text = (action.action + ' ' + action.reason).lower()
+        _check_text(combined_text, "Action")
+
+    for insight in response.key_insights:
+        _check_text(insight, "Key insight")
+
+    for risk in response.risks:
+        _check_text(risk.explanation, "Risk explanation")
+
+    for warning in response.assumption_warnings:
+        _check_text(warning, "Assumption warning")
+
+    _check_text(response.deterministic_interpretation.assessment, "Deterministic interpretation")
+    _check_text(response.monte_carlo_interpretation.assessment, "Monte Carlo interpretation")
+    _check_text(response.comparison.what_deterministic_shows, "Comparison")
+    _check_text(response.comparison.what_monte_carlo_adds, "Comparison")
+    _check_text(response.comparison.why_the_results_differ, "Comparison")
+    _check_text(response.cash_flow_insights.pension, "Cash flow insight")
+    _check_text(response.cash_flow_insights.adhoc_expenses, "Cash flow insight")
+    _check_text(response.cash_flow_insights.one_time_retirement_income, "Cash flow insight")
+    _check_text(response.cash_flow_insights.retirement_expenses, "Cash flow insight")
+    _check_text(response.bottom_line, "Bottom line")
 
 
 class AIInsightService:

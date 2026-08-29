@@ -1587,6 +1587,96 @@ class TestAIInsightModels(unittest.TestCase):
         with self.assertRaises(ValueError):
             _validate_numerical_recommendations(response, request)
 
+    def test_unsupported_percentage_in_key_insights_rejected(self):
+        request = AIInsightRequest(**_make_payload())
+        response = AIInsightResponse(
+            overall_assessment=OverallAssessment(rating="moderate", headline="Test", summary="Test"),
+            deterministic_interpretation=DeterministicInterpretation(assessment="Test", key_points=[]),
+            monte_carlo_interpretation=MonteCarloInterpretation(assessment="Test", key_points=[]),
+            comparison=Comparison(what_deterministic_shows="Test", what_monte_carlo_adds="Test", why_the_results_differ="Test"),
+            cash_flow_insights=CashFlowInsights(pension="Test", adhoc_expenses="Test", one_time_retirement_income="Test", retirement_expenses="Test"),
+            strengths=[],
+            risks=[],
+            key_insights=["Increase contributions by 15% to close the gap."],
+            actions=[],
+            assumption_warnings=[],
+            bottom_line="Test"
+        )
+        from src.ai_insights import _validate_numerical_recommendations
+        with self.assertRaises(ValueError):
+            _validate_numerical_recommendations(response, request)
+
+    def test_unsupported_rupee_amount_in_risks_explanation_rejected(self):
+        request = AIInsightRequest(**_make_payload())
+        response = AIInsightResponse(
+            overall_assessment=OverallAssessment(rating="moderate", headline="Test", summary="Test"),
+            deterministic_interpretation=DeterministicInterpretation(assessment="Test", key_points=[]),
+            monte_carlo_interpretation=MonteCarloInterpretation(assessment="Test", key_points=[]),
+            comparison=Comparison(what_deterministic_shows="Test", what_monte_carlo_adds="Test", why_the_results_differ="Test"),
+            cash_flow_insights=CashFlowInsights(pension="Test", adhoc_expenses="Test", one_time_retirement_income="Test", retirement_expenses="Test"),
+            strengths=[],
+            risks=[RiskItem(severity="high", risk="Test risk", explanation="Save an additional ₹50 lakh per year to improve outcomes.")],
+            key_insights=[],
+            actions=[],
+            assumption_warnings=[],
+            bottom_line="Test"
+        )
+        from src.ai_insights import _validate_numerical_recommendations
+        with self.assertRaises(ValueError):
+            _validate_numerical_recommendations(response, request)
+
+    def test_unsupported_age_in_bottom_line_rejected(self):
+        request = AIInsightRequest(**_make_payload())
+        response = AIInsightResponse(
+            overall_assessment=OverallAssessment(rating="moderate", headline="Test", summary="Test"),
+            deterministic_interpretation=DeterministicInterpretation(assessment="Test", key_points=[]),
+            monte_carlo_interpretation=MonteCarloInterpretation(assessment="Test", key_points=[]),
+            comparison=Comparison(what_deterministic_shows="Test", what_monte_carlo_adds="Test", why_the_results_differ="Test"),
+            cash_flow_insights=CashFlowInsights(pension="Test", adhoc_expenses="Test", one_time_retirement_income="Test", retirement_expenses="Test"),
+            strengths=[],
+            risks=[],
+            key_insights=[],
+            actions=[],
+            assumption_warnings=[],
+            bottom_line="Delay retirement by 2 years to improve outcomes."
+        )
+        from src.ai_insights import _validate_numerical_recommendations
+        with self.assertRaises(ValueError):
+            _validate_numerical_recommendations(response, request)
+
+    def test_valid_supplied_number_in_non_action_fields_accepted(self):
+        request = AIInsightRequest(**_make_payload())
+        response = AIInsightResponse(
+            overall_assessment=OverallAssessment(rating="moderate", headline="Test", summary="Test"),
+            deterministic_interpretation=DeterministicInterpretation(
+                assessment="Readiness is 95.18% based on the deterministic projection.",
+                key_points=["Corpus at retirement is 152960169.0."]
+            ),
+            monte_carlo_interpretation=MonteCarloInterpretation(
+                assessment="Success rate is 33.0% across 100 simulations.",
+                key_points=["The p5 final corpus is 0.0."]
+            ),
+            comparison=Comparison(
+                what_deterministic_shows="Deterministic shows a gap of 7749583.0 at retirement.",
+                what_monte_carlo_adds="Monte Carlo adds distribution around the median final corpus of 50000000.0.",
+                why_the_results_differ="Deterministic uses average returns; Monte Carlo accounts for volatility."
+            ),
+            cash_flow_insights=CashFlowInsights(
+                pension="Pension starts at age 60 with annual_pension of 600000.0.",
+                adhoc_expenses="Ad-hoc expenses at age 58 total 2500000.0.",
+                one_time_retirement_income="No one_time_lumpsum is assumed.",
+                retirement_expenses="Current annual expenses are 1200000.0 growing at avg_inflation_rate 0.06."
+            ),
+            strengths=[],
+            risks=[RiskItem(severity="high", risk="Test", explanation="Corpus exhausts at age 77.")],
+            key_insights=["The plan is at_risk with readiness_percent 95.18."],
+            actions=[],
+            assumption_warnings=["num_simulations is 100."],
+            bottom_line="Test"
+        )
+        from src.ai_insights import _validate_numerical_recommendations
+        _validate_numerical_recommendations(response, request)
+
 
 if __name__ == "__main__":
     unittest.main()
