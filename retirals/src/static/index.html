@@ -2090,6 +2090,7 @@
         let monteCarloResult = null;
         let aiInsightLoading = false;
         let aiInsightResult = null;
+        let aiInsightCooldownUntil = 0;
 
         function invalidateAiInsightResults() {
             deterministicResult = null;
@@ -2102,7 +2103,8 @@
             if (!btn) return;
 
             const hasBoth = deterministicResult !== null && monteCarloResult !== null;
-            if (hasBoth && !aiInsightLoading) {
+            const onCooldown = Date.now() < aiInsightCooldownUntil;
+            if (hasBoth && !aiInsightLoading && !onCooldown) {
                 btn.disabled = false;
                 btn.classList.remove('ai-disabled');
             } else {
@@ -2113,12 +2115,14 @@
 
         async function getAiInsight() {
             if (aiInsightLoading) return;
+            if (Date.now() < aiInsightCooldownUntil) return;
             if (!deterministicResult || !monteCarloResult) return;
             if (!lastCalculationResult || !lastCalculationResult.payload) return;
 
             const btn = document.getElementById('aiInsightBtn');
             const aiOverlay = document.getElementById('aiOverlay');
             aiInsightLoading = true;
+            aiInsightCooldownUntil = Date.now() + 60000;
             btn.disabled = true;
             btn.classList.add('ai-disabled');
             btn.querySelector('.ai-btn-text').textContent = '⏳ Getting AI Insight...';
