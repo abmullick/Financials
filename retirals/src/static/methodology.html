@@ -179,8 +179,18 @@
                     <tr><td>Annual contribution</td><td>₹500,000</td><td>Amount saved each year before retirement. Contributions stop at retirement.</td></tr>
                     <tr><td>Contribution increase</td><td>8.0%</td><td>Annual growth applied to your contribution amount. Set to 0% for fixed contributions.</td></tr>
                     <tr><td>One-time lump sum</td><td>₹0</td><td>A future cash injection at retirement, such as gratuity or PF proceeds.</td></tr>
-                    <tr><td>Pre-retirement return</td><td>10.0%</td><td>Expected annual return on the portfolio while you are still contributing.</td></tr>
-                    <tr><td>Post-retirement return</td><td>8.0%</td><td>Expected annual return on the portfolio after retirement.</td></tr>
+<tr><td>Pre-retirement return</td><td>10.0%</td><td>Kept for compatibility; actual calculation uses asset-level returns (see below).</td></tr>
+<tr><td>Post-retirement return</td><td>8.0%</td><td>Kept for compatibility; actual calculation uses asset-level returns (see below).</td></tr>
+<tr><td>Equity return</td><td>12.0%</td><td>Expected annual return on equity allocation.</td></tr>
+<tr><td>Debt return</td><td>6.0%</td><td>Expected annual return on debt allocation.</td></tr>
+<tr><td>Arbitrage return</td><td>8.0%</td><td>Expected annual return on arbitrage allocation.</td></tr>
+<tr><td>REIT return</td><td>8.0%</td><td>Expected annual return on REIT allocation.</td></tr>
+<tr><td>REIT allocation</td><td>0%</td><td>Share of the portfolio in REITs. Defaults to 0% so existing plans are unchanged unless the user enables REIT.</td></tr>
+<tr><td>REIT volatility</td><td>15.0%</td><td>Annual standard deviation of REIT returns.</td></tr>
+<tr><td>Equity ↔ REIT correlation</td><td>0.60</td><td>How equity and REIT returns move together.</td></tr>
+<tr><td>Debt ↔ REIT correlation</td><td>0.20</td><td>How debt and REIT returns move together.</td></tr>
+<tr><td>Arbitrage ↔ REIT correlation</td><td>0.10</td><td>How arbitrage and REIT returns move together.</td></tr>
+<tr><td>REIT taxable gain fraction</td><td>50%</td><td>Fraction of REIT withdrawal treated as taxable gain (the rest is return of capital).</td></tr>
                     <tr><td>Equity allocation</td><td>60%</td><td>Share of the portfolio in equity. Affects both deterministic tax treatment and Monte Carlo volatility.</td></tr>
                     <tr><td>Debt allocation</td><td>30%</td><td>Share in debt instruments.</td></tr>
                     <tr><td>Arbitrage allocation</td><td>10%</td><td>Share in arbitrage strategies.</td></tr>
@@ -208,11 +218,11 @@
 <summary><strong>📊 Deterministic projection</strong></summary>
 <section id="projection">
             <h2>Deterministic projection</h2>
-            <p>The retirement projection applies the selected pre- and post-retirement return each year. It adds contributions before retirement, inflates expenses, applies pension income and withdrawal taxes, then updates the corpus. It is useful for understanding the cash-flow mechanics of one scenario, but it does not show the range of possible market outcomes.</p>
+            <p>The retirement projection applies the selected asset-level returns each year. It adds contributions before retirement, inflates expenses, applies pension income and withdrawal taxes (including REIT taxation), then updates the corpus. It is useful for understanding the cash-flow mechanics of one scenario, but it does not show the range of possible market outcomes.</p>
             <h3>Stress scenarios</h3>
             <p>Mild and severe stress scenarios replace the first two retirement-year returns with fixed negative returns. They are designed to show the effect of a poor start to retirement.</p>
             <h3>Pension and tax treatment</h3>
-            <p>Net pension first funds recurring expenses. A pension surplus is reinvested only when that option is selected. Withdrawal taxes use a simplified blended allocation approach and an annual LTCG exemption; they do not track individual tax lots or cost basis.</p>
+            <p>Net pension first funds recurring expenses. A pension surplus is reinvested only when that option is selected. Withdrawal taxes use a simplified blended allocation approach and an annual LTCG exemption; they do not track individual tax lots or cost basis. REIT withdrawals are partially taxable: only the estimated gain portion (based on the REIT taxable gain fraction) is treated as taxable and taxed at the LTCG rate.</p>
         </section>
 </details>
 
@@ -222,24 +232,28 @@
             <h2>Monte Carlo simulation</h2>
             <p>Monte Carlo runs 100 to 50,000 simulated annual-return paths. Every path follows the same contributions, expenses, pension, tax, and withdrawal rules, but its market returns differ. The success rate is the share of paths that fund all required expenses through life expectancy.</p>
             <p>The simulation uses either a normal or lognormal return distribution. Lognormal is the default because it cannot produce a return below −100%. A random seed makes a run reproducible; leaving it blank produces a new random set of paths.</p>
-            <h3>Monte Carlo parameters</h3>
-            <table>
-                <thead><tr><th>Setting</th><th>Default</th><th>What it means</th></tr></thead>
-                <tbody>
-                    <tr><td>Number of simulations</td><td>1,000</td><td>How many random market paths to simulate. More paths reduce sampling noise but take longer.</td></tr>
-                    <tr><td>Return distribution</td><td>Lognormal</td><td>Lognormal keeps returns above −100%. Normal is simpler but can produce unrealistic negative portfolio values at high volatility.</td></tr>
-                    <tr><td>Equity volatility</td><td>18.0%</td><td>Annual standard deviation of equity returns.</td></tr>
-                    <tr><td>Debt volatility</td><td>6.0%</td><td>Annual standard deviation of debt returns.</td></tr>
-                    <tr><td>Arbitrage volatility</td><td>8.0%</td><td>Annual standard deviation of arbitrage returns.</td></tr>
-                    <tr><td>Equity ↔ Debt correlation</td><td>-0.10</td><td>How equity and debt returns move together. Negative values mean they tend to offset each other.</td></tr>
-                    <tr><td>Equity ↔ Arbitrage correlation</td><td>0.05</td><td>How equity and arbitrage returns move together. Near-zero values mean they are largely independent.</td></tr>
-                    <tr><td>Debt ↔ Arbitrage correlation</td><td>0.20</td><td>How debt and arbitrage returns move together. Positive values mean they tend to rise and fall together.</td></tr>
-                    <tr><td>Random seed</td><td>None</td><td>Optional fixed seed for reproducible results. Same inputs + same seed = identical output.</td></tr>
-                    <tr><td>Retirement age sensitivity</td><td>None</td><td>Comma-separated alternative retirement ages to compare success rates. Useful for "how much longer should I work?" analysis.</td></tr>
-                </tbody>
-            </table>
-            <h3>Allocation and volatility</h3>
-            <p>Equity, debt, and arbitrage weights, volatilities, and correlations are combined into one covariance-based portfolio volatility. The current model draws one return for the total portfolio; it does not simulate separate asset-class balances or rebalancing.</p>
+<h3>Monte Carlo parameters</h3>
+             <table>
+                 <thead><tr><th>Setting</th><th>Default</th><th>What it means</th></tr></thead>
+                 <tbody>
+                     <tr><td>Number of simulations</td><td>1,000</td><td>How many random market paths to simulate. More paths reduce sampling noise but take longer.</td></tr>
+                     <tr><td>Return distribution</td><td>Lognormal</td><td>Lognormal keeps returns above −100%. Normal is simpler but can produce unrealistic negative portfolio values at high volatility.</td></tr>
+                     <tr><td>Equity volatility</td><td>18.0%</td><td>Annual standard deviation of equity returns.</td></tr>
+                     <tr><td>Debt volatility</td><td>6.0%</td><td>Annual standard deviation of debt returns.</td></tr>
+                     <tr><td>Arbitrage volatility</td><td>8.0%</td><td>Annual standard deviation of arbitrage returns.</td></tr>
+                     <tr><td>REIT volatility</td><td>15.0%</td><td>Annual standard deviation of REIT returns.</td></tr>
+                     <tr><td>Equity ↔ Debt correlation</td><td>-0.10</td><td>How equity and debt returns move together. Negative values mean they tend to offset each other.</td></tr>
+                     <tr><td>Equity ↔ Arbitrage correlation</td><td>0.05</td><td>How equity and arbitrage returns move together. Near-zero values mean they are largely independent.</td></tr>
+                     <tr><td>Debt ↔ Arbitrage correlation</td><td>0.20</td><td>How debt and arbitrage returns move together. Positive values mean they tend to rise and fall together.</td></tr>
+                     <tr><td>Equity ↔ REIT correlation</td><td>0.60</td><td>How equity and REIT returns move together.</td></tr>
+                     <tr><td>Debt ↔ REIT correlation</td><td>0.20</td><td>How debt and REIT returns move together.</td></tr>
+                     <tr><td>Arbitrage ↔ REIT correlation</td><td>0.10</td><td>How arbitrage and REIT returns move together.</td></tr>
+                     <tr><td>Random seed</td><td>None</td><td>Optional fixed seed for reproducible results. Same inputs + same seed = identical output.</td></tr>
+                     <tr><td>Retirement age sensitivity</td><td>None</td><td>Comma-separated alternative retirement ages to compare success rates. Useful for "how much longer should I work?" analysis.</td></tr>
+                 </tbody>
+             </table>
+             <h3>Allocation and volatility</h3>
+             <p>Equity, debt, arbitrage, and REIT weights, volatilities, and correlations are combined into one covariance-based portfolio volatility. The current model draws one return for the total portfolio; it does not simulate separate asset-class balances or rebalancing.</p>
         </section>
 </details>
 
@@ -453,8 +467,8 @@
                 <dd>Deterministic coverage ratio: projected corpus at retirement divided by minimum corpus required. 100% means the deterministic projection breaks even.</dd>
                 <dt>Success rate</dt>
                 <dd>In Monte Carlo, the percentage of simulated paths where expenses are fully funded through life expectancy.</dd>
-                <dt>Blended tax rate</dt>
-                <dd>A weighted average of LTCG, STCG, debt, and arbitrage tax rates based on your portfolio allocation and equity split.</dd>
+<dt>Blended tax rate</dt>
+                 <dd>A weighted average of LTCG, STCG, debt, arbitrage, and REIT tax rates based on your portfolio allocation and equity split. REIT taxable gains are taxed at the LTCG rate.</dd>
                 <dt>Annuity due</dt>
                 <dd>A payment stream where cash flows occur at the beginning of each period. In this planner, expenses are treated as an annuity due because they are incurred throughout the year.</dd>
                 <dt>Sequence-of-returns risk</dt>

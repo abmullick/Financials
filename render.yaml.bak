@@ -1,12 +1,9 @@
 services:
   - type: web
     name: retirement-planner
+    rootDirectory: retirals
     runtime: python3
-    buildCommand: |
-      apt-get update && apt-get install -y nodejs npm
-      pip install -r requirements.txt
-      npm install
-      npm run build
+    buildCommand: pip install -r requirements.txt
     startCommand: uvicorn src.main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: GROQ_API_KEY

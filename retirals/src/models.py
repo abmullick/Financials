@@ -26,6 +26,10 @@ class PlannerInputs(BaseModel):
     annual_contribution: float = Field(700000.00, ge=0, le=1e9)
     pre_retirement_return: float = Field(0.09, ge=-0.5, le=0.5)
     post_retirement_return: float = Field(0.08, ge=-0.5, le=0.5)
+    return_equity: float = Field(0.12, ge=-0.5, le=0.5)
+    return_debt: float = Field(0.06, ge=-0.5, le=0.5)
+    return_arbitrage: float = Field(0.08, ge=-0.5, le=0.5)
+    return_reit: float = Field(0.08, ge=-0.5, le=0.5)
     contribution_increase: float = Field(0.01, ge=0, le=0.5)
     ltcg_exemption: float = Field(125000.00, ge=0, le=1e7)
     one_time_lumpsum: float = Field(0.0, ge=0, description="One-time lumpsum added at retirement (e.g., gratuity).")
@@ -38,6 +42,13 @@ class PlannerInputs(BaseModel):
     allocation_equity: float = Field(0.60, ge=0, le=1.0)
     allocation_debt: float = Field(0.30, ge=0, le=1.0)
     allocation_arbitrage: float = Field(0.10, ge=0, le=1.0)
+    allocation_reit: float = Field(0.0, ge=0, le=1.0)
+    reit_gain_fraction: float = Field(
+        0.5,
+        ge=0,
+        le=1,
+        description="Fraction of REIT withdrawal treated as taxable gain."
+    )
     # Equity sub-allocation (LTCG/STCG split)
     equity_ltcg_split: float = Field(0.70, ge=0, le=1.0)
     equity_stcg_split: float = Field(0.30, ge=0, le=1.0)
@@ -58,9 +69,13 @@ class PlannerInputs(BaseModel):
     volatility_equity: float = Field(0.18, ge=0, le=1.0, description="Annual volatility for equity allocation.")
     volatility_debt: float = Field(0.06, ge=0, le=1.0, description="Annual volatility for debt allocation.")
     volatility_arbitrage: float = Field(0.08, ge=0, le=1.0, description="Annual volatility for arbitrage allocation.")
+    volatility_reit: float = Field(0.15, ge=0, le=1.0, description="Annual volatility for REIT allocation.")
     equity_debt_correlation: float = Field(-0.10, ge=-1.0, le=1.0, description="Correlation between equity and debt returns.")
     equity_arbitrage_correlation: float = Field(0.05, ge=-1.0, le=1.0, description="Correlation between equity and arbitrage returns.")
     debt_arbitrage_correlation: float = Field(0.20, ge=-1.0, le=1.0, description="Correlation between debt and arbitrage returns.")
+    equity_reit_correlation: float = Field(0.60, ge=-1.0, le=1.0, description="Correlation between equity and REIT returns.")
+    debt_reit_correlation: float = Field(0.20, ge=-1.0, le=1.0, description="Correlation between debt and REIT returns.")
+    arbitrage_reit_correlation: float = Field(0.10, ge=-1.0, le=1.0, description="Correlation between arbitrage and REIT returns.")
     return_distribution: ReturnDistribution = Field(ReturnDistribution.LOGNORMAL, description="Distribution type for return simulation: normal or lognormal.")
     monte_carlo_seed: Optional[int] = Field(None, description="Optional random seed for reproducible simulations.")
     retirement_age_sensitivity: Optional[list[int]] = Field(None, description="Optional list of retirement ages to compare in sensitivity analysis.")
@@ -80,9 +95,9 @@ class PlannerInputs(BaseModel):
                 raise ValueError(f"Duplicate ad-hoc expense age found: {expense.age}.")
             adhoc_ages.append(expense.age)
 
-        allocation_total = self.allocation_equity + self.allocation_debt + self.allocation_arbitrage
+        allocation_total = self.allocation_equity + self.allocation_debt + self.allocation_arbitrage + self.allocation_reit
         if abs(allocation_total - 1.0) > 0.01:
-            raise ValueError(f"Portfolio allocation (equity + debt + arbitrage) must sum to approximately 100%. Current total: {(allocation_total * 100):.1f}%.")
+            raise ValueError(f"Portfolio allocation (equity + debt + arbitrage + REIT) must sum to approximately 100%. Current total: {(allocation_total * 100):.1f}%.")
         
         equity_split_total = self.equity_ltcg_split + self.equity_stcg_split
         if abs(equity_split_total - 1.0) > 0.01:

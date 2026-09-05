@@ -871,12 +871,344 @@ INVALID_TEST_SCENARIOS = [
     }),
 ]
 
+# Remember the original number of valid scenarios
+original_valid_count = len(TEST_SCENARIOS)
+
+# REIT-specific valid scenarios
+REIT_VALID_SCENARIOS = [
+    # Deterministic REIT scenarios
+    ("REIT allocation 20%", {"allocation_reit": 0.20}, False),
+    ("REIT return 12%", {"return_reit": 0.12}, False),
+    ("REIT gain fraction 0.0", {"reit_gain_fraction": 0.0}, False),
+    ("REIT gain fraction 1.0", {"reit_gain_fraction": 1.0}, False),
+    # Monte Carlo REIT scenarios
+    ("REIT MC allocation 20%", {"allocation_reit": 0.20, "num_simulations": 100, "monte_carlo_seed": 42}, True),
+    ("REIT MC gain fraction 0.0", {"allocation_reit": 0.20, "reit_gain_fraction": 0.0, "num_simulations": 100, "monte_carlo_seed": 42}, True),
+    ("REIT MC gain fraction 1.0", {"allocation_reit": 0.20, "reit_gain_fraction": 1.0, "num_simulations": 100, "monte_carlo_seed": 42}, True),
+]
+
+# Extend the existing TEST_SCENARIOS with REIT scenarios
+TEST_SCENARIOS.extend(REIT_VALID_SCENARIOS)
+
+
+def test_reit_behavior():
+    """Test REIT-specific behavioral regression by comparing API responses with different REIT parameters."""
+    print("\n" + "="*60)
+    print("REIT BEHAVIORAL REGRESSION TESTS")
+    print("="*60)
+    
+    # Use the same base payload for all comparisons
+    base_payload = deep_merge(BASE_PAYLOAD, {})
+    
+    # Convert percentage inputs to decimal fractions (frontend does this before sending)
+    percentage_fields = [
+        "avg_inflation_rate", "pre_retirement_return", "post_retirement_return",
+        "contribution_increase", "pension_increase", "pension_tax_rate",
+        "tax_ltcg", "tax_stcg", "tax_debt", "tax_arbitrage",
+        "allocation_equity", "allocation_debt", "allocation_arbitrage",
+        "equity_ltcg_split", "equity_stcg_split"
+    ]
+    for key in percentage_fields:
+        if key in base_payload and isinstance(base_payload[key], (int, float)):
+            base_payload[key] = base_payload[key] / 100.0
+    
+    # Convert ad-hoc expense inflation rates from percentages to decimals
+    if "adhoc_expenses" in base_payload and isinstance(base_payload["adhoc_expenses"], list):
+        for expense in base_payload["adhoc_expenses"]:
+            if isinstance(expense, dict) and "inflation_rate" in expense and isinstance(expense["inflation_rate"], (int, float)):
+                expense["inflation_rate"] = expense["inflation_rate"] / 100.0
+    
+    # Track test results
+    reit_tests_passed = 0
+    reit_tests_failed = 0
+    
+    # 1. REIT allocation: Compare allocation_reit=0.0 vs allocation_reit=0.20
+    print("\n1. Testing REIT allocation effect...")
+    payload_no_reit = deep_merge(base_payload, {"allocation_reit": 0.0})
+    payload_with_reit = deep_merge(base_payload, {"allocation_reit": 0.20})
+    
+    status1, result1 = make_request("/calculate", payload_no_reit)
+    status2, result2 = make_request("/calculate", payload_with_reit)
+    
+    if status1 == 200 and status2 == 200:
+        # Compare final corpus or readiness percent
+        corp1 = result1.get("metrics", {}).get("final_corpus", 0)
+        corp2 = result2.get("metrics", {}).get("final_corpus", 0)
+        if corp1 != corp2:
+            print(f"   PASS: Final corpus changed from {corp1:.2f} to {corp2:.2f} with 20% REIT allocation")
+            reit_tests_passed += 1
+        else:
+            print(f"   FAIL: Final corpus did not change with REIT allocation (both {corp1:.2f})")
+            reit_tests_failed += 1
+    else:
+        print(f"   FAIL: API error - status1={status1}, status2={status2}")
+        reit_tests_failed += 1
+    
+    # 2. REIT return: With allocation_reit=0.20, compare return_reit=0.08 vs 0.12
+    print("\n2. Testing REIT return effect...")
+    payload_low_return = deep_merge(base_payload, {"allocation_reit": 0.20, "return_reit": 0.08})
+    payload_high_return = deep_merge(base_payload, {"allocation_reit": 0.20, "return_reit": 0.12})
+    
+    status1, result1 = make_request("/calculate", payload_low_return)
+    status2, result2 = make_request("/calculate", payload_high_return)
+    
+    if status1 == 200 and status2 == 200:
+        # Higher REIT return should lead to higher final corpus
+        corp1 = result1.get("metrics", {}).get("final_corpus", 0)
+        corp2 = result2.get("metrics", {}).get("final_corpus", 0)
+        if corp2 > corp1:
+            print(f"   PASS: Final corpus increased from {corp1:.2f} to {corp2:.2f} with higher REIT return")
+            reit_tests_passed += 1
+        else:
+            print(f"   FAIL: Final corpus did not increase with higher REIT return ({corp1:.2f} -> {corp2:.2f})")
+            reit_tests_failed += 1
+    else:
+        print(f"   FAIL: API error - status1={status1}, status2={status2}")
+        reit_tests_failed += 1
+    
+    # 3. REIT taxable gain fraction: Compare reit_gain_fraction=0.0 vs 1.0
+    print("\n3. Testing REIT taxable gain fraction effect...")
+    payload_no_gain = deep_merge(base_payload, {"allocation_reit": 0.20, "reit_gain_fraction": 0.0})
+    payload_all_gain = deep_merge(base_payload, {"allocation_reit": 0.20, "reit_gain_fraction": 1.0})
+    
+    status1, result1 = make_request("/calculate", payload_no_gain)
+    status2, result2 = make_request("/calculate", payload_all_gain)
+    
+    if status1 == 200 and status2 == 200:
+        # Higher taxable gain fraction should lead to lower final corpus (more taxes)
+        corp1 = result1.get("metrics", {}).get("final_corpus", 0)
+        corp2 = result2.get("metrics", {}).get("final_corpus", 0)
+        if corp2 < corp1:
+            print(f"   PASS: Final corpus decreased from {corp1:.2f} to {corp2:.2f} with full REIT taxation")
+            reit_tests_passed += 1
+        else:
+            print(f"   FAIL: Final corpus did not decrease with full REIT taxation ({corp1:.2f} -> {corp2:.2f})")
+            reit_tests_failed += 1
+    else:
+        print(f"   FAIL: API error - status1={status1}, status2={status2}")
+        reit_tests_failed += 1
+    
+    # 4. MC REIT allocation: Compare allocation_reit=0.0 vs 0.20
+    print("\n4. Testing MC REIT allocation effect...")
+    mc_seed = 42
+    mc_sims = 100
+    payload_no_reit_mc = deep_merge(base_payload, {
+        "allocation_reit": 0.0,
+        "num_simulations": mc_sims,
+        "monte_carlo_seed": mc_seed
+    })
+    payload_with_reit_mc = deep_merge(base_payload, {
+        "allocation_reit": 0.20,
+        "num_simulations": mc_sims,
+        "monte_carlo_seed": mc_seed
+    })
+    
+    status1, result1 = make_request("/calculate-mc", payload_no_reit_mc)
+    status2, result2 = make_request("/calculate-mc", payload_with_reit_mc)
+    
+    if status1 == 200 and status2 == 200:
+        # Compare success rate or median final corpus
+        success1 = result1.get("metrics", {}).get("success_rate", 0)
+        success2 = result2.get("metrics", {}).get("success_rate", 0)
+        if success1 != success2:
+            print(f"   PASS: MC success rate changed from {success1:.1f}% to {success2:.1f}% with 20% REIT allocation")
+            reit_tests_passed += 1
+        else:
+            # Try median final corpus
+            med1 = result1.get("metrics", {}).get("median_final_corpus", 0)
+            med2 = result2.get("metrics", {}).get("median_final_corpus", 0)
+            if med1 != med2:
+                print(f"   PASS: MC median final corpus changed from {med1:.2f} to {med2:.2f} with 20% REIT allocation")
+                reit_tests_passed += 1
+            else:
+                print(f"   FAIL: MC results did not change with REIT allocation")
+                reit_tests_failed += 1
+    else:
+        print(f"   FAIL: API error - status1={status1}, status2={status2}")
+        reit_tests_failed += 1
+    
+    # 5. MC REIT taxable gain fraction: Compare reit_gain_fraction=0.0 vs 1.0
+    print("\n5. Testing MC REIT taxable gain fraction effect...")
+    payload_no_gain_mc = deep_merge(base_payload, {
+        "allocation_reit": 0.20,
+        "reit_gain_fraction": 0.0,
+        "num_simulations": mc_sims,
+        "monte_carlo_seed": mc_seed
+    })
+    payload_all_gain_mc = deep_merge(base_payload, {
+        "allocation_reit": 0.20,
+        "reit_gain_fraction": 1.0,
+        "num_simulations": mc_sims,
+        "monte_carlo_seed": mc_seed
+    })
+    
+    status1, result1 = make_request("/calculate-mc", payload_no_gain_mc)
+    status2, result2 = make_request("/calculate-mc", payload_all_gain_mc)
+    
+    if status1 == 200 and status2 == 200:
+        # Higher taxable gain fraction should lead to lower success rate (more taxes)
+        success1 = result1.get("metrics", {}).get("success_rate", 0)
+        success2 = result2.get("metrics", {}).get("success_rate", 0)
+        if success2 < success1:
+            print(f"   PASS: MC success rate decreased from {success1:.1f}% to {success2:.1f}% with full REIT taxation")
+            reit_tests_passed += 1
+        else:
+            print(f"   FAIL: MC success rate did not decrease with full REIT taxation ({success1:.1f}% -> {success2:.1f}%)")
+            reit_tests_failed += 1
+    else:
+        print(f"   FAIL: API error - status1={status1}, status2={status2}")
+        reit_tests_failed += 1
+    
+    # 6. MC volatility: Compare volatility_reit=0.15 vs 0.25
+    print("\n6. Testing MC REIT volatility effect...")
+    payload_low_vol = deep_merge(base_payload, {
+        "allocation_reit": 0.20,
+        "volatility_reit": 0.15,
+        "num_simulations": mc_sims,
+        "monte_carlo_seed": mc_seed
+    })
+    payload_high_vol = deep_merge(base_payload, {
+        "allocation_reit": 0.20,
+        "volatility_reit": 0.25,
+        "num_simulations": mc_sims,
+        "monte_carlo_seed": mc_seed
+    })
+    
+    status1, result1 = make_request("/calculate-mc", payload_low_vol)
+    status2, result2 = make_request("/calculate-mc", payload_high_vol)
+    
+    if status1 == 200 and status2 == 200:
+        # Higher volatility should lead to lower success rate (more risk)
+        success1 = result1.get("metrics", {}).get("success_rate", 0)
+        success2 = result2.get("metrics", {}).get("success_rate", 0)
+        if success2 < success1:
+            print(f"   PASS: MC success rate decreased from {success1:.1f}% to {success2:.1f}% with higher REIT volatility")
+            reit_tests_passed += 1
+        else:
+            print(f"   FAIL: MC success rate did not decrease with higher REIT volatility ({success1:.1f}% -> {success2:.1f}%)")
+            reit_tests_failed += 1
+    else:
+        print(f"   FAIL: API error - status1={status1}, status2={status2}")
+        reit_tests_failed += 1
+    
+    # 7. MC correlations: Test each REIT correlation independently
+    print("\n7. Testing MC REIT correlations effect...")
+    correlations_tested = 0
+    correlations_passed = 0
+    
+    # Test equity_reit_correlation
+    print("   Testing equity_reit_correlation...")
+    payload_low_corr = deep_merge(base_payload, {
+        "allocation_reit": 0.20,
+        "equity_reit_correlation": 0.0,
+        "num_simulations": mc_sims,
+        "monte_carlo_seed": mc_seed
+    })
+    payload_high_corr = deep_merge(base_payload, {
+        "allocation_reit": 0.20,
+        "equity_reit_correlation": 0.8,
+        "num_simulations": mc_sims,
+        "monte_carlo_seed": mc_seed
+    })
+    
+    status1, result1 = make_request("/calculate-mc", payload_low_corr)
+    status2, result2 = make_request("/calculate-mc", payload_high_corr)
+    
+    if status1 == 200 and status2 == 200:
+        success1 = result1.get("metrics", {}).get("success_rate", 0)
+        success2 = result2.get("metrics", {}).get("success_rate", 0)
+        if success1 != success2:
+            print(f"      PASS: Equity-REIT correlation affects MC results ({success1:.1f}% -> {success2:.1f}%)")
+            correlations_passed += 1
+        else:
+            print(f"      FAIL: Equity-REIT correlation does not affect MC results")
+    else:
+        print(f"      FAIL: API error - status1={status1}, status2={status2}")
+    correlations_tested += 1
+    
+    # Test debt_reit_correlation
+    print("   Testing debt_reit_correlation...")
+    payload_low_corr = deep_merge(base_payload, {
+        "allocation_reit": 0.20,
+        "debt_reit_correlation": 0.0,
+        "num_simulations": mc_sims,
+        "monte_carlo_seed": mc_seed
+    })
+    payload_high_corr = deep_merge(base_payload, {
+        "allocation_reit": 0.20,
+        "debt_reit_correlation": 0.8,
+        "num_simulations": mc_sims,
+        "monte_carlo_seed": mc_seed
+    })
+    
+    status1, result1 = make_request("/calculate-mc", payload_low_corr)
+    status2, result2 = make_request("/calculate-mc", payload_high_corr)
+    
+    if status1 == 200 and status2 == 200:
+        success1 = result1.get("metrics", {}).get("success_rate", 0)
+        success2 = result2.get("metrics", {}).get("success_rate", 0)
+        if success1 != success2:
+            print(f"      PASS: Debt-REIT correlation affects MC results ({success1:.1f}% -> {success2:.1f}%)")
+            correlations_passed += 1
+        else:
+            print(f"      FAIL: Debt-REIT correlation does not affect MC results")
+    else:
+        print(f"      FAIL: API error - status1={status1}, status2={status2}")
+    correlations_tested += 1
+    
+    # Test arbitrage_reit_correlation
+    print("   Testing arbitrage_reit_correlation...")
+    payload_low_corr = deep_merge(base_payload, {
+        "allocation_reit": 0.20,
+        "arbitrage_reit_correlation": 0.0,
+        "num_simulations": mc_sims,
+        "monte_carlo_seed": mc_seed
+    })
+    payload_high_corr = deep_merge(base_payload, {
+        "allocation_reit": 0.20,
+        "arbitrage_reit_correlation": 0.8,
+        "num_simulations": mc_sims,
+        "monte_carlo_seed": mc_seed
+    })
+    
+    status1, result1 = make_request("/calculate-mc", payload_low_corr)
+    status2, result2 = make_request("/calculate-mc", payload_high_corr)
+    
+    if status1 == 200 and status2 == 200:
+        success1 = result1.get("metrics", {}).get("success_rate", 0)
+        success2 = result2.get("metrics", {}).get("success_rate", 0)
+        if success1 != success2:
+            print(f"      PASS: Arbitrage-REIT correlation affects MC results ({success1:.1f}% -> {success2:.1f}%)")
+            correlations_passed += 1
+        else:
+            print(f"      FAIL: Arbitrage-REIT correlation does not affect MC results")
+    else:
+        print(f"      FAIL: API error - status1={status1}, status2={status2}")
+    correlations_tested += 1
+    
+    if correlations_passed == correlations_tested:
+        print(f"   PASS: All {correlations_tested} REIT correlation tests passed")
+        reit_tests_passed += correlations_passed
+    else:
+        print(f"   FAIL: {correlations_passed}/{correlations_tested} REIT correlation tests passed")
+        reit_tests_failed += (correlations_tested - correlations_passed)
+    
+    # Summary
+    print(f"\nREIT Behavioral Tests Summary:")
+    print(f"  Passed: {reit_tests_passed}")
+    print(f"  Failed: {reit_tests_failed}")
+    print(f"  Total:  {reit_tests_passed + reit_tests_failed}")
+    
+    return reit_tests_failed == 0
+
+
 def main():
     print("="*60)
     print("RETIREMENT PLANNER API TEST SUITE")
     print("="*60)
     print(f"Base URL: {BASE_URL}")
-    print(f"Total scenarios: {len(TEST_SCENARIOS) + len(INVALID_TEST_SCENARIOS)} ({len(TEST_SCENARIOS)} valid + {len(INVALID_TEST_SCENARIOS)} invalid)")
+    print(f"Total scenarios: {len(TEST_SCENARIOS) + len(INVALID_TEST_SCENARIOS)} ({original_valid_count} valid + {len(REIT_VALID_SCENARIOS)} REIT valid + {len(INVALID_TEST_SCENARIOS)} invalid)")
+    print(f"Plus: 1 REIT behavioral test suite (7 comparisons)")
     
     results = {
         "deterministic": {"passed": 0, "failed": 0, "tests": []},
@@ -928,7 +1260,7 @@ def main():
                 results["deterministic"]["failed"] += 1
             time.sleep(7)  # Stay under /calculate rate limit (10/min)
     
-    # Run invalid input tests
+# Run invalid input tests
     for name, overrides in INVALID_TEST_SCENARIOS:
         payload = deep_merge(BASE_PAYLOAD, overrides)
         
@@ -940,6 +1272,13 @@ def main():
             results["invalid"]["failed"] += 1
         time.sleep(1)  # Brief pause between validation tests
     
+    # Run REIT behavioral tests
+    reit_behavior_passed = test_reit_behavior()
+    if reit_behavior_passed:
+        results["reit_behavior"] = {"passed": 1, "failed": 0}
+    else:
+        results["reit_behavior"] = {"passed": 0, "failed": 1}
+
     # Summary
     print(f"\n{'='*60}")
     print("SUMMARY")
@@ -961,6 +1300,10 @@ def main():
         for name, passed in results['monte_carlo']['tests']:
             if not passed:
                 print(f"    - {name}")
+                
+    print(f"\nREIT Behavioral Tests:")
+    print(f"  Passed: {results['reit_behavior']['passed']}")
+    print(f"  Failed: {results['reit_behavior']['failed']}")
     
     print(f"\nInvalid Input Validation:")
     print(f"  Passed: {results['invalid']['passed']}")
@@ -971,11 +1314,11 @@ def main():
             if not passed:
                 print(f"    - {name}")
     
-    total = results['deterministic']['passed'] + results['deterministic']['failed'] + results['monte_carlo']['passed'] + results['monte_carlo']['failed'] + results['invalid']['passed'] + results['invalid']['failed']
-    print(f"\nOverall: {results['deterministic']['passed'] + results['monte_carlo']['passed'] + results['invalid']['passed']}/{total} passed")
+    total = results['deterministic']['passed'] + results['deterministic']['failed'] + results['monte_carlo']['passed'] + results['monte_carlo']['failed'] + results['invalid']['passed'] + results['invalid']['failed'] + results['reit_behavior']['passed'] + results['reit_behavior']['failed']
+    print(f"\nOverall: {results['deterministic']['passed'] + results['monte_carlo']['passed'] + results['invalid']['passed'] + results['reit_behavior']['passed']}/{total} passed")
     
     # Exit with error code if any failures
-    if results['deterministic']['failed'] > 0 or results['monte_carlo']['failed'] > 0 or results['invalid']['failed'] > 0:
+    if results['deterministic']['failed'] > 0 or results['monte_carlo']['failed'] > 0 or results['invalid']['failed'] > 0 or results['reit_behavior']['failed'] > 0:
         sys.exit(1)
 
 if __name__ == "__main__":

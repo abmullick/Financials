@@ -1,0 +1,22 @@
+{
+  "name": "retirals",
+  "version": "1.0.0",
+  "description": "A web-based retirement planning tool that combines deterministic projection with Monte Carlo simulation to estimate retirement readiness and corpus sustainability.",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tailwindcss -i ./src/static/css/tailwind.input.css -o ./src/static/css/tailwind.css --minify"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "autoprefixer": "^10.5.5",
+    "postcss": "^8.5.28",
+    "tailwindcss": "^3.4.1"
+  }
+}

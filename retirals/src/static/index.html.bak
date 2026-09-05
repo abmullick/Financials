@@ -2550,327 +2550,6 @@
             status.classList.add('hidden');
         }
 
-        function updateCharts(data) {
-            const payload = lastCalculationResult.payload;
-
-            // --- Update Plan Health Indicator ---
-            const healthSection = document.getElementById('planHealthSection');
-            const healthIndicator = document.getElementById('planHealthIndicator');
-            const healthStatus = document.getElementById('planHealthStatus');
-            const healthMessage = document.getElementById('planHealthMessage');
-
-            healthIndicator.classList.remove('bg-emerald-500/10', 'border-emerald-500/30', 'bg-amber-500/10', 'border-amber-500/30', 'bg-rose-500/10', 'border-rose-500/30');
-
-            if (data.metrics.plan_sustainable) {
-                healthStatus.innerHTML = `<span class="text-success">🟢 Strong</span>`;
-                healthMessage.textContent = `Your projected corpus remains positive through age ${payload.life_expectancy}.`;
-                healthIndicator.classList.add('bg-emerald-500/10', 'border', 'border-emerald-500/30');
-            } else {
-                let exhaustionMessage = `Portfolio exhaustion occurs at age ${data.metrics.corpus_exhaustion_age}.`;
-                if (payload.include_pension) {
-                    exhaustionMessage += " Pension income continues thereafter.";
-                }
-                healthMessage.textContent = exhaustionMessage;
-
-                if (data.metrics.readiness_percent >= 75) {
-                    healthStatus.innerHTML = `<span class="text-warning">🟡 Needs Attention</span>`;
-                    healthIndicator.classList.add('bg-amber-500/10', 'border', 'border-amber-500/30');
-                } else {
-                    healthStatus.innerHTML = `<span class="text-danger">🔴 Shortfall Risk</span>`;
-                    healthIndicator.classList.add('bg-rose-500/10', 'border', 'border-rose-500/30');
-                }
-            }
-
-            // --- Update Key Insight Box ---
-            const insightSection = document.getElementById('keyInsightSection');
-            const insightBox = document.getElementById('keyInsightBox');
-            const insightTitle = document.getElementById('keyInsightTitle');
-            const insightMessage = document.getElementById('keyInsightMessage');
-
-            insightBox.classList.remove('bg-emerald-500/10', 'border-emerald-500/30', 'bg-amber-500/10', 'border-amber-500/30');
-
-            if (data.metrics.plan_sustainable) {
-                insightTitle.innerHTML = '💡 Key Insight';
-                let message = `Your retirement plan is projected to remain financially sustainable until age ${payload.life_expectancy}. The final corpus is estimated to be ${fmt(data.metrics.final_corpus)}.`;
-                if (payload.include_pension && data.metrics.average_pension_coverage > 1) {
-                    message += ` Pension income is projected to cover approximately ${data.metrics.average_pension_coverage.toFixed(0)}% of recurring expenses after age ${payload.pension_start_age}.`;
-                }
-                insightMessage.textContent = message;
-                insightBox.classList.add('bg-emerald-500/10', 'border-emerald-500/30');
-            } else {
-                insightTitle.innerHTML = '⚠️ Key Insight';
-                let message = `Your investment corpus is projected to exhaust at age ${data.metrics.corpus_exhaustion_age}.`;
-                const additionalContributionNeeded = data.metrics.target_annual_contribution_for_gap - payload.annual_contribution;
-                if (additionalContributionNeeded > 1000) {
-                    const monthlyIncrease = additionalContributionNeeded / 12;
-                    message += ` To close this gap, consider increasing your annual savings to ${fmt(data.metrics.target_annual_contribution_for_gap)} (an additional ${fmt(monthlyIncrease)}/month).`;
-                } else if (payload.include_pension) {
-                    message += " After this point, the plan relies solely on pension income, which may not cover all expenses.";
-                } else {
-                    message += " After this point, there are no projected funds to cover expenses.";
-                }
-                insightMessage.textContent = message;
-                insightBox.classList.add('bg-amber-500/10', 'border-amber-500/30');
-            }
-
-            // --- Animate results appearance ---
-            const sectionsToAnimate = [
-                healthSection,
-                insightSection,
-                document.getElementById('advisorySection'),
-                document.getElementById('wealthChartPanel'),
-                payload.include_pension ? document.getElementById('pensionKpiSection') : null,
-                document.getElementById('detailedAnalysisSection'),
-                document.getElementById('detailedProjectionSection')
-            ].filter(Boolean);
-
-            sectionsToAnimate.forEach((section, index) => {
-                setTimeout(() => {
-                    section.classList.remove('hidden');
-                    section.classList.add('results-panel-animated');
-                    section.addEventListener('animationend', function handler() {
-                        section.classList.remove('results-panel-animated');
-                        section.removeEventListener('animationend', handler);
-                    }, { once: true });
-                }, index * 100);
-            });
-
-            setTimeout(() => {
-                document.querySelectorAll('.kpi-value').forEach(el => el.classList.add('animate-reveal'));
-                fitAllKpiValues();
-            }, sectionsToAnimate.length * 100 + 50);
-
-            // --- Update Retirement Journey Timeline ---
-            const timelineContainer = document.getElementById('journeyTimelineContainer');
-            const legendContainer = document.getElementById('journeyLegend');
-            timelineContainer.innerHTML = '';
-            legendContainer.innerHTML = '';
-
-            const timelineBar = document.createElement('div');
-            timelineBar.className = 'journey-timeline-bar';
-
-            const totalYears = payload.life_expectancy - payload.current_age + 1;
-            const retirementYearIndex = payload.retirement_age - payload.current_age;
-            const exhaustionYearIndex = data.metrics.corpus_exhaustion_age ? data.metrics.corpus_exhaustion_age - payload.current_age : -1;
-            const segments = [];
-            const legend = new Map();
-
-            if (retirementYearIndex > 0) {
-                segments.push({ years: retirementYearIndex, color: 'bg-emerald-500', label: 'Accumulation' });
-                legend.set('Accumulation', 'bg-emerald-500');
-            }
-
-            for (let i = retirementYearIndex; i < totalYears; i++) {
-                const color = exhaustionYearIndex !== -1 && i > exhaustionYearIndex && payload.include_pension
-                    ? 'bg-purple-500'
-                    : i === exhaustionYearIndex
-                        ? 'bg-rose-500'
-                        : data.projections[i] && data.projections[i].ad_hoc > 0
-                            ? 'bg-amber-500'
-                            : 'bg-blue-500';
-                const label = color === 'bg-purple-500'
-                    ? 'Pension Only'
-                    : color === 'bg-rose-500'
-                        ? 'Corpus Exhaustion'
-                        : color === 'bg-amber-500'
-                            ? 'High Withdrawal'
-                            : 'Retirement';
-                legend.set(label, color);
-                segments.push({ years: 1, color, label });
-            }
-
-            const consolidatedSegments = segments.reduce((acc, segment) => {
-                if (acc.length > 0 && acc[acc.length - 1].label === segment.label) {
-                    acc[acc.length - 1].years += segment.years;
-                } else {
-                    acc.push({ ...segment });
-                }
-                return acc;
-            }, []);
-
-            consolidatedSegments.forEach(seg => {
-                const segDiv = document.createElement('div');
-                segDiv.className = `journey-segment ${seg.color}`;
-                segDiv.style.width = `${(seg.years / totalYears) * 100}%`;
-                segDiv.title = `${seg.label} (${seg.years} years)`;
-                timelineBar.appendChild(segDiv);
-            });
-
-            [payload.current_age, payload.retirement_age, data.metrics.corpus_exhaustion_age, payload.life_expectancy].filter(Boolean).forEach(age => {
-                const marker = document.createElement('div');
-                marker.className = 'journey-marker';
-                marker.style.left = `${((age - payload.current_age) / totalYears) * 100}%`;
-                marker.textContent = age;
-                timelineBar.appendChild(marker);
-            });
-
-            timelineContainer.appendChild(timelineBar);
-            legend.forEach((color, label) => {
-                legendContainer.innerHTML += `<div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full ${color}"></div><span style="color: var(--text-2);">${label}</span></div>`;
-            });
-
-            const ages = data.projections.map(row => row.age);
-            const contribution = data.projections.map(row => row.contribution);
-            const lumpsumData = data.projections.map(row => row.lumpsum);
-            const withdrawal = data.projections.map(row => row.withdrawal);
-            const withdrawalAfterTax = data.projections.map(row => row.withdrawal_after_tax);
-            const withdrawalTax = data.projections.map(row => row.withdrawal_tax);
-            const adHoc = data.projections.map(row => row.ad_hoc);
-            const returns = data.projections.map(row => row.return);
-            const closing = data.projections.map(row => row.closing);
-            const unfundedExpense = data.projections.map(row => row.unfunded_expense);
-            const pensionData = data.projections.map(p => p.pension - p.pension_tax);
-            const pensionSurplusData = data.projections.map(p => p.pension_surplus_reinvested);
-
-            const tbody = document.getElementById('ledger_body');
-            tbody.innerHTML = '';
-            data.projections.forEach(row => {
-                const tr = document.createElement('tr');
-                if (row.age < payload.retirement_age) {
-                    tr.classList.add('row-accumulation');
-                } else if (row.age === data.metrics.corpus_exhaustion_age) {
-                    tr.classList.add('row-exhaustion');
-                } else if (data.metrics.corpus_exhaustion_age && row.age > data.metrics.corpus_exhaustion_age && payload.include_pension) {
-                    tr.classList.add('row-pension-only');
-                } else {
-                    tr.classList.add('row-retirement');
-                }
-                if (row.age === payload.retirement_age) tr.style.borderTop = '2px solid rgba(59, 130, 246, 0.4)';
-                tr.innerHTML = `
-                    <td class="py-2 px-3 font-semibold">${row.age}</td>
-                    <td class="py-2 px-3 text-right">${fmt(row.opening)}</td>
-                    <td class="py-2 px-3 text-right text-emerald-600 dark:text-emerald-400">+${fmt(row.contribution)}</td>
-                    <td class="py-2 px-3 text-right text-emerald-600 dark:text-emerald-400">+${fmt(row.lumpsum)}</td>
-                    <td class="py-2 px-3 text-right text-emerald-600 dark:text-emerald-400">+${fmt(row.pension)}</td>
-                    <td class="py-2 px-3 text-right text-rose-600 dark:text-rose-400">-${fmt(row.pension_tax)}</td>
-                    <td class="py-2 px-3 text-right text-emerald-600 dark:text-emerald-400">+${fmt(row.pension_surplus_reinvested)}</td>
-                    <td class="py-2 px-3 text-right text-rose-600 dark:text-rose-400">-${fmt(row.withdrawal)}</td>
-                    <td class="py-2 px-3 text-right text-rose-600 dark:text-rose-400">-${fmt(row.withdrawal_tax)}</td>
-                    <td class="py-2 px-3 text-right text-purple-600 dark:text-purple-400">-${fmt(row.ad_hoc)}</td>
-                    <td class="py-2 px-3 text-right font-semibold ${row.unfunded_expense > 0 ? 'text-red-600 dark:text-red-400' : ''}">-${fmt(row.unfunded_expense)}</td>
-                    <td class="py-2 px-3 text-right text-blue-600 dark:text-blue-400">${fmt(row.return)}</td>
-                    <td class="py-2 px-3 text-right font-semibold">${fmt(row.closing)}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            const trajectoryDatasets = [{
-                label: 'Net Closing Assets (₹)',
-                data: closing,
-                borderColor: '#facc15',
-                backgroundColor: withGradient(document.getElementById('trajectoryChart').getContext('2d'), 'rgba(250, 204, 21, 0.2)', 'rgba(250, 204, 21, 0.01)'),
-                fill: true,
-                pointRadius: 0,
-                pointHoverRadius: 5,
-                order: 1
-            }];
-
-            if (payload.include_pension) {
-                trajectoryDatasets.push({
-                    label: 'Net Pension Income (₹)',
-                    data: pensionData,
-                    borderColor: '#a78bfa',
-                    backgroundColor: 'rgba(167, 139, 250, 0.1)',
-                    fill: 'start',
-                    pointRadius: 0,
-                    pointHoverRadius: 5,
-                    borderDash: [5, 5],
-                    order: 2
-                });
-            }
-
-            const milestonePlugin = {
-                id: 'milestonePlugin',
-                beforeDraw: (chart) => {
-                    const { ctx, chartArea: { top, bottom, left, right }, scales: { x } } = chart;
-                    ctx.save();
-                    const retirementPixel = x.getPixelForValue(ages.indexOf(payload.retirement_age));
-                    const exhaustionPixel = data.metrics.corpus_exhaustion_age ? x.getPixelForValue(ages.indexOf(data.metrics.corpus_exhaustion_age)) : null;
-                    ctx.fillStyle = 'rgba(16, 185, 129, 0.05)';
-                    ctx.fillRect(left, top, retirementPixel - left, bottom - top);
-                    ctx.fillStyle = 'rgba(59, 130, 246, 0.05)';
-                    ctx.fillRect(retirementPixel, top, (exhaustionPixel || right) - retirementPixel, bottom - top);
-                    if (exhaustionPixel && payload.include_pension) {
-                        ctx.fillStyle = 'rgba(167, 139, 250, 0.08)';
-                        ctx.fillRect(exhaustionPixel, top, right - exhaustionPixel, bottom - top);
-                    }
-                    const drawMilestoneLine = (pixel, label, color) => {
-                        if (pixel >= left && pixel <= right) {
-                            ctx.beginPath();
-                            ctx.strokeStyle = color;
-                            ctx.lineWidth = 2;
-                            ctx.setLineDash([6, 3]);
-                            ctx.moveTo(pixel, top);
-                            ctx.lineTo(pixel, bottom);
-                            ctx.stroke();
-                            ctx.setLineDash([]);
-                            ctx.fillStyle = color;
-                            ctx.textAlign = 'center';
-                            ctx.font = '600 11px Inter, sans-serif';
-                            ctx.save();
-                            ctx.translate(pixel + 5, top + 50);
-                            ctx.rotate(Math.PI / 2);
-                            ctx.fillText(label, 0, 0);
-                            ctx.restore();
-                        }
-                    };
-                    drawMilestoneLine(retirementPixel, 'Retirement', 'rgba(59, 130, 246, 0.7)');
-                    if (exhaustionPixel) drawMilestoneLine(exhaustionPixel, 'Exhaustion', 'rgba(239, 68, 68, 0.7)');
-                    ctx.restore();
-                }
-            };
-
-            makeLineChart('trajectoryChart', ages, trajectoryDatasets, { plugins: { legend: { display: true, labels: { color: isLightTheme() ? '#334155' : '#f1f5f9', boxWidth: 12, usePointStyle: true, pointStyle: 'circle', padding: 16, font: { weight: '700', size: 13 } } } } }, [milestonePlugin]);
-
-            const cashFlowDatasets = [
-                { label: 'Contribution', data: contribution, backgroundColor: 'rgba(16, 185, 129, 0.78)', borderColor: 'rgba(16, 185, 129, 1)', borderWidth: 1 },
-                { label: 'Lumpsum', data: lumpsumData, backgroundColor: 'rgba(37, 99, 235, 0.78)', borderColor: 'rgba(37, 99, 235, 1)', borderWidth: 1 },
-                { label: 'Portfolio Withdrawal', data: withdrawal, backgroundColor: 'rgba(239, 68, 68, 0.78)', borderColor: 'rgba(239, 68, 68, 1)', borderWidth: 1 }
-            ];
-            if (payload.include_pension) {
-                cashFlowDatasets.splice(1, 0, { label: 'Net Pension', data: pensionData, backgroundColor: 'rgba(96, 165, 250, 0.78)', borderColor: 'rgba(96, 165, 250, 1)', borderWidth: 1 });
-                cashFlowDatasets.push({ label: 'Pension Surplus Reinvested', data: pensionSurplusData, backgroundColor: 'rgba(52, 211, 153, 0.78)', borderColor: 'rgba(52, 211, 153, 1)', borderWidth: 1 });
-            }
-            makeBarChart('cashFlowChart', ages, cashFlowDatasets);
-            makeLineChart('returnChart', ages, [{ label: 'Annual Return', data: returns, borderColor: '#60a5fa', backgroundColor: withGradient(document.getElementById('returnChart').getContext('2d'), 'rgba(96, 165, 250, 0.2)', 'rgba(96, 165, 250, 0.01)'), fill: true, pointRadius: 0, pointHoverRadius: 5 }]);
-            makeBarChart('expenseChart', ages, [
-                { label: 'Annual Expenses (Net)', data: withdrawalAfterTax, backgroundColor: 'rgba(239, 68, 68, 0.76)', borderColor: 'rgba(239, 68, 68, 1)', borderWidth: 1, stack: 'outflow' },
-                { label: 'Withdrawal Tax', data: withdrawalTax, backgroundColor: 'rgba(59, 130, 246, 0.76)', borderColor: 'rgba(59, 130, 246, 1)', borderWidth: 1, stack: 'outflow' },
-                { label: 'Ad-Hoc', data: adHoc, backgroundColor: 'rgba(124, 58, 237, 0.76)', borderColor: 'rgba(124, 58, 237, 1)', borderWidth: 1 },
-                { label: 'Unfunded Expense', data: unfundedExpense, backgroundColor: 'rgba(217, 70, 239, 0.76)', borderColor: 'rgba(217, 70, 239, 1)', borderWidth: 1 }
-            ], { scales: { x: { stacked: true }, y: { stacked: true } } });
-            makeLineChart('withdrawalReturnChart', ages, [
-                { label: 'Withdrawal', data: withdrawal, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.08)', fill: false, pointRadius: 0 },
-                { label: 'Annual Return', data: returns, borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.08)', fill: false, pointRadius: 0 }
-            ]);
-            makeLineChart('projectedBalanceChart', ages, [{ label: 'Projected Corpus Balance', data: closing, borderColor: '#34d399', backgroundColor: withGradient(document.getElementById('projectedBalanceChart').getContext('2d'), 'rgba(52, 211, 153, 0.2)', 'rgba(52, 211, 153, 0.01)'), fill: true, pointRadius: 0, pointHoverRadius: 5 }]);
-
-            makeDoughnutChart('allocationChart', ['Equity', 'Debt', 'Arbitrage', 'REIT'], [payload.allocation_equity * 100, payload.allocation_debt * 100, payload.allocation_arbitrage * 100, payload.allocation_reit * 100]);
-
-            const taxEquityLTCG = payload.allocation_equity * payload.equity_ltcg_split * payload.tax_ltcg;
-            const taxEquitySTCG = payload.allocation_equity * payload.equity_stcg_split * payload.tax_stcg;
-            const taxDebt = payload.allocation_debt * payload.tax_debt;
-            const taxArbitrage = payload.allocation_arbitrage * payload.tax_arbitrage;
-            const taxReitLTCG = payload.allocation_reit * payload.reit_gain_fraction * payload.tax_ltcg;
-            const totalTaxRate = taxEquityLTCG + taxEquitySTCG + taxDebt + taxArbitrage + taxReitLTCG;
-
-            makeDoughnutChart('taxAllocationChart', ['Equity LTCG', 'Equity STCG', 'Debt', 'Arbitrage', 'REIT LTCG'], totalTaxRate > 0 ? [
-                (taxEquityLTCG / totalTaxRate) * 100,
-                (taxEquitySTCG / totalTaxRate) * 100,
-                (taxDebt / totalTaxRate) * 100,
-                (taxArbitrage / totalTaxRate) * 100,
-                (taxReitLTCG / totalTaxRate) * 100
-            ] : [0, 0, 0, 0, 0], {
-                colors: [
-                    'rgba(59, 130, 246, 0.8)',
-                    'rgba(96, 165, 250, 0.8)',
-                    'rgba(16, 185, 129, 0.8)',
-                    'rgba(245, 158, 11, 0.8)',
-                    'rgba(250, 204, 21, 0.8)'
-                ]
-            });
-        }
-
         async function calculateMetrics() {
             clearCalculationError();
 
@@ -2881,15 +2560,15 @@
                 retirement_age: parseInt(document.getElementById('retirement_age').value),
                 life_expectancy: parseInt(document.getElementById('life_expectancy').value),
                 current_annual_expenses: parseCurrency(document.getElementById('current_annual_expenses').value),
-                avg_inflation_rate: parseFloat(document.getElementById('avg_inflation_rate').value) / 100.0,
-                current_corpus: parseCurrency(document.getElementById('current_corpus').value),
-                annual_contribution: parseCurrency(document.getElementById('annual_contribution').value),
-                return_equity: parseFloat(document.getElementById('return_equity').value) / 100.0,
-                return_debt: parseFloat(document.getElementById('return_debt').value) / 100.0,
-                return_arbitrage: parseFloat(document.getElementById('return_arbitrage').value) / 100.0,
-                return_reit: parseFloat(document.getElementById('return_reit').value) / 100.0,
-                contribution_increase: parseFloat(document.getElementById('contribution_increase').value) / 100.0,
-                ltcg_exemption: parseCurrency(document.getElementById('ltcg_exemption').value),
+avg_inflation_rate: parseFloat(document.getElementById('avg_inflation_rate').value) / 100.0,
+                 current_corpus: parseCurrency(document.getElementById('current_corpus').value),
+                 annual_contribution: parseCurrency(document.getElementById('annual_contribution').value),
+                 return_equity: parseFloat(document.getElementById('return_equity').value) / 100.0,
+                  return_debt: parseFloat(document.getElementById('return_debt').value) / 100.0,
+                  return_arbitrage: parseFloat(document.getElementById('return_arbitrage').value) / 100.0,
+                  return_reit: parseFloat(document.getElementById('return_reit').value) / 100.0,
+                 contribution_increase: parseFloat(document.getElementById('contribution_increase').value) / 100.0,
+                 ltcg_exemption: parseCurrency(document.getElementById('ltcg_exemption').value),
                 one_time_lumpsum: parseCurrency(document.getElementById('one_time_lumpsum').value),
                 // Pension
                 include_pension: document.getElementById('include_pension').checked,
@@ -2901,11 +2580,11 @@
 
                 stress_scenario: document.getElementById('stress_scenario').value,
                 adhoc_expenses: getAdHocExpenses(),
-                // Portfolio Allocation
-                allocation_equity: parseFloat(document.getElementById('allocation_equity').value) / 100,
-                allocation_debt: parseFloat(document.getElementById('allocation_debt').value) / 100,
-                allocation_arbitrage: parseFloat(document.getElementById('allocation_arbitrage').value) / 100,
-                allocation_reit: parseFloat(document.getElementById('allocation_reit').value) / 100,
+// Portfolio Allocation
+                 allocation_equity: parseFloat(document.getElementById('allocation_equity').value) / 100,
+                 allocation_debt: parseFloat(document.getElementById('allocation_debt').value) / 100,
+                 allocation_arbitrage: parseFloat(document.getElementById('allocation_arbitrage').value) / 100,
+                 allocation_reit: parseFloat(document.getElementById('allocation_reit').value) / 100,
                 // Equity sub-allocation
                 equity_ltcg_split: parseFloat(document.getElementById('equity_ltcg_split').value) / 100,
                 equity_stcg_split: parseFloat(document.getElementById('equity_stcg_split').value) / 100,
@@ -2929,13 +2608,6 @@
 
             if (payload.life_expectancy < payload.retirement_age) {
                 showCalculationError('Life expectancy must be greater than or equal to the retirement age.');
-                return;
-            }
-
-            // Validate allocation sums to 100%
-            const totalAlloc = payload.allocation_equity + payload.allocation_debt + payload.allocation_arbitrage + payload.allocation_reit;
-            if (totalAlloc < 0.995 || totalAlloc > 1.005) {
-                showCalculationError('Portfolio allocation must sum to 100%.');
                 return;
             }
 
@@ -3026,15 +2698,417 @@
                     coverageEl.classList.remove('text-success', 'text-warning');
                     if (coverage >= 50) coverageEl.classList.add('text-success');
                     else if (coverage >= 25) coverageEl.classList.add('text-warning');
+
+                } else {
+                    pensionKpiSection.classList.add('hidden');
                 }
 
-                // --- Update charts ---
-                updateCharts(data);
+                // --- Update Plan Health Indicator ---
+                const healthSection = document.getElementById('planHealthSection');
+                const healthIndicator = document.getElementById('planHealthIndicator');
+                const healthStatus = document.getElementById('planHealthStatus');
+                const healthMessage = document.getElementById('planHealthMessage');
+
+                // healthSection.classList.remove('hidden'); // Handled by animation logic below
+                healthIndicator.classList.remove('bg-emerald-500/10', 'border-emerald-500/30', 'bg-amber-500/10', 'border-amber-500/30', 'bg-rose-500/10', 'border-rose-500/30');
+
+                if (data.metrics.plan_sustainable) {
+                    healthStatus.innerHTML = `<span class="text-success">🟢 Strong</span>`;
+                    healthMessage.textContent = `Your projected corpus remains positive through age ${payload.life_expectancy}.`;
+                    healthIndicator.classList.add('bg-emerald-500/10', 'border', 'border-emerald-500/30');
+                } else {
+                    let exhaustionMessage = `Portfolio exhaustion occurs at age ${data.metrics.corpus_exhaustion_age}.`;
+                    if (payload.include_pension) {
+                        exhaustionMessage += " Pension income continues thereafter.";
+                    }
+                    healthMessage.textContent = exhaustionMessage;
+
+                    // Use readiness to determine if it's "Needs Attention" or "Shortfall Risk"
+                    if (data.metrics.readiness_percent >= 75) {
+                        healthStatus.innerHTML = `<span class="text-warning">🟡 Needs Attention</span>`;
+                        healthIndicator.classList.add('bg-amber-500/10', 'border', 'border-amber-500/30');
+                    } else {
+                        healthStatus.innerHTML = `<span class="text-danger">🔴 Shortfall Risk</span>`;
+                        healthIndicator.classList.add('bg-rose-500/10', 'border', 'border-rose-500/30');
+                    }
+                }
+
+                // --- Update Key Insight Box ---
+                const insightSection = document.getElementById('keyInsightSection');
+                const insightBox = document.getElementById('keyInsightBox');
+                const insightTitle = document.getElementById('keyInsightTitle');
+                const insightMessage = document.getElementById('keyInsightMessage');
+
+                // insightSection.classList.remove('hidden'); // Handled by animation logic below
+                insightBox.classList.remove('bg-emerald-500/10', 'border-emerald-500/30', 'bg-amber-500/10', 'border-amber-500/30');
+
+                if (data.metrics.plan_sustainable) {
+                    insightTitle.innerHTML = '💡 Key Insight';
+                    let message = `Your retirement plan is projected to remain financially sustainable until age ${payload.life_expectancy}. The final corpus is estimated to be ${fmt(data.metrics.final_corpus)}.`;
+                    if (payload.include_pension && data.metrics.average_pension_coverage > 1) {
+                        message += ` Pension income is projected to cover approximately ${data.metrics.average_pension_coverage.toFixed(0)}% of recurring expenses after age ${payload.pension_start_age}.`;
+                    }
+                    insightMessage.textContent = message;
+                    insightBox.classList.add('bg-emerald-500/10', 'border-emerald-500/30');
+                } else {
+                    insightTitle.innerHTML = '⚠️ Key Insight';
+                    let message = `Your investment corpus is projected to exhaust at age ${data.metrics.corpus_exhaustion_age}.`;
+                    const additionalContributionNeeded = data.metrics.target_annual_contribution_for_gap - payload.annual_contribution;
+                    if (additionalContributionNeeded > 1000) { // Only show if a meaningful increase is needed
+                        const monthlyIncrease = additionalContributionNeeded / 12;
+                        message += ` To close this gap, consider increasing your annual savings to ${fmt(data.metrics.target_annual_contribution_for_gap)} (an additional ${fmt(monthlyIncrease)}/month).`;
+                    } else if (payload.include_pension) {
+                        message += " After this point, the plan relies solely on pension income, which may not cover all expenses.";
+                    } else {
+                        message += " After this point, there are no projected funds to cover expenses."
+                    }
+                    insightMessage.textContent = message;
+                    insightBox.classList.add('bg-amber-500/10', 'border-amber-500/30');
+                }
+
+                // --- Animate results appearance ---
+                const sectionsToAnimate = [
+                    document.getElementById('planHealthSection'),
+                    document.getElementById('keyInsightSection'),
+                    document.getElementById('advisorySection'),
+                    document.getElementById('wealthChartPanel'),
+                    // Only animate pension section if it's actually included
+                    payload.include_pension ? document.getElementById('pensionKpiSection') : null,
+                    document.getElementById('detailedAnalysisSection'),
+                    document.getElementById('detailedProjectionSection')
+                ].filter(Boolean); // Filter out nulls
+
+                sectionsToAnimate.forEach((section, index) => {
+                    setTimeout(() => {
+                        section.classList.remove('hidden');
+                        section.classList.add('results-panel-animated');
+                        // Remove animation class after it completes to allow re-triggering
+                        section.addEventListener('animationend', function handler() {
+                            section.classList.remove('results-panel-animated');
+                            section.removeEventListener('animationend', handler);
+                        }, { once: true });
+                    }, index * 100); // Stagger by 100ms
+                });
+
+                // Apply KPI animations after a slight delay to ensure elements are visible
+                setTimeout(() => {
+                    document.querySelectorAll('.kpi-value').forEach(el => el.classList.add('animate-reveal'));
+                    fitAllKpiValues();
+                }, sectionsToAnimate.length * 100 + 50); // Delay slightly more than the last section animation
+
+                // --- Update Retirement Journey Timeline ---
+                const timelineContainer = document.getElementById('journeyTimelineContainer');
+                const legendContainer = document.getElementById('journeyLegend');
+                timelineContainer.innerHTML = ''; // Clear previous
+                legendContainer.innerHTML = ''; // Clear previous
+
+                const timelineBar = document.createElement('div');
+                timelineBar.className = 'journey-timeline-bar';
+
+                const totalYears = payload.life_expectancy - payload.current_age + 1;
+                const retirementYearIndex = payload.retirement_age - payload.current_age;
+                const exhaustionYearIndex = data.metrics.corpus_exhaustion_age ? data.metrics.corpus_exhaustion_age - payload.current_age : -1;
+
+                const segments = [];
+                const legend = new Map();
+
+                // 1. Accumulation Phase
+                if (retirementYearIndex > 0) {
+                    segments.push({ years: retirementYearIndex, color: 'bg-emerald-500', label: 'Accumulation' });
+                    legend.set('Accumulation', 'bg-emerald-500');
+                }
+
+                // 2. Retirement Phases
+                for (let i = retirementYearIndex; i < totalYears; i++) {
+                    const age = payload.current_age + i;
+                    let color = 'bg-blue-500';
+                    let label = 'Retirement';
+
+                    if (exhaustionYearIndex !== -1 && i > exhaustionYearIndex && payload.include_pension) {
+                        color = 'bg-purple-500';
+                        label = 'Pension Only';
+                    } else if (i === exhaustionYearIndex) {
+                        color = 'bg-rose-500';
+                        label = 'Corpus Exhaustion';
+                    } else if (data.projections[i] && data.projections[i].ad_hoc > 0) {
+                        color = 'bg-amber-500';
+                        label = 'High Withdrawal';
+                    }
+
+                    legend.set(label, color);
+                    segments.push({ years: 1, color: color, label: label });
+                }
+
+                // Consolidate consecutive segments of the same color
+                const consolidatedSegments = segments.reduce((acc, segment) => {
+                    if (acc.length > 0 && acc[acc.length - 1].label === segment.label) {
+                        acc[acc.length - 1].years += segment.years;
+                    } else {
+                        acc.push({ ...segment });
+                    }
+                    return acc;
+                }, []);
+
+                consolidatedSegments.forEach(seg => {
+                    const segDiv = document.createElement('div');
+                    segDiv.className = `journey-segment ${seg.color}`;
+                    segDiv.style.width = `${(seg.years / totalYears) * 100}%`;
+                    segDiv.title = `${seg.label} (${seg.years} years)`;
+                    timelineBar.appendChild(segDiv);
+                });
+
+                // Add markers
+                [payload.current_age, payload.retirement_age, data.metrics.corpus_exhaustion_age, payload.life_expectancy].filter(Boolean).forEach(age => {
+                    const marker = document.createElement('div');
+                    marker.className = 'journey-marker';
+                    marker.style.left = `${((age - payload.current_age) / totalYears) * 100}%`;
+                    marker.textContent = age;
+                    timelineBar.appendChild(marker);
+                });
+
+                timelineContainer.appendChild(timelineBar);
+
+                // Build Legend
+                legend.forEach((color, label) => {
+                    legendContainer.innerHTML += `<div class="flex items-center gap-2"><div class="w-3 h-3 rounded-full ${color}"></div><span style="color: var(--text-2);">${label}</span></div>`;
+                });
+
+                const ages = data.projections.map(row => row.age);
+                const opening = data.projections.map(row => row.opening);
+                const contribution = data.projections.map(row => row.contribution);
+                const lumpsumData = data.projections.map(row => row.lumpsum);
+                const withdrawal = data.projections.map(row => row.withdrawal);
+                const withdrawalAfterTax = data.projections.map(row => row.withdrawal_after_tax);
+                const withdrawalTax = data.projections.map(row => row.withdrawal_tax);
+                const adHoc = data.projections.map(row => row.ad_hoc);
+                const returns = data.projections.map(row => row.return);
+                const closing = data.projections.map(row => row.closing);
+                const unfundedExpense = data.projections.map(row => row.unfunded_expense);
+                const pensionData = data.projections.map(p => p.pension - p.pension_tax);
+                const pensionSurplusData = data.projections.map(p => p.pension_surplus_reinvested);
+
+                const tbody = document.getElementById('ledger_body');
+                tbody.innerHTML = '';
+
+                data.projections.forEach(row => {
+                    const tr = document.createElement('tr');
+                    
+                    // Apply lifecycle phase background tints
+                    if (row.age < payload.retirement_age) {
+                        tr.classList.add('row-accumulation');
+                    } else if (row.age === data.metrics.corpus_exhaustion_age) {
+                        tr.classList.add('row-exhaustion');
+                    } else if (data.metrics.corpus_exhaustion_age && row.age > data.metrics.corpus_exhaustion_age && payload.include_pension) {
+                        tr.classList.add('row-pension-only');
+                    } else {
+                        tr.classList.add('row-retirement');
+                    }
+
+                    // Highlight the first year of retirement for clarity
+                    if (row.age === payload.retirement_age) tr.style.borderTop = '2px solid rgba(59, 130, 246, 0.4)';
+
+                    tr.innerHTML = `
+                        <td class="py-2 px-3 font-semibold">${row.age}</td>
+                        <td class="py-2 px-3 text-right">${fmt(row.opening)}</td>
+                        <td class="py-2 px-3 text-right text-emerald-600 dark:text-emerald-400">+${fmt(row.contribution)}</td>
+                        <td class="py-2 px-3 text-right text-emerald-600 dark:text-emerald-400">+${fmt(row.lumpsum)}</td>
+                        <td class="py-2 px-3 text-right text-emerald-600 dark:text-emerald-400">+${fmt(row.pension)}</td>
+                        <td class="py-2 px-3 text-right text-rose-600 dark:text-rose-400">-${fmt(row.pension_tax)}</td>
+                        <td class="py-2 px-3 text-right text-emerald-600 dark:text-emerald-400">+${fmt(row.pension_surplus_reinvested)}</td>
+                        <td class="py-2 px-3 text-right text-rose-600 dark:text-rose-400">-${fmt(row.withdrawal)}</td>
+                        <td class="py-2 px-3 text-right text-rose-600 dark:text-rose-400">-${fmt(row.withdrawal_tax)}</td>
+                        <td class="py-2 px-3 text-right text-purple-600 dark:text-purple-400">-${fmt(row.ad_hoc)}</td>
+                        <td class="py-2 px-3 text-right font-semibold ${row.unfunded_expense > 0 ? 'text-red-600 dark:text-red-400' : ''}">-${fmt(row.unfunded_expense)}</td>
+                        <td class="py-2 px-3 text-right text-blue-600 dark:text-blue-400">${fmt(row.return)}</td>
+                        <td class="py-2 px-3 text-right font-semibold">${fmt(row.closing)}</td>
+                    `
+                    ;
+                    tbody.appendChild(tr);
+                });
+
+                // --- Enhanced Trajectory Chart with Milestones ---
+                const trajectoryDatasets = [
+                    {
+                        label: 'Net Closing Assets (₹)',
+                        data: closing,
+                        borderColor: '#facc15', // yellow-400
+                        backgroundColor: withGradient(document.getElementById('trajectoryChart').getContext('2d'), 'rgba(250, 204, 21, 0.2)', 'rgba(250, 204, 21, 0.01)'),
+                        fill: true,
+                        pointRadius: 0,
+                        pointHoverRadius: 5,
+                        order: 1 // Render on top
+                    }
+                ];
+
+                if (payload.include_pension) {
+                    trajectoryDatasets.push({
+                        label: 'Net Pension Income (₹)',
+                        data: pensionData,
+                        borderColor: '#a78bfa', // purple-400
+                        backgroundColor: 'rgba(167, 139, 250, 0.1)',
+                        fill: 'start',
+                        pointRadius: 0,
+                        pointHoverRadius: 5,
+                        borderDash: [5, 5],
+                        order: 2
+                    });
+                }
+
+                const milestonePlugin = {
+                    id: 'milestonePlugin',
+                    beforeDraw: (chart) => {
+                        const { ctx, chartArea: { top, bottom, left, right }, scales: { x, y } } = chart;
+                        ctx.save();
+
+                        const retirementAge = payload.retirement_age;
+                        const exhaustionAge = data.metrics.corpus_exhaustion_age;
+
+                        const retirementPixel = x.getPixelForValue(ages.indexOf(retirementAge));
+                        const exhaustionPixel = exhaustionAge ? x.getPixelForValue(ages.indexOf(exhaustionAge)) : null;
+
+                        // --- Background Regions ---
+                        // Accumulation Phase
+                        ctx.fillStyle = 'rgba(16, 185, 129, 0.05)'; // Emerald
+                        ctx.fillRect(left, top, retirementPixel - left, bottom - top);
+
+                        // Retirement Phase
+                        ctx.fillStyle = 'rgba(59, 130, 246, 0.05)'; // Blue
+                        ctx.fillRect(retirementPixel, top, (exhaustionPixel || right) - retirementPixel, bottom - top);
+
+                        // Pension Only Phase (if applicable)
+                        if (exhaustionPixel && payload.include_pension) {
+                            ctx.fillStyle = 'rgba(167, 139, 250, 0.08)'; // Purple
+                            ctx.fillRect(exhaustionPixel, top, right - exhaustionPixel, bottom - top);
+                        }
+
+                        // --- Vertical Milestone Lines ---
+                        const drawMilestoneLine = (pixel, label, color) => {
+                            if (pixel >= left && pixel <= right) {
+                                ctx.beginPath();
+                                ctx.strokeStyle = color;
+                                ctx.lineWidth = 2;
+                                ctx.setLineDash([6, 3]);
+                                ctx.moveTo(pixel, top);
+                                ctx.lineTo(pixel, bottom);
+                                ctx.stroke();
+                                ctx.setLineDash([]);
+
+                                // Label
+                                ctx.fillStyle = color;
+                                ctx.textAlign = 'center';
+                                ctx.font = '600 11px Inter, sans-serif';
+                                ctx.save();
+                                ctx.translate(pixel + 5, top + 50);
+                                ctx.rotate(Math.PI / 2);
+                                ctx.fillText(label, 0, 0);
+                                ctx.restore();
+                            }
+                        };
+
+                        drawMilestoneLine(retirementPixel, 'Retirement', 'rgba(59, 130, 246, 0.7)');
+                        if (exhaustionPixel) {
+                            drawMilestoneLine(exhaustionPixel, 'Exhaustion', 'rgba(239, 68, 68, 0.7)');
+                        }
+
+                        ctx.restore();
+                    }
+                };
+
+                makeLineChart(
+                    'trajectoryChart', 
+                    ages, 
+                    trajectoryDatasets,
+                    { plugins: { legend: { display: true, labels: { color: isLightTheme() ? '#334155' : '#f1f5f9', boxWidth: 12, usePointStyle: true, pointStyle: 'circle', padding: 16, font: { weight: '700', size: 13 } } } } },
+                    [milestonePlugin]
+                );
+
+                const cashFlowDatasets = [
+                    { label: 'Contribution', data: contribution, backgroundColor: 'rgba(16, 185, 129, 0.78)', borderColor: 'rgba(16, 185, 129, 1)', borderWidth: 1 },
+                    { label: 'Lumpsum', data: lumpsumData, backgroundColor: 'rgba(37, 99, 235, 0.78)', borderColor: 'rgba(37, 99, 235, 1)', borderWidth: 1 },
+                    { label: 'Portfolio Withdrawal', data: withdrawal, backgroundColor: 'rgba(239, 68, 68, 0.78)', borderColor: 'rgba(239, 68, 68, 1)', borderWidth: 1  }
+                ];
+
+                if (payload.include_pension) {
+                    cashFlowDatasets.splice(1, 0, { label: 'Net Pension', data: pensionData, backgroundColor: 'rgba(96, 165, 250, 0.78)', borderColor: 'rgba(96, 165, 250, 1)', borderWidth: 1 });
+                    cashFlowDatasets.push({ label: 'Pension Surplus Reinvested', data: pensionSurplusData, backgroundColor: 'rgba(52, 211, 153, 0.78)', borderColor: 'rgba(52, 211, 153, 1)', borderWidth: 1 });
+                }
+
+                makeBarChart('cashFlowChart', ages, cashFlowDatasets);
+
+                makeLineChart('returnChart', ages, [{
+                    label: 'Annual Return',
+                    data: returns,
+                    borderColor: '#60a5fa',
+                    backgroundColor: withGradient(document.getElementById('returnChart').getContext('2d'), 'rgba(96, 165, 250, 0.2)', 'rgba(96, 165, 250, 0.01)'),
+                    fill: true,
+                    pointRadius: 0,
+                    pointHoverRadius: 5
+                }]);
+
+                makeBarChart('expenseChart', ages, [
+                    { label: 'Annual Expenses (Net)', data: withdrawalAfterTax, backgroundColor: 'rgba(239, 68, 68, 0.76)', borderColor: 'rgba(239, 68, 68, 1)', borderWidth: 1, stack: 'outflow' },
+                    { label: 'Withdrawal Tax', data: withdrawalTax, backgroundColor: 'rgba(59, 130, 246, 0.76)', borderColor: 'rgba(59, 130, 246, 1)', borderWidth: 1, stack: 'outflow' },
+                    { label: 'Ad-Hoc', data: adHoc, backgroundColor: 'rgba(124, 58, 237, 0.76)', borderColor: 'rgba(124, 58, 237, 1)', borderWidth: 1 },
+                    { label: 'Unfunded Expense', data: unfundedExpense, backgroundColor: 'rgba(217, 70, 239, 0.76)', borderColor: 'rgba(217, 70, 239, 1)', borderWidth: 1 }
+                ], { scales: { x: { stacked: true }, y: { stacked: true } } });
+
+                makeLineChart('withdrawalReturnChart', ages, [
+                    { label: 'Withdrawal', data: withdrawal, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.08)', fill: false, pointRadius: 0 },
+                    { label: 'Annual Return', data: returns, borderColor: '#2563eb', backgroundColor: 'rgba(37,99,235,0.08)', fill: false, pointRadius: 0 }
+                ]);
+
+                makeLineChart('projectedBalanceChart', ages, [{
+                    label: 'Projected Corpus Balance',
+                    data: closing,
+                    borderColor: '#34d399',
+                    backgroundColor: withGradient(document.getElementById('projectedBalanceChart').getContext('2d'), 'rgba(52, 211, 153, 0.2)', 'rgba(52, 211, 153, 0.01)'),
+                    fill: true,
+                    pointRadius: 0,
+                    pointHoverRadius: 5
+                }]);
+
+makeDoughnutChart('allocationChart',
+                     ['Equity', 'Debt', 'Arbitrage', 'REIT'],
+                     [
+                         payload.allocation_equity * 100,
+                         payload.allocation_debt * 100,
+                         payload.allocation_arbitrage * 100,
+                         payload.allocation_reit * 100
+                     ]
+                 );
+
+                const taxEquityLTCG = payload.allocation_equity * payload.equity_ltcg_split * payload.tax_ltcg;
+                const taxEquitySTCG = payload.allocation_equity * payload.equity_stcg_split * payload.tax_stcg;
+                const taxDebt = payload.allocation_debt * payload.tax_debt;
+                const taxArbitrage = payload.allocation_arbitrage * payload.tax_arbitrage;
+                const taxReitLTCG = payload.allocation_reit * payload.reit_gain_fraction * payload.tax_ltcg;
+                const totalTaxRate = taxEquityLTCG + taxEquitySTCG + taxDebt + taxArbitrage + taxReitLTCG;
+
+                makeDoughnutChart('taxAllocationChart',
+                    ['Equity LTCG', 'Equity STCG', 'Debt', 'Arbitrage', 'REIT LTCG'],
+                    totalTaxRate > 0 ? [
+                        (taxEquityLTCG / totalTaxRate) * 100,
+                        (taxEquitySTCG / totalTaxRate) * 100,
+                        (taxDebt / totalTaxRate) * 100,
+                        (taxArbitrage / totalTaxRate) * 100,
+                        (taxReitLTCG / totalTaxRate) * 100
+                    ] : [0, 0, 0, 0, 0],
+                    {
+                        colors: [
+                            'rgba(59, 130, 246, 0.8)',   // blue-500
+                            'rgba(96, 165, 250, 0.8)',   // blue-400
+                            'rgba(16, 185, 129, 0.8)',   // emerald-500
+                            'rgba(245, 158, 11, 0.8)',    // amber-500
+                            'rgba(250, 204, 21, 0.8)'     // yellow-400
+                        ]
+                    }
+                );
             } catch (error) {
-                console.error('Calculation error:', error);
                 showCalculationError(error.message || 'Unexpected error while calculating retirement metrics.');
             }
-        }        async function calculateMonteCarlo() {
+        }
+
+        async function calculateMonteCarlo() {
             clearCalculationError();
 
             const btn = document.getElementById('mcRunBtn');
@@ -3049,24 +3123,24 @@
                 retirement_age: parseInt(document.getElementById('retirement_age').value),
                 life_expectancy: parseInt(document.getElementById('life_expectancy').value),
                 current_annual_expenses: parseCurrency(document.getElementById('current_annual_expenses').value),
-                avg_inflation_rate: parseFloat(document.getElementById('avg_inflation_rate').value) / 100.0,
-                current_corpus: parseCurrency(document.getElementById('current_corpus').value),
-                annual_contribution: parseCurrency(document.getElementById('annual_contribution').value),
-                contribution_increase: parseFloat(document.getElementById('contribution_increase').value) / 100.0,
-                ltcg_exemption: parseCurrency(document.getElementById('ltcg_exemption').value),
-                one_time_lumpsum: parseCurrency(document.getElementById('one_time_lumpsum').value),
-                include_pension: document.getElementById('include_pension').checked,
-                pension_start_age: parseInt(document.getElementById('pension_start_age').value),
-                annual_pension: parseCurrency(document.getElementById('annual_pension').value),
-                pension_increase: parseFloat(document.getElementById('pension_increase').value) / 100.0,
-                pension_tax_rate: parseFloat(document.getElementById('pension_tax_rate').value) / 100.0,
-                reinvest_pension_surplus: document.getElementById('reinvest_pension_surplus').checked,
-                stress_scenario: document.getElementById('stress_scenario').value,
+avg_inflation_rate: parseFloat(document.getElementById('avg_inflation_rate').value) / 100.0,
+                 current_corpus: parseCurrency(document.getElementById('current_corpus').value),
+                 annual_contribution: parseCurrency(document.getElementById('annual_contribution').value),
+                 contribution_increase: parseFloat(document.getElementById('contribution_increase').value) / 100.0,
+                 ltcg_exemption: parseCurrency(document.getElementById('ltcg_exemption').value),
+                 one_time_lumpsum: parseCurrency(document.getElementById('one_time_lumpsum').value),
+                 include_pension: document.getElementById('include_pension').checked,
+                 pension_start_age: parseInt(document.getElementById('pension_start_age').value),
+                 annual_pension: parseCurrency(document.getElementById('annual_pension').value),
+                 pension_increase: parseFloat(document.getElementById('pension_increase').value) / 100.0,
+                 pension_tax_rate: parseFloat(document.getElementById('pension_tax_rate').value) / 100.0,
+                 reinvest_pension_surplus: document.getElementById('reinvest_pension_surplus').checked,
+                 stress_scenario: document.getElementById('stress_scenario').value,
                 adhoc_expenses: getAdHocExpenses(),
                 allocation_equity: parseFloat(document.getElementById('allocation_equity').value) / 100,
                 allocation_debt: parseFloat(document.getElementById('allocation_debt').value) / 100,
                 allocation_arbitrage: parseFloat(document.getElementById('allocation_arbitrage').value) / 100,
-                allocation_reit: parseFloat(document.getElementById("allocation_reit").value) / 100,
+                 allocation_reit: parseFloat(document.getElementById("allocation_reit").value) / 100,
                 equity_ltcg_split: parseFloat(document.getElementById('equity_ltcg_split').value) / 100,
                 equity_stcg_split: parseFloat(document.getElementById('equity_stcg_split').value) / 100,
                 tax_ltcg: parseFloat(document.getElementById('tax_ltcg').value) / 100,
@@ -3074,10 +3148,10 @@
                 tax_debt: parseFloat(document.getElementById('tax_debt').value) / 100,
                 tax_arbitrage: parseFloat(document.getElementById('tax_arbitrage').value) / 100,
                 reit_gain_fraction: parseFloat(document.getElementById('reit_gain_fraction').value) / 100.0,
-                return_equity: parseFloat(document.getElementById('return_equity').value) / 100.0,
-                return_debt: parseFloat(document.getElementById('return_debt').value) / 100.0,
-                return_arbitrage: parseFloat(document.getElementById('return_arbitrage').value) / 100.0,
-                return_reit: parseFloat(document.getElementById('return_reit').value) / 100.0,
+                 return_equity: parseFloat(document.getElementById('return_equity').value) / 100.0,
+                 return_debt: parseFloat(document.getElementById('return_debt').value) / 100.0,
+                 return_arbitrage: parseFloat(document.getElementById('return_arbitrage').value) / 100.0,
+                 return_reit: parseFloat(document.getElementById('return_reit').value) / 100.0,
                 num_simulations: parseInt(document.getElementById('num_simulations').value),
                 volatility_equity: parseFloat(document.getElementById('volatility_equity').value) / 100,
                 volatility_debt: parseFloat(document.getElementById('volatility_debt').value) / 100,
@@ -3114,17 +3188,6 @@
 
             if (payload.life_expectancy < payload.retirement_age) {
                 showCalculationError('Life expectancy must be greater than or equal to the retirement age.');
-                overlay.classList.remove('active');
-                btn.classList.remove('mc-loading');
-                btn.disabled = false;
-                btn.querySelector('.mc-btn-text').textContent = '🎲 Run Monte Carlo Simulation';
-                return;
-            }
-
-            // Validate allocation sums to 100%
-            const totalAlloc = payload.allocation_equity + payload.allocation_debt + payload.allocation_arbitrage + payload.allocation_reit;
-            if (totalAlloc < 0.995 || totalAlloc > 1.005) {
-                showCalculationError('Portfolio allocation must sum to 100%.');
                 overlay.classList.remove('active');
                 btn.classList.remove('mc-loading');
                 btn.disabled = false;
@@ -3172,7 +3235,9 @@
                 btn.querySelector('.mc-btn-text').textContent = '🎲 Run Monte Carlo Simulation';
                 document.getElementById('mcOverlay').classList.remove('active');
             }
-        }        function renderMonteCarloResults(data) {
+        }
+
+        function renderMonteCarloResults(data) {
             const metrics = data.metrics;
             const yearly = data.yearly_percentiles;
 

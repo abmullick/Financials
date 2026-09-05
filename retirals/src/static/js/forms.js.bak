@@ -134,41 +134,63 @@ function setupStepper() {
 }
 
 function setupAllocationSliders() {
-    const sliders = {
-        equity: { slider: document.getElementById('equity_slider'), valueDisplay: document.getElementById('equity_slider_value'), hiddenInput: document.getElementById('allocation_equity') },
-        debt: { slider: document.getElementById('debt_slider'), valueDisplay: document.getElementById('debt_slider_value'), hiddenInput: document.getElementById('allocation_debt') },
-        arbitrage: { slider: document.getElementById('arbitrage_slider'), valueDisplay: document.getElementById('arbitrage_slider_value'), hiddenInput: document.getElementById('allocation_arbitrage') },
-        reit: { slider: document.getElementById('reit_slider'), valueDisplay: document.getElementById('reit_slider_value'), hiddenInput: document.getElementById('allocation_reit') }
-    };
+const sliders = {
+         equity: { slider: document.getElementById('equity_slider'), valueDisplay: document.getElementById('equity_slider_value'), hiddenInput: document.getElementById('allocation_equity') },
+         debt: { slider: document.getElementById('debt_slider'), valueDisplay: document.getElementById('debt_slider_value'), hiddenInput: document.getElementById('allocation_debt') },
+         arbitrage: { slider: document.getElementById('arbitrage_slider'), valueDisplay: document.getElementById('arbitrage_slider_value'), hiddenInput: document.getElementById('allocation_arbitrage') },
+         reit: { slider: document.getElementById('reit_slider'), valueDisplay: document.getElementById('reit_slider_value'), hiddenInput: document.getElementById('allocation_reit') }
+     };
     const sliderKeys = Object.keys(sliders);
     const totalDisplay = document.getElementById('allocationTotalDisplay');
 
-    function updateTotal() {
-        let total = 0;
-        sliderKeys.forEach(key => {
-            total += parseInt(sliders[key].hiddenInput.value, 10);
-        });
-        totalDisplay.textContent = total + '%';
-        // Optionally add invalid indication class if total != 100
-        if (total !== 100) {
-            totalDisplay.classList.add('text-red-500');
-        } else {
-            totalDisplay.classList.remove('text-red-500');
+    function updateSliders(changedKey) {
+        const changedSlider = sliders[changedKey];
+        const newValue = parseInt(changedSlider.slider.value, 10);
+        const oldValue = parseInt(changedSlider.hiddenInput.value, 10);
+        const delta = newValue - oldValue;
+
+        if (delta === 0) return;
+
+        const otherKeys = sliderKeys.filter(k => k !== changedKey);
+        let otherTotal = otherKeys.reduce((sum, k) => sum + parseInt(sliders[k].hiddenInput.value, 10), 0);
+
+        if (otherTotal > 0) {
+            const adjustments = {};
+            let totalAdjustment = 0;
+
+            otherKeys.forEach(key => {
+                const otherSlider = sliders[key];
+                const otherValue = parseInt(otherSlider.hiddenInput.value, 10);
+                const adjustment = Math.round(delta * (otherValue / otherTotal));
+                adjustments[key] = adjustment;
+                totalAdjustment += adjustment;
+            });
+
+            // Correct for rounding errors
+            if (totalAdjustment !== delta) {
+                adjustments[otherKeys[0]] += (delta - totalAdjustment);
+            }
+
+            otherKeys.forEach(key => {
+                const otherSlider = sliders[key];
+                const currentVal = parseInt(otherSlider.hiddenInput.value, 10);
+                otherSlider.slider.value = Math.max(0, Math.min(100, currentVal - adjustments[key]));
+            });
         }
+
+        sliderKeys.forEach(key => {
+            const s = sliders[key];
+            s.hiddenInput.value = s.slider.value;
+            s.valueDisplay.textContent = `${s.slider.value}%`;
+        });
     }
 
-    // Initialize total display
-    updateTotal();
-
     sliderKeys.forEach(key => {
-        const s = sliders[key];
-        s.slider.addEventListener('input', () => {
-            s.hiddenInput.value = s.slider.value;
-            s.valueDisplay.textContent = s.slider.value + '%';
-            updateTotal();
-        });
+        sliders[key].slider.addEventListener('input', () => updateSliders(key));
     });
-}function setupEquitySplitValidator() {
+}
+
+function setupEquitySplitValidator() {
     const inputs = document.querySelectorAll('.equity-split-input');
     const totalDisplay = document.getElementById('equitySplitTotalDisplay');
 

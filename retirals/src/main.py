@@ -54,7 +54,7 @@ async def add_security_headers(request: Request, call_next):
     # 'unsafe-inline' is needed for the inline <style> and <script> blocks in index.html.
     response.headers["Content-Security-Policy"] = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com https://cdn.jsdelivr.net/npm/chart.js; "
+        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net/npm/chart.js; "
         "style-src 'self' 'unsafe-inline'; "
         "img-src 'self' data:;"
     )

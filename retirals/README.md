@@ -1,6 +1,6 @@
 # Parity Retirement Planner
 
-A web-based retirement planning tool that combines deterministic projection with Monte Carlo simulation to estimate retirement readiness and corpus sustainability.
+A web-based retirement planning tool that combines deterministic projection with Monte Carlo simulation to estimate retirement readiness and corpus sustainability. Supports four asset classes: Equity, Debt, Arbitrage, and REIT.
 
 ## Features
 
@@ -12,6 +12,7 @@ A web-based retirement planning tool that combines deterministic projection with
 - **Dark/Light Theme** — Persistent theme with responsive charts and collapsible sections.
 - **Report Export** — Download results as PDF or HTML.
 - **AI Insights** — AI-powered interpretation of deterministic and Monte Carlo results, with evidence-based actions, risk analysis, numerical validation, and a 60-second cooldown between requests.
+- **REIT Support** — Includes REIT as a fourth asset class with configurable allocation, return, volatility, and correlations; partially taxable withdrawals.
 
 ## Quick Start
 
@@ -39,9 +40,13 @@ Unlike the deterministic projection, which assumes average returns every year, M
 | `volatility_equity` | 18.0% | 0–100% | Annual std dev of equity returns |
 | `volatility_debt` | 6.0% | 0–100% | Annual std dev of debt returns |
 | `volatility_arbitrage` | 8.0% | 0–100% | Annual std dev of arbitrage returns |
+| `volatility_reit` | 15.0% | 0–100% | Annual std dev of REIT returns |
 | `equity_debt_correlation` | -0.10 | -1 to +1 | Correlation between equity and debt returns |
 | `equity_arbitrage_correlation` | 0.05 | -1 to +1 | Correlation between equity and arbitrage returns |
 | `debt_arbitrage_correlation` | 0.20 | -1 to +1 | Correlation between debt and arbitrage returns |
+| `equity_reit_correlation` | 0.60 | -1 to +1 | Correlation between equity and REIT returns |
+| `debt_reit_correlation` | 0.20 | -1 to +1 | Correlation between debt and REIT returns |
+| `arbitrage_reit_correlation` | 0.10 | -1 to +1 | Correlation between arbitrage and REIT returns |
 | `monte_carlo_seed` | None | Any integer | Optional seed for reproducible results |
 | `retirement_age_sensitivity` | None | Comma-separated ages | Optional list of retirement ages to compare success rates |
 
@@ -65,17 +70,21 @@ variance =
     we² × σe²
   + wd² × σd²
   + wa² × σa²
+  + wr² × σr²
   + 2 × we × wd × σe × σd × ρed
   + 2 × we × wa × σe × σa × ρea
+  + 2 × we × wr × σe × σr × ρer
   + 2 × wd × wa × σd × σa × ρda
+  + 2 × wd × wr × σd × σr × ρdr
+  + 2 × wa × wr × σa × σr × ρar
 
 portfolio_volatility = sqrt(max(variance, 0))
 ```
 
 Where:
-- `we`, `wd`, `wa` = equity, debt, arbitrage weights
-- `σe`, `σd`, `σa` = equity, debt, arbitrage volatilities
-- `ρed`, `ρea`, `ρda` = correlations between each pair
+- `we`, `wd`, `wa`, `wr` = equity, debt, arbitrage, REIT weights
+- `σe`, `σd`, `σa`, `σr` = equity, debt, arbitrage, REIT volatilities
+- `ρed`, `ρea`, `ρer`, `ρda`, `ρdr`, `ρar` = correlations between each pair
 
 This applies during **both** accumulation and retirement phases. Diversification benefits are captured when correlations are less than +1, and risk is amplified when correlations are positive.
 

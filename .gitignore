@@ -14,3 +14,5 @@ env/
 # Log files
 *.log
 *.out
+
+node_modules/
