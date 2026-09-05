@@ -877,14 +877,14 @@ original_valid_count = len(TEST_SCENARIOS)
 # REIT-specific valid scenarios
 REIT_VALID_SCENARIOS = [
     # Deterministic REIT scenarios
-    ("REIT allocation 20%", {"allocation_reit": 0.20}, False),
+    ("REIT allocation 20%", {"allocation_reit": 0.20, "allocation_equity": 0.40}, False),
     ("REIT return 12%", {"return_reit": 0.12}, False),
     ("REIT gain fraction 0.0", {"reit_gain_fraction": 0.0}, False),
     ("REIT gain fraction 1.0", {"reit_gain_fraction": 1.0}, False),
     # Monte Carlo REIT scenarios
-    ("REIT MC allocation 20%", {"allocation_reit": 0.20, "num_simulations": 100, "monte_carlo_seed": 42}, True),
-    ("REIT MC gain fraction 0.0", {"allocation_reit": 0.20, "reit_gain_fraction": 0.0, "num_simulations": 100, "monte_carlo_seed": 42}, True),
-    ("REIT MC gain fraction 1.0", {"allocation_reit": 0.20, "reit_gain_fraction": 1.0, "num_simulations": 100, "monte_carlo_seed": 42}, True),
+    ("REIT MC allocation 20%", {"allocation_reit": 0.20, "allocation_equity": 0.40, "num_simulations": 100, "monte_carlo_seed": 42}, True),
+    ("REIT MC gain fraction 0.0", {"allocation_reit": 0.20, "allocation_equity": 0.40, "reit_gain_fraction": 0.0, "num_simulations": 100, "monte_carlo_seed": 42}, True),
+    ("REIT MC gain fraction 1.0", {"allocation_reit": 0.20, "allocation_equity": 0.40, "reit_gain_fraction": 1.0, "num_simulations": 100, "monte_carlo_seed": 42}, True),
 ]
 
 # Extend the existing TEST_SCENARIOS with REIT scenarios
@@ -922,10 +922,24 @@ def test_reit_behavior():
     reit_tests_passed = 0
     reit_tests_failed = 0
     
+    # Helper to create payload with REIT allocation while keeping total allocation = 1.0
+    def with_reit_allocation(reit_alloc):
+        """Return a payload with REIT allocation set, reducing equity to keep sum=1.0."""
+        p = deep_merge(base_payload, {})
+        # Ensure we have enough equity to reduce
+        equity_alloc = p.get("allocation_equity", 0.6)
+        if reit_alloc > equity_alloc:
+            # If not enough equity, reduce equity to zero and take from debt? but we keep simple.
+            # For simplicity, we cap REIT allocation at equity allocation.
+            reit_alloc = equity_alloc
+        p["allocation_reit"] = reit_alloc
+        p["allocation_equity"] = equity_alloc - reit_alloc
+        return p
+    
     # 1. REIT allocation: Compare allocation_reit=0.0 vs allocation_reit=0.20
     print("\n1. Testing REIT allocation effect...")
-    payload_no_reit = deep_merge(base_payload, {"allocation_reit": 0.0})
-    payload_with_reit = deep_merge(base_payload, {"allocation_reit": 0.20})
+    payload_no_reit = with_reit_allocation(0.0)
+    payload_with_reit = with_reit_allocation(0.20)
     
     status1, result1 = make_request("/calculate", payload_no_reit)
     status2, result2 = make_request("/calculate", payload_with_reit)
@@ -946,8 +960,8 @@ def test_reit_behavior():
     
     # 2. REIT return: With allocation_reit=0.20, compare return_reit=0.08 vs 0.12
     print("\n2. Testing REIT return effect...")
-    payload_low_return = deep_merge(base_payload, {"allocation_reit": 0.20, "return_reit": 0.08})
-    payload_high_return = deep_merge(base_payload, {"allocation_reit": 0.20, "return_reit": 0.12})
+    payload_low_return = deep_merge(with_reit_allocation(0.20), {"return_reit": 0.08})
+    payload_high_return = deep_merge(with_reit_allocation(0.20), {"return_reit": 0.12})
     
     status1, result1 = make_request("/calculate", payload_low_return)
     status2, result2 = make_request("/calculate", payload_high_return)
@@ -968,8 +982,8 @@ def test_reit_behavior():
     
     # 3. REIT taxable gain fraction: Compare reit_gain_fraction=0.0 vs 1.0
     print("\n3. Testing REIT taxable gain fraction effect...")
-    payload_no_gain = deep_merge(base_payload, {"allocation_reit": 0.20, "reit_gain_fraction": 0.0})
-    payload_all_gain = deep_merge(base_payload, {"allocation_reit": 0.20, "reit_gain_fraction": 1.0})
+    payload_no_gain = deep_merge(with_reit_allocation(0.20), {"reit_gain_fraction": 0.0})
+    payload_all_gain = deep_merge(with_reit_allocation(0.20), {"reit_gain_fraction": 1.0})
     
     status1, result1 = make_request("/calculate", payload_no_gain)
     status2, result2 = make_request("/calculate", payload_all_gain)
@@ -992,13 +1006,11 @@ def test_reit_behavior():
     print("\n4. Testing MC REIT allocation effect...")
     mc_seed = 42
     mc_sims = 100
-    payload_no_reit_mc = deep_merge(base_payload, {
-        "allocation_reit": 0.0,
+    payload_no_reit_mc = deep_merge(with_reit_allocation(0.0), {
         "num_simulations": mc_sims,
         "monte_carlo_seed": mc_seed
     })
-    payload_with_reit_mc = deep_merge(base_payload, {
-        "allocation_reit": 0.20,
+    payload_with_reit_mc = deep_merge(with_reit_allocation(0.20), {
         "num_simulations": mc_sims,
         "monte_carlo_seed": mc_seed
     })
@@ -1029,14 +1041,12 @@ def test_reit_behavior():
     
     # 5. MC REIT taxable gain fraction: Compare reit_gain_fraction=0.0 vs 1.0
     print("\n5. Testing MC REIT taxable gain fraction effect...")
-    payload_no_gain_mc = deep_merge(base_payload, {
-        "allocation_reit": 0.20,
+    payload_no_gain_mc = deep_merge(with_reit_allocation(0.20), {
         "reit_gain_fraction": 0.0,
         "num_simulations": mc_sims,
         "monte_carlo_seed": mc_seed
     })
-    payload_all_gain_mc = deep_merge(base_payload, {
-        "allocation_reit": 0.20,
+    payload_all_gain_mc = deep_merge(with_reit_allocation(0.20), {
         "reit_gain_fraction": 1.0,
         "num_simulations": mc_sims,
         "monte_carlo_seed": mc_seed
@@ -1061,14 +1071,12 @@ def test_reit_behavior():
     
     # 6. MC volatility: Compare volatility_reit=0.15 vs 0.25
     print("\n6. Testing MC REIT volatility effect...")
-    payload_low_vol = deep_merge(base_payload, {
-        "allocation_reit": 0.20,
+    payload_low_vol = deep_merge(with_reit_allocation(0.20), {
         "volatility_reit": 0.15,
         "num_simulations": mc_sims,
         "monte_carlo_seed": mc_seed
     })
-    payload_high_vol = deep_merge(base_payload, {
-        "allocation_reit": 0.20,
+    payload_high_vol = deep_merge(with_reit_allocation(0.20), {
         "volatility_reit": 0.25,
         "num_simulations": mc_sims,
         "monte_carlo_seed": mc_seed
@@ -1098,14 +1106,12 @@ def test_reit_behavior():
     
     # Test equity_reit_correlation
     print("   Testing equity_reit_correlation...")
-    payload_low_corr = deep_merge(base_payload, {
-        "allocation_reit": 0.20,
+    payload_low_corr = deep_merge(with_reit_allocation(0.20), {
         "equity_reit_correlation": 0.0,
         "num_simulations": mc_sims,
         "monte_carlo_seed": mc_seed
     })
-    payload_high_corr = deep_merge(base_payload, {
-        "allocation_reit": 0.20,
+    payload_high_corr = deep_merge(with_reit_allocation(0.20), {
         "equity_reit_correlation": 0.8,
         "num_simulations": mc_sims,
         "monte_carlo_seed": mc_seed
@@ -1128,14 +1134,12 @@ def test_reit_behavior():
     
     # Test debt_reit_correlation
     print("   Testing debt_reit_correlation...")
-    payload_low_corr = deep_merge(base_payload, {
-        "allocation_reit": 0.20,
+    payload_low_corr = deep_merge(with_reit_allocation(0.20), {
         "debt_reit_correlation": 0.0,
         "num_simulations": mc_sims,
         "monte_carlo_seed": mc_seed
     })
-    payload_high_corr = deep_merge(base_payload, {
-        "allocation_reit": 0.20,
+    payload_high_corr = deep_merge(with_reit_allocation(0.20), {
         "debt_reit_correlation": 0.8,
         "num_simulations": mc_sims,
         "monte_carlo_seed": mc_seed
@@ -1158,14 +1162,12 @@ def test_reit_behavior():
     
     # Test arbitrage_reit_correlation
     print("   Testing arbitrage_reit_correlation...")
-    payload_low_corr = deep_merge(base_payload, {
-        "allocation_reit": 0.20,
+    payload_low_corr = deep_merge(with_reit_allocation(0.20), {
         "arbitrage_reit_correlation": 0.0,
         "num_simulations": mc_sims,
         "monte_carlo_seed": mc_seed
     })
-    payload_high_corr = deep_merge(base_payload, {
-        "allocation_reit": 0.20,
+    payload_high_corr = deep_merge(with_reit_allocation(0.20), {
         "arbitrage_reit_correlation": 0.8,
         "num_simulations": mc_sims,
         "monte_carlo_seed": mc_seed
