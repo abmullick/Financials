@@ -1392,10 +1392,74 @@
                             <div class="relative">
                                 <input type="number" step="0.1" id="post_retirement_return" aria-label="Post retirement return" value="8.0" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
                                 <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">%</span>
-                            </div>
-                            <p class="text-xs mt-1.5" style="color: var(--text-3);">Expected annual portfolio return after retirement.</p>
-                        </div>
-                        <div class="grid grid-cols-2 gap-3 pt-2">
+</div>
+                             <p class="text-xs mt-1.5" style="color: var(--text-3);">Expected annual portfolio return after retirement.</p>
+                         </div>
+                         <div>
+                             <div class="flex items-center gap-1.5 mb-1">
+                                 <label class="block text-xs font-medium text-slate-300" for="return_equity">Equity Return</label>
+                                 <div class="tooltip-container">
+                                     <span class="tooltip-icon">ⓘ</span>
+                                     <div class="tooltip-content">
+                                         The expected average annual return on your equity investments.
+                                     </div>
+                                 </div>
+                             </div>
+                             <div class="relative">
+                                 <input type="number" step="0.1" id="return_equity" aria-label="Equity return" value="12.0" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
+                                 <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">%</span>
+                             </div>
+                             <p class="text-xs mt-1.5" style="color: var(--text-3);">Expected annual return from equity investments.</p>
+                         </div>
+                         <div>
+                             <div class="flex items-center gap-1.5 mb-1">
+                                 <label class="block text-xs font-medium text-slate-300" for="return_debt">Debt Return</label>
+                                 <div class="tooltip-container">
+                                     <span class="tooltip-icon">ⓘ</span>
+                                     <div class="tooltip-content">
+                                         The expected average annual return on your debt investments.
+                                     </div>
+                                 </div>
+                             </div>
+                             <div class="relative">
+                                 <input type="number" step="0.1" id="return_debt" aria-label="Debt return" value="6.0" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
+                                 <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">%</span>
+                             </div>
+                             <p class="text-xs mt-1.5" style="color: var(--text-3);">Expected annual return from debt investments.</p>
+                         </div>
+                         <div>
+                             <div class="flex items-center gap-1.5 mb-1">
+                                 <label class="block text-xs font-medium text-slate-300" for="return_arbitrage">Arbitrage Return</label>
+                                 <div class="tooltip-container">
+                                     <span class="tooltip-icon">ⓘ</span>
+                                     <div class="tooltip-content">
+                                         The expected average annual return on your arbitrage investments.
+                                     </div>
+                                 </div>
+                             </div>
+                             <div class="relative">
+                                 <input type="number" step="0.1" id="return_arbitrage" aria-label="Arbitrage return" value="8.0" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
+                                 <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">%</span>
+                             </div>
+                             <p class="text-xs mt-1.5" style="color: var(--text-3);">Expected annual return from arbitrage investments.</p>
+                         </div>
+                         <div>
+                             <div class="flex items-center gap-1.5 mb-1">
+                                 <label class="block text-xs font-medium text-slate-300" for="return_reit">REIT Return</label>
+                                 <div class="tooltip-container">
+                                     <span class="tooltip-icon">ⓘ</span>
+                                     <div class="tooltip-content">
+                                         The expected average annual return on your REIT investments.
+                                     </div>
+                                 </div>
+                             </div>
+                             <div class="relative">
+                                 <input type="number" step="0.1" id="return_reit" aria-label="REIT return" value="8.0" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
+                                 <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">%</span>
+                             </div>
+                             <p class="text-xs mt-1.5" style="color: var(--text-3);">Expected annual return from REIT investments.</p>
+                         </div>
+                         <div class="grid grid-cols-2 gap-3 pt-2">
                             <button type="button" class="prev-step-btn secondary-button w-full font-semibold py-2 rounded-xl text-sm">← Back</button>
                             <button type="button" class="next-step-btn secondary-button w-full font-semibold py-2 rounded-xl text-sm">Next: Advanced →</button>
                         </div>
