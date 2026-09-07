@@ -1765,6 +1765,7 @@
                         <div>
                             <h3 class="text-sm font-semibold" style="color: var(--text-1);">Future One-Time Expenses</h3>
                             <p class="text-xs" style="color: var(--text-3);">Optional — add any major future expenses.</p>
+                            <p class="text-xs" style="color: var(--text-3);">Enter costs in today’s money. Future costs are adjusted for inflation.</p>
                         </div>
                         <div id="adhocExpenseRows" class="space-y-3 pt-1"></div>
                         <button id="addAdHocBtn" type="button" class="secondary-button w-full font-semibold py-2 rounded-xl text-sm mt-2">+ Add Expense</button>
@@ -2039,7 +2040,7 @@
                                     <th class="py-2 px-3 text-right text-xs font-medium uppercase">Reinvested</th>
                                     <th class="py-2 px-3 text-right text-xs font-medium uppercase">Withdrawal</th>
                                     <th class="py-2 px-3 text-right text-xs font-medium uppercase">Withdrawal Tax</th>
-                                    <th class="py-2 px-3 text-right text-xs font-medium uppercase">Ad-Hoc</th>
+                                    <th class="py-2 px-3 text-right text-xs font-medium uppercase">Estimated Future Cost</th>
                                     <th class="py-2 px-3 text-right text-xs font-medium uppercase text-red-400">Unfunded</th>
                                     <th class="py-2 px-3 text-right text-xs font-medium uppercase">Return</th>
                                     <th class="py-2 px-3 text-right text-xs font-medium uppercase">Closing</th>
@@ -2837,7 +2838,7 @@
             makeBarChart('expenseChart', ages, [
                 { label: 'Annual Expenses (Net)', data: withdrawalAfterTax, backgroundColor: 'rgba(239, 68, 68, 0.76)', borderColor: 'rgba(239, 68, 68, 1)', borderWidth: 1, stack: 'outflow' },
                 { label: 'Withdrawal Tax', data: withdrawalTax, backgroundColor: 'rgba(59, 130, 246, 0.76)', borderColor: 'rgba(59, 130, 246, 1)', borderWidth: 1, stack: 'outflow' },
-                { label: 'Ad-Hoc', data: adHoc, backgroundColor: 'rgba(124, 58, 237, 0.76)', borderColor: 'rgba(124, 58, 237, 1)', borderWidth: 1 },
+                { label: 'Estimated Future Cost', data: adHoc, backgroundColor: 'rgba(124, 58, 237, 0.76)', borderColor: 'rgba(124, 58, 237, 1)', borderWidth: 1 },
                 { label: 'Unfunded Expense', data: unfundedExpense, backgroundColor: 'rgba(217, 70, 239, 0.76)', borderColor: 'rgba(217, 70, 239, 1)', borderWidth: 1 }
             ], { scales: { x: { stacked: true }, y: { stacked: true } } });
             makeLineChart('withdrawalReturnChart', ages, [

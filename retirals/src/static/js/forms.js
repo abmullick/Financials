@@ -13,23 +13,47 @@ function buildAdHocRow(age = '', amount = '', category = 'Other', inflation = nu
     };
 
     row.innerHTML = `
-        <div class="grid grid-cols-[1fr_1fr_40px] gap-x-3 gap-y-2 items-center">
-            <input class="adhoc-age input-shell w-full rounded-lg p-2 text-sm" type="number" min="1" placeholder="Age" value="${age}">
-            <input class="adhoc-amount input-shell w-full rounded-lg p-2 text-sm" type="text" placeholder="Amount" value="${formatCurrency(amount)}">
-            <button type="button" class="remove-adhoc-btn row-span-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-rose-100 text-lg font-bold text-rose-700 hover:bg-rose-200">×</button>
-            
-            <select class="adhoc-category input-shell w-full rounded-lg p-2 text-sm">
-                <option>Healthcare</option>
-                <option>Education</option>
-                <option>Home / Renovation</option>
-                <option>Vehicle / Consumer Goods</option>
-                <option>Travel / Lifestyle</option>
-                <option>Other</option>
-                <option>Custom</option>
-            </select>
-            <div class="relative">
-                <input class="adhoc-inflation input-shell w-full rounded-lg p-2 text-sm pr-7" type="number" step="0.1" placeholder="Inflation">
-                <span class="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-400 text-xs">%</span>
+        <div class="grid grid-cols-[1fr_1fr_40px] gap-x-3 gap-y-1 items-start">
+            <div class="flex flex-col">
+                <label class="block text-xs font-medium text-slate-300 mb-0.5">Age</label>
+                <input class="adhoc-age input-shell w-full rounded-lg p-2 text-sm" type="number" min="1" placeholder=" " value="${age}">
+            </div>
+            <div class="relative flex flex-col">
+                <div class="flex items-center gap-1 mb-0.5">
+                    <label class="block text-xs font-medium text-slate-300">Cost Today</label>
+                    <div class="tooltip-container">
+                        <span class="tooltip-icon">ⓘ</span>
+                        <div class="tooltip-content">Cost as of today.</div>
+                    </div>
+                </div>
+                <input class="adhoc-amount input-shell w-full rounded-lg p-2 text-sm" type="text" placeholder=" " value="${formatCurrency(amount)}">
+            </div>
+            <button type="button" class="remove-adhoc-btn row-span-2 self-start mt-4 inline-flex h-8 w-8 items-center justify-center rounded-full bg-rose-100 text-lg font-bold text-rose-700 hover:bg-rose-200">×</button>
+
+            <div class="flex flex-col">
+                <label class="block text-xs font-medium text-slate-300 mb-0.5">Category</label>
+                <select class="adhoc-category input-shell w-full rounded-lg p-2 text-sm mt-0.5">
+                    <option>Healthcare</option>
+                    <option>Education</option>
+                    <option>Home / Renovation</option>
+                    <option>Vehicle / Consumer Goods</option>
+                    <option>Travel / Lifestyle</option>
+                    <option>Other</option>
+                    <option>Custom</option>
+                </select>
+            </div>
+            <div class="relative flex flex-col">
+                <div class="flex items-center gap-1 mb-0.5">
+                    <label class="block text-xs font-medium text-slate-300">Inflation %</label>
+                    <div class="tooltip-container">
+                        <span class="tooltip-icon">ⓘ</span>
+                        <div class="tooltip-content">Annual inflation rate.</div>
+                    </div>
+                </div>
+                <div class="relative mt-0.5">
+                    <input class="adhoc-inflation input-shell w-full rounded-lg p-2 text-sm pr-7" type="number" step="0.1" placeholder=" ">
+                    <span class="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-400 text-xs">%</span>
+                </div>
             </div>
         </div>
     `;
