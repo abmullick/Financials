@@ -3,121 +3,203 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Help & Methodology — Retirement Corpus Planner</title>
+    <title>Help &amp; Methodology — Retirement Corpus Planner</title>
     <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
     <style>
-        :root { 
-            --bg: #f4f8ff; --surface: #fff; --text: #172033; --muted: #52627c; --accent: #2563eb; --border: #d9e3f2; --warn: #9a6700; 
+        :root {
+            --bg: #f4f8ff; --surface: #fff; --text: #172033; --muted: #52627c; --accent: #2563eb; --border: #d9e3f2; --warn: #9a6700;
             --header-bg: linear-gradient(135deg, #10233b, #1d4f80);
             --header-text: #ffffff;
-            --section-bg: #fff;
             --summary-text: #172033;
             --code-bg: #f1f5f9;
+            --chip-bg: #eef4ff;
+            --callout-bg: #fff7e6;
+            --callout-border: #eab308;
+            --nav-bg: #ffffffcc;
         }
-        body.dark-mode { 
-            --bg: #0b1220; --surface: #111827; --text: #e5e7eb; --muted: #9ca3af; --accent: #60a5fa; --border: #1f2937; --warn: #fbbf24; 
+        body.dark-mode {
+            --bg: #0b1220; --surface: #111827; --text: #e5e7eb; --muted: #9ca3af; --accent: #60a5fa; --border: #1f2937; --warn: #fbbf24;
             --header-bg: linear-gradient(135deg, #0f172a, #1e3a5f);
             --header-text: #e5e7eb;
-            --section-bg: #111827;
             --summary-text: #e5e7eb;
             --code-bg: #1f2937;
+            --chip-bg: #16233a;
+            --callout-bg: #201a0a;
+            --callout-border: #fbbf24;
+            --nav-bg: #0b1220cc;
         }
         * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; scroll-padding-top: 132px; }
         body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; transition: background 0.2s ease, color 0.2s ease; }
-        main { max-width: 920px; margin: 0 auto; padding: 40px 20px 64px; }
-        header { border-radius: 18px; padding: 30px; color: var(--header-text); background: var(--header-bg); }
-        h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 2.5rem); }
-        h2 { margin: 36px 0 12px; font-size: 1.35rem; }
-        h3 { margin: 24px 0 6px; font-size: 1.05rem; }
+        main { max-width: 980px; margin: 0 auto; padding: 28px 20px 64px; }
+
+        /* ---------- Header ---------- */
+        .hero { border-radius: 16px; padding: 26px 28px; color: var(--header-text); background: var(--header-bg); }
+        .hero h1 { margin: 0; font-size: clamp(1.6rem, 3vw, 2.15rem); }
+        .hero .lede { color: #dbeafe; margin-top: 10px; font-size: .98rem; }
+        body.dark-mode .hero .lede { color: #93c5fd; }
+        .toolbar { display: flex; justify-content: space-between; align-items: center; margin: 10px 0 4px; flex-wrap: wrap; gap: 10px; }
+        .toolbar a, .toolbar button { font-size: 0.9rem; }
+        .theme-toggle-btn, .print-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; }
+        .print-btn { text-decoration: none; display: inline-block; }
+/* ---------- Sticky section nav ---------- */
+        .secnav {
+            position: sticky; top: 0; z-index: 20;
+            background: var(--nav-bg); backdrop-filter: blur(6px);
+            border: 1px solid var(--border); border-radius: 12px;
+            margin: 14px 0 4px; padding: 8px 12px;
+            display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+        }
+        .secnav .btns { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+        .secnav a.secnav-link {
+            text-decoration: none; font-size: .8rem; font-weight: 600;
+            padding: 3px 9px; border-radius: 999px;
+            color: var(--muted); border: 1px solid var(--border); background: var(--surface);
+            white-space: nowrap;
+        }
+        .secnav a.secnav-link:hover { color: var(--accent); border-color: var(--accent); }
+        .secnav a.secnav-link.active { color: var(--accent); border-color: var(--accent); background: var(--chip-bg); }
+        .secnav .backtop { margin-left: auto; font-size: .78rem; color: var(--muted); text-decoration: none; white-space: nowrap; }
+        .secnav .backtop:hover { color: var(--accent); }
+
+        /* ---------- Notice ---------- */
+        .notice { border: 1px solid var(--callout-border); background: var(--callout-bg); border-radius: 12px; padding: 14px 16px; margin-top: 16px; border-left: 4px solid var(--callout-border); color: var(--text); }
+        body.dark-mode .notice { border-left-color: #fbbf24; }
+
+        /* ---------- Methodology flow ---------- */
+        .flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 14px 0 4px; }
+        .flow-title { font-size: .85rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+        .flow-step {
+            display: inline-flex; align-items: center; gap: 6px;
+            background: var(--surface); border: 1px solid var(--border); border-radius: 999px;
+            padding: 5px 11px; font-size: .82rem; font-weight: 600; color: var(--text);
+        }
+        .flow-step .n {
+            width: 17px; height: 17px; flex-shrink: 0; border-radius: 50%;
+            background: var(--accent); color: #fff; font-size: .68rem; font-weight: 700;
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+        .flow-arrow { color: var(--muted); font-size: 1rem; }
+/* ---------- Sections ---------- */
+        .sec { border: 1px solid var(--border); background: var(--surface); border-radius: 14px; padding: 20px 22px; margin-top: 22px; }
+        .sec > h2 { margin: 0; font-size: 1.3rem; display: flex; align-items: center; gap: 10px; }
+        .sec .sec-num {
+            width: 30px; height: 30px; flex-shrink: 0; border-radius: 9px;
+            background: var(--chip-bg); color: var(--accent);
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+        .sec .sec-num svg { width: 19px; height: 19px; }
+        .sec .sec-no { min-width: 20px; color: var(--muted); font-size: .92rem; font-weight: 700; }
+        .sec.acc summary strong { font-size: 1.15rem; }
+        details.acc summary strong { font-size: 1.15rem; }
+        details.acc:not(.sec) summary { grid-template-columns: 1fr auto; }
+        .group-label { font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; font-weight: 700; color: var(--muted); margin: 26px 0 0; }
+        .sec .sec-sub { font-size: .84rem; color: var(--muted); margin: 2px 0 12px; }
+        h3 { font-size: 1.02rem; margin: 16px 0 6px; color: var(--text); }
+
+        /* "What it means" / "How the planner handles it" */
+        .how { display: grid; grid-template-columns: 1fr; gap: 0; margin-top: 8px; }
+        .how .hm { padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border); }
+        .how .hm + .hm { border-left: 3px solid var(--accent); margin-top: 6px; background: var(--chip-bg); }
+        .hm .h-label { display: block; font-size: .72rem; text-transform: uppercase; letter-spacing: .06em; font-weight: 700; color: var(--muted); margin-bottom: 4px; }
+        .hm p { margin: 6px 0; }
+        .hm ul { margin: 6px 0; padding-left: 20px; }
+
+        .callout { border: 1px solid var(--callout-border); border-left: 4px solid var(--callout-border); background: var(--callout-bg); border-radius: 10px; padding: 10px 14px; margin: 12px 0; color: var(--text); }
+        body.dark-mode .callout { border-left-color: #fbbf24; }
+        .callout strong:first-child { color: var(--warn); }
+
+        .chip { display: inline-block; padding: 2px 9px; border-radius: 999px; background: var(--chip-bg); color: var(--accent); font-size: .78rem; font-weight: 600; }
+        .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; background: rgba(37,99,235,0.12); color: var(--accent); font-size: .78rem; font-weight: 600; }
+
         p { margin: 8px 0; }
-        .lede { color: #dbeafe; margin-top: 8px; }
-        body.dark-mode .lede { color: #93c5fd; }
-        .notice, section { border: 1px solid var(--border); background: var(--surface); border-radius: 14px; padding: 20px; margin-top: 18px; transition: background 0.2s ease, border-color 0.2s ease; }
-        .notice { border-left: 4px solid #eab308; color: #604a00; }
-        body.dark-mode .notice { color: #fde68a; border-left-color: #fbbf24; }
-        .toc { columns: 2; padding-left: 20px; }
+        ul, ol { padding-left: 22px; margin: 8px 0; }
+        .muted { color: var(--muted); }
+        code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
         a { color: var(--accent); }
         table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-        th, td { text-align: left; vertical-align: top; padding: 10px; border-bottom: 1px solid var(--border); }
-        th { color: var(--muted); font-size: .84rem; text-transform: uppercase; letter-spacing: .04em; }
-        ul { padding-left: 22px; margin: 8px 0; }
-        .muted { color: var(--muted); }
-        details { border: 1px solid var(--border); background: var(--surface); border-radius: 14px; padding: 20px; margin-top: 18px; transition: background 0.2s ease, border-color 0.2s ease; }
-        summary { font-weight: 600; cursor: pointer; color: var(--summary-text); font-size: 1.1rem; }
-        details[open] summary { margin-bottom: 12px; }
-        .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 10px; }
-        .toolbar a, .toolbar button { font-size: 0.9rem; }
-        .theme-toggle-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; }
-        .print-btn { background: var(--surface); border: 1px solid var(--border); color: var(--text); padding: 6px 12px; border-radius: 8px; cursor: pointer; font-size: 0.85rem; text-decoration: none; display: inline-block; }
-        .example-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-top: 12px; }
-        .example-card { border: 1px solid var(--border); background: var(--surface); border-radius: 12px; padding: 16px; }
-        .example-card h4 { margin: 0 0 8px; font-size: 1rem; }
-        .example-card p { margin: 4px 0; font-size: 0.95rem; }
-        .example-card .tag { display: inline-block; padding: 2px 8px; border-radius: 999px; background: rgba(37,99,235,0.1); color: var(--accent); font-size: 0.8rem; font-weight: 600; margin-top: 8px; }
+        th, td { text-align: left; vertical-align: top; padding: 9px; border-bottom: 1px solid var(--border); }
+        th { color: var(--muted); font-size: .82rem; text-transform: uppercase; letter-spacing: .04em; }
+
+        .example-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; }
+        .example-card { border: 1px solid var(--border); background: var(--surface); border-radius: 12px; padding: 14px; }
+        .example-card h4 { margin: 0 0 8px; font-size: .95rem; }
+        .example-card p { margin: 4px 0; font-size: .9rem; }
+
         .glossary dt { font-weight: 600; margin-top: 10px; }
         .glossary dd { margin-left: 0; color: var(--muted); }
-        .faq-item { border-bottom: 1px solid var(--border); padding: 12px 0; }
+
+        .faq-item { border-bottom: 1px solid var(--border); padding: 10px 0; }
         .faq-item:last-child { border-bottom: none; }
-        .faq-item summary { font-size: 1rem; }
-        code { background: var(--code-bg); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
-        .scroll-indicator {
-            position: fixed;
-            bottom: 1.25rem;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 0.35rem;
-            opacity: 0.95;
-            animation: scroll-bounce 1.8s ease-in-out infinite, scroll-glow 2.2s ease-in-out infinite;
-            pointer-events: auto;
-            cursor: pointer;
-            background: rgba(0, 0, 0, 0.65);
-            border-radius: 9999px;
-            padding: 0.5rem 1rem;
+        .faq-item details > summary { font-size: .95rem; font-weight: 600; cursor: pointer; }
+
+        /* Accordion (details/summary) reused from the existing design */
+        details.acc { border: 1px solid var(--border); background: var(--surface); border-radius: 14px; padding: 20px 22px; margin-top: 22px; }
+        details.acc summary { font-weight: 600; cursor: pointer; color: var(--summary-text); font-size: 1rem; display: grid; grid-template-columns: 30px 24px 1fr auto; gap: 10px; align-items: center; list-style: none; text-align: left; }
+        details.acc summary::-webkit-details-marker { display: none; }
+        details.acc[open] summary { margin-bottom: 10px; }
+        details.acc .chev { color: var(--muted); font-size: .8rem; transition: transform .2s ease; justify-self: end; }
+        details.acc[open] .chev { transform: rotate(180deg); }
+
+        .cards { display: grid; grid-template-columns: 1fr; gap: 16px; }
+        .foot { text-align: center; }
+
+        /* ---------- Help search (Level 1 + Level 2 local) ---------- */
+        .help-search { display: flex; align-items: center; gap: 8px; width: 100%; max-width: 580px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 9px 11px; }
+        .help-search:focus-within { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15); }
+        .help-search .hs-icon { width: 18px; height: 18px; color: var(--muted); flex-shrink: 0; }
+        #help-search-input { flex: 1 1 auto; min-width: 0; border: 0; outline: 0; background: transparent; color: var(--text); font: inherit; padding: 6px 4px; }
+        #help-search-input::placeholder { color: var(--muted); }
+        #help-search-clear { flex-shrink: 0; border: 0; background: transparent; cursor: pointer; color: var(--muted); font-size: 1.1rem; line-height: 1; padding: 2px 7px; border-radius: 6px; }
+        #help-search-clear:hover { color: var(--accent); background: var(--chip-bg); }
+        .help-suggest { margin: 0 0 8px; }
+        .help-suggest-title { display: block; font-size: .76rem; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; font-weight: 700; margin-bottom: 2px; }
+        .help-suggest .chips { display: flex; flex-wrap: wrap; gap: 7px; }
+        .help-suggest a { text-decoration: none; font-size: .8rem; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); color: var(--muted); }
+        .help-suggest a:hover, .help-suggest a:focus-visible { color: var(--accent); border-color: var(--accent); background: var(--chip-bg); }
+        .help-results { position: relative; z-index: 15; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--shadow); margin: 2px 0 10px; padding: 10px 14px; max-height: 320px; overflow: auto; }
+        .help-results ul { list-style: none; margin: 0; padding: 0; }
+        .help-results .res-note { font-size: .8rem; color: var(--muted); padding: 4px 0; }
+        .help-result { display: block; width: 100%; text-align: left; border: 0; background: transparent; cursor: pointer; padding: 8px 10px; border-radius: 8px; }
+        .help-result:hover, .help-result.active, .help-result:focus-visible { background: var(--chip-bg); }
+        .help-result .t { font-weight: 600; color: var(--text); display: block; font-size: .92rem; }
+        .help-result .cat { color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .04em; }
+        .help-result .x { display: block; color: var(--muted); font-size: .82rem; margin-top: 2px; }
+        .help-result.noresult { cursor: default; color: var(--muted); }
+        .search-hit { animation: search-hit-flash 1.6s ease; }
+        @keyframes search-hit-flash { 0% { box-shadow: 0 0 0 0 transparent; } 8% { background: var(--chip-bg); border-color: var(--accent); box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25); } 100% { background: transparent; border-color: var(--border); box-shadow: 0 0 0 0 transparent; } }
+
+        @media (min-width: 720px) {
+            .how { grid-template-columns: 1fr 1fr; }
+            .how .hm { height: 100%; }
+            .cards { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
         }
-        .scroll-indicator span {
-            font-size: 10px;
-            font-weight: 700;
-            letter-spacing: 0.14em;
-            text-transform: uppercase;
-            color: #ffffff;
+
+        @media (max-width: 640px) {
+            main { padding: 18px 14px 44px; }
+            .hero { padding: 20px; }
+            .secnav { padding: 6px 10px; }
+            .secnav .btns { overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap; }
+            th, td { padding: 7px; }
         }
-        .scroll-indicator svg {
-            width: 22px;
-            height: 22px;
-            color: #eab308;
-            filter: drop-shadow(0 0 4px rgba(234, 179, 8, 0.6));
-        }
-        .scroll-indicator.scroll-up svg {
-            transform: rotate(180deg);
-        }
-        @keyframes scroll-bounce {
-            0%, 100% { transform: translateX(-50%) translateY(0); }
-            50% { transform: translateX(-50%) translateY(6px); }
-        }
-        @keyframes scroll-glow {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(234, 179, 8, 0.4); }
-            50% { box-shadow: 0 0 0 10px rgba(234, 179, 8, 0); }
-        }
+
         @media print {
-            .toolbar, .scroll-indicator, #theme-toggle, #print-btn { display: none !important; }
+            .toolbar, .secnav, #theme-toggle, #print-btn, .help-search, .help-results, .help-suggest { display: none !important; }
             body { background: #fff; color: #000; }
-            details { border: 1px solid #ccc; background: #fff; }
+            details.acc { border: 1px solid #ccc; background: #fff; }
         }
-        @media (max-width: 620px) { .toc { columns: 1; } main { padding: 20px 14px 40px; } header { padding: 24px; } th, td { padding: 8px; } .example-grid { grid-template-columns: 1fr; } }
     </style>
 </head>
-<body>
-    <main>
-        <header>
+<body id="top">
+<main>
+        <header class="hero">
             <h1>Help &amp; Methodology</h1>
             <p class="lede">A practical guide to using the Retirement Corpus Planner and interpreting its deterministic and Monte Carlo results.</p>
         </header>
 
-        <div class="notice"><strong>Important:</strong> this planner provides estimates for education and planning. It is not financial, tax, legal, or investment advice. Review major decisions with a qualified professional.</div>
+        <div class="notice">
+            <strong>Important:</strong> this planner provides estimates for education and planning. It is not financial, tax, legal, or investment advice. Review major decisions with a qualified professional.
+        </div>
 
         <div class="toolbar">
             <a href="/">← Back to Planner</a>
@@ -127,141 +209,404 @@
             </div>
         </div>
 
-        <details open>
-        <summary><strong>📋 In this guide</strong></summary>
-        <section>
-            <h2>In this guide</h2>
-            <ul class="toc">
-                <li><a href="#getting-started">Getting started</a></li>
-                <li><a href="#input-settings">Input settings reference</a></li>
-                <li><a href="#projection">Deterministic projection</a></li>
-                <li><a href="#monte-carlo">Monte Carlo simulation</a></li>
-                <li><a href="#ai-insights">AI Insights</a></li>
-                <li><a href="#charts">Charts and visualisations</a></li>
-                <li><a href="#metrics">Metrics and interpretation</a></li>
-                <li><a href="#examples">Example scenarios</a></li>
-                <li><a href="#best-practices">Best practices</a></li>
-                <li><a href="#faq">FAQ</a></li>
-                <li><a href="#glossary">Glossary</a></li>
-                <li><a href="#assumptions">Assumptions and limitations</a></li>
-                <li><a href="#about">About</a></li>
-                <li><a href="#contact">Contact</a></li>
-                <li><a href="#references">References and data sources</a></li>
-                <li><a href="#feedback">Feedback</a></li>
-            </ul>
-        </section>
-</details>
+        <!-- Help search: Level 1 local text + Level 2 intent-aware -->
+        <div class="help-search" role="search">
+            <svg class="hs-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6"/><path d="M16.5 8.5 V16.5 M16.5 8.5 a2.5 2.5 0 0 0 -1.5 -2.5 M15 6 V10 M14.8 6 l0 -2.8"/></svg>
+            <label for="help-search-input" class="sr-only" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);">Search Help &amp; Methodology</label>
+            <input id="help-search-input" type="search" role="combobox" aria-expanded="false" aria-controls="help-results-list" aria-activedescendant="" aria-autocomplete="list" autocomplete="off" spellcheck="false" placeholder="Search Help & Methodology…">
+            <button id="help-search-clear" type="button" class="help-search-clear" aria-label="Clear search" hidden>×</button>
+        </div>
+        <div class="help-suggest" id="help-suggest">
+            <span class="help-suggest-title">Try asking</span>
+            <span class="chips">
+                <a href="#" data-q="How is inflation applied?">How is inflation applied?</a>
+                <a href="#" data-q="What does today&#39;s money mean?">What does today's money mean?</a>
+                <a href="#" data-q="How does stochastic simulation work?">How does stochastic simulation work?</a>
+                <a href="#" data-q="How are taxes handled?">How are taxes handled?</a>
+            </span>
+        </div>
+        <div class="help-results" id="help-results" hidden>
+            <ul id="help-results-list" role="listbox" aria-label="Search results"></ul>
+        </div>
 
-<details open>
-<summary><strong>🚀 Getting started</strong></summary>
-<section id="getting-started">
-            <h2>Getting started</h2>
-            <p>The default inputs show a realistic mid-career scenario: age 35, planning to retire at 60, with ₹15 lakh annual expenses, ₹40 lakh current corpus, ₹5 lakh annual contribution growing at 8%, and a 60/30/10 equity-debt-arbitrage allocation. This is a plausible starting point for many Indian professionals, but it is intentionally set slightly below full readiness so you can see how the tool identifies gaps and recommends actions.</p>
-            <p>Enter your current age, retirement age, life expectancy, current corpus, annual expenses, annual contribution, return assumptions, and inflation. Add one-time expenses for known future costs such as education, housing, or medical care.</p>
-            <p>The planner also supports a retirement lump sum, pension income, investment allocation, withdrawal tax assumptions, and market-stress scenarios. Use the deterministic simulation for one assumed return path; use Monte Carlo to assess many possible market paths.</p>
-            <p class="muted">Amounts are treated as annual values in Indian rupees. Check that all assumptions use the same time frame and that future expenses are expressed in today's money when entering them.</p>
-        </section>
-</details>
+        <!-- Compact section navigation (sticky on desktop) -->
+        <nav class="secnav" aria-label="Sections">
+            <div class="btns">
+                <a class="secnav-link" href="#getting-started">Getting Started</a>
+                <a class="secnav-link" href="#inputs">Inputs</a>
+                <a class="secnav-link" href="#money">Money &amp; Inflation</a>
+                <a class="secnav-link" href="#returns">Investments</a>
+                <a class="secnav-link" href="#projection">Projection</a>
+                <a class="secnav-link" href="#taxes">Taxes</a>
+                <a class="secnav-link" href="#simulation">Simulation</a>
+                <a class="secnav-link" href="#results">Results</a>
+                <a class="secnav-link" href="#advisory">Advisory</a>
+                <a class="secnav-link" href="#limits">Limitations</a>
+            </div>
+            <a class="backtop" href="#top">Back to top ↑</a>
+        </nav>
 
-        <details open>
-<summary><strong>⚙️ Input Settings Reference</strong></summary>
-<section id="input-settings">
-            <h2>Input Settings Reference</h2>
-            <p class="muted">Use this reference when filling in the planner parameters. Values marked as default are shown in the UI, but you can change any of them.</p>
-            <table>
-                <thead><tr><th>Setting</th><th>Default</th><th>What it means</th></tr></thead>
-                <tbody>
-                    <tr><td>Current age</td><td>35</td><td>Your present age. The projection starts from this year.</td></tr>
-                    <tr><td>Retirement age</td><td>60</td><td>The age at which contributions stop and withdrawals begin.</td></tr>
-                    <tr><td>Life expectancy</td><td>85</td><td>The final age the plan must fund. The model runs to this age.</td></tr>
-                    <tr><td>Current annual expenses</td><td>₹1,500,000</td><td>Your present-day yearly spending. This is inflated each year in retirement.</td></tr>
-                    <tr><td>Average inflation rate</td><td>6.0%</td><td>Annual inflation applied to expenses and ad-hoc expenses. Use a realistic long-term expectation.</td></tr>
-                    <tr><td>Current corpus</td><td>₹4,000,000</td><td>Existing investible wealth available today.</td></tr>
-                    <tr><td>Annual contribution</td><td>₹500,000</td><td>Amount saved each year before retirement. Contributions stop at retirement.</td></tr>
-                    <tr><td>Contribution increase</td><td>8.0%</td><td>Annual growth applied to your contribution amount. Set to 0% for fixed contributions.</td></tr>
-                    <tr><td>One-time lump sum</td><td>₹0</td><td>A future cash injection at retirement, such as gratuity or PF proceeds.</td></tr>
-<tr><td>Pre-retirement return</td><td>10.0%</td><td>Kept for compatibility; actual calculation uses asset-level returns (see below).</td></tr>
-<tr><td>Post-retirement return</td><td>8.0%</td><td>Kept for compatibility; actual calculation uses asset-level returns (see below).</td></tr>
-<tr><td>Equity return</td><td>12.0%</td><td>Expected annual return on equity allocation.</td></tr>
-<tr><td>Debt return</td><td>6.0%</td><td>Expected annual return on debt allocation.</td></tr>
-<tr><td>Arbitrage return</td><td>8.0%</td><td>Expected annual return on arbitrage allocation.</td></tr>
-<tr><td>REIT return</td><td>8.0%</td><td>Expected annual return on REIT allocation.</td></tr>
-<tr><td>REIT allocation</td><td>0%</td><td>Share of the portfolio in REITs. Defaults to 0% so existing plans are unchanged unless the user enables REIT.</td></tr>
-<tr><td>REIT volatility</td><td>15.0%</td><td>Annual standard deviation of REIT returns.</td></tr>
-<tr><td>Equity ↔ REIT correlation</td><td>0.60</td><td>How equity and REIT returns move together.</td></tr>
-<tr><td>Debt ↔ REIT correlation</td><td>0.20</td><td>How debt and REIT returns move together.</td></tr>
-<tr><td>Arbitrage ↔ REIT correlation</td><td>0.10</td><td>How arbitrage and REIT returns move together.</td></tr>
-<tr><td>REIT taxable gain fraction</td><td>50%</td><td>Fraction of REIT withdrawal treated as taxable gain (the rest is return of capital).</td></tr>
-                    <tr><td>Equity allocation</td><td>60%</td><td>Share of the portfolio in equity. Affects both deterministic tax treatment and Monte Carlo volatility.</td></tr>
-                    <tr><td>Debt allocation</td><td>30%</td><td>Share in debt instruments.</td></tr>
-                    <tr><td>Arbitrage allocation</td><td>10%</td><td>Share in arbitrage strategies.</td></tr>
-                    <tr><td>Equity LTCG split</td><td>70%</td><td>Portion of equity returns treated as long-term capital gains.</td></tr>
-                    <tr><td>Equity STCG split</td><td>30%</td><td>Portion of equity returns treated as short-term capital gains.</td></tr>
-                    <tr><td>LTCG tax rate</td><td>12.5%</td><td>Tax rate applied to long-term capital gains.</td></tr>
-                    <tr><td>STCG tax rate</td><td>20.0%</td><td>Tax rate applied to short-term capital gains.</td></tr>
-                    <tr><td>Debt tax rate</td><td>20.0%</td><td>Tax rate applied to debt returns.</td></tr>
-                    <tr><td>Arbitrage tax rate</td><td>20.0%</td><td>Tax rate applied to arbitrage returns.</td></tr>
-                    <tr><td>LTCG exemption</td><td>₹125,000</td><td>Annual exemption amount subtracted from taxable LTCG before applying the LTCG rate.</td></tr>
-                    <tr><td>Stress scenario</td><td>Normal</td><td>Choose Normal, Mild Crash, or Severe Crash to override the first two retirement-year returns.</td></tr>
-                    <tr><td>Include pension</td><td>Off</td><td>Enable if you expect regular pension income after a chosen start age.</td></tr>
-                    <tr><td>Pension start age</td><td>60</td><td>Age from which gross pension begins. It can be before or after retirement.</td></tr>
-                    <tr><td>Annual pension</td><td>₹600,000</td><td>Gross annual pension at the start age. It grows each year by the pension increase rate. Disabled by default.</td></tr>
-                    <tr><td>Pension increase</td><td>5.0%</td><td>Annual growth rate applied to the pension amount.</td></tr>
-                    <tr><td>Pension tax rate</td><td>20.0%</td><td>Tax deducted from gross pension to arrive at net pension.</td></tr>
-                    <tr><td>Reinvest pension surplus</td><td>On</td><td>When enabled, any pension amount not needed for expenses is reinvested into the corpus.</td></tr>
-                    <tr><td>Ad-hoc expenses</td><td>None by default</td><td>Optional one-time future expenses by age, such as a house purchase or medical procedure. Each can use either general inflation or a custom rate.</td></tr>
-                </tbody>
-            </table>
-        </section>
-</details>
+        <!-- Methodology flow -->
+        <div class="flow" aria-hidden="true">
+            <span class="flow-title">How the planner works</span>
+            <span class="flow-step"><span class="n">1</span>Inputs</span><span class="flow-arrow">→</span>
+            <span class="flow-step"><span class="n">2</span>Assumptions</span><span class="flow-arrow">→</span>
+            <span class="flow-step"><span class="n">3</span>Income &amp; Expense Projection</span><span class="flow-arrow">→</span>
+            <span class="flow-step"><span class="n">4</span>Investment Growth</span><span class="flow-arrow">→</span>
+            <span class="flow-step"><span class="n">5</span>Taxes</span><span class="flow-arrow">→</span>
+            <span class="flow-step"><span class="n">6</span>Market Simulation</span><span class="flow-arrow">→</span>
+            <span class="flow-step"><span class="n">7</span>Retirement Outcomes</span><span class="flow-arrow">→</span>
+            <span class="flow-step"><span class="n">8</span>Advisory Insights</span>
+        </div>
+<!-- CORE METHODOLOGY group -->
+        <p class="group-label">Core Methodology</p>
+<!-- 1. Getting Started -->
+    <details class="sec acc" id="getting-started" open>
+        <summary><span class="sec-num"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M9.5 8.2 L15.5 12 L9.5 15.8 Z"/></svg></span><span class="sec-no">1</span><strong>Getting Started</strong><span class="chev">▾</span></summary>
+        <div class="how">
+            <div class="hm">
+                <span class="h-label">What it means</span>
+                <p>Getting started is about entering a realistic picture of your finances today so the planner can project them forward.</p>
+            </div>
+            <div class="hm">
+                <span class="h-label">How the planner handles it</span>
+                <p>Enter your current age, retirement age, life expectancy, current corpus, annual expenses, annual contribution, return assumptions, and inflation. Add one-time expenses for known future costs such as education, housing, or medical care.</p>
+            </div>
+        </div>
+        <p class="muted">The default inputs show a realistic mid-career scenario: age 35, planning to retire at 60, with ₹15 lakh annual expenses, ₹40 lakh current corpus, ₹5 lakh annual contribution growing at 8%, and a 60/30/10 equity-debt-arbitrage allocation. This is a plausible starting point for many Indian professionals, but it is intentionally set slightly below full readiness so you can see how the tool identifies gaps and recommends actions.</p>
+        <p class="muted">Amounts are treated as annual values in Indian rupees. Check that all assumptions use the same time frame and that future expenses are expressed in today's money when entering them.</p>
+        <p>The planner also supports a retirement lump sum, pension income, investment allocation, withdrawal tax assumptions, and market-stress scenarios. Use the deterministic simulation for one assumed return path; use Monte Carlo to assess many possible market paths.</p>
+        <div class="callout">
+            <strong>Amounts are in today's money</strong> unless stated otherwise. Enter future one-time expenses as the cost today — the planner adjusts them for inflation.
+        </div>
+    </details>
+<!-- 2. Inputs & Assumptions -->
+    <details class="sec acc" id="inputs">
+        <summary><span class="sec-num"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6 H19 M5 12 H19 M5 18 H19"/><circle cx="14.5" cy="6" r="1.8"/><circle cx="9.5" cy="12" r="1.8"/><circle cx="17" cy="18" r="1.8"/></svg></span><span class="sec-no">2</span><strong>Inputs &amp; Assumptions</strong><span class="chev">▾</span></summary>
+        <div class="how">
+            <div class="hm">
+                <span class="h-label">What it means</span>
+                <p>Your inputs describe your situation today and the assumptions you expect to hold in the future. The planner's outputs are only as realistic as these inputs.</p>
+            </div>
+            <div class="hm">
+                <span class="h-label">How the planner handles it</span>
+                <p>Every input feeds the year-by-year projection. The values shown as defaults are pre-filled in the UI, but you can change any of them. Keep all amounts in today's money and use consistent time frames.</p>
+            </div>
+        </div>
+        <table>
+            <thead><tr><th>Setting</th><th>Default</th><th>What it means</th></tr></thead>
+            <tbody>
+                <tr><td>Current age</td><td>35</td><td>Your present age. The projection starts from this year.</td></tr>
+                <tr><td>Retirement age</td><td>60</td><td>The age at which contributions stop and withdrawals begin.</td></tr>
+                <tr><td>Life expectancy</td><td>85</td><td>The final age the plan must fund. The model runs to this age.</td></tr>
+                <tr><td>Current annual expenses</td><td>₹1,500,000</td><td>Your present-day yearly spending. This is inflated each year in retirement.</td></tr>
+                <tr><td>Average inflation rate</td><td>6.0%</td><td>Annual inflation applied to expenses and ad-hoc expenses. Use a realistic long-term expectation.</td></tr>
+                <tr><td>Current corpus</td><td>₹4,000,000</td><td>Existing investible wealth available today.</td></tr>
+                <tr><td>Annual contribution</td><td>₹500,000</td><td>Amount saved each year before retirement. Contributions stop at retirement.</td></tr>
+                <tr><td>Contribution increase</td><td>8.0%</td><td>Annual growth applied to your contribution amount. Set to 0% for fixed contributions.</td></tr>
+                <tr><td>One-time lump sum</td><td>₹0</td><td>A future cash injection at retirement, such as gratuity or PF proceeds.</td></tr>
+                <tr><td>Ad-hoc expenses</td><td>None by default</td><td>Optional one-time future expenses by age, such as a house purchase or medical procedure. Each can use either general inflation or a custom rate.</td></tr>
+            </tbody>
+        </table>
+<h3>Return and allocation assumptions</h3>
+        <table>
+            <thead><tr><th>Setting</th><th>Default</th><th>What it means</th></tr></thead>
+            <tbody>
+                <tr><td>Pre-retirement return</td><td>10.0%</td><td>Kept for compatibility; actual calculation uses asset-level returns (see below).</td></tr>
+                <tr><td>Post-retirement return</td><td>8.0%</td><td>Kept for compatibility; actual calculation uses asset-level returns (see below).</td></tr>
+                <tr><td>Equity return</td><td>12.0%</td><td>Expected annual return on equity allocation.</td></tr>
+                <tr><td>Debt return</td><td>6.0%</td><td>Expected annual return on debt allocation.</td></tr>
+                <tr><td>Arbitrage return</td><td>8.0%</td><td>Expected annual return on arbitrage allocation.</td></tr>
+                <tr><td>REIT return</td><td>8.0%</td><td>Expected annual return on REIT allocation.</td></tr>
+                <tr><td>Equity allocation</td><td>60%</td><td>Share of the portfolio in equity. Affects both deterministic tax treatment and Monte Carlo volatility.</td></tr>
+                <tr><td>Debt allocation</td><td>30%</td><td>Share in debt instruments.</td></tr>
+                <tr><td>Arbitrage allocation</td><td>10%</td><td>Share in arbitrage strategies.</td></tr>
+                <tr><td>REIT allocation</td><td>0%</td><td>Share of the portfolio in REITs. Defaults to 0% so existing plans are unchanged unless the user enables REIT.</td></tr>
+                <tr><td>REIT volatility</td><td>15.0%</td><td>Annual standard deviation of REIT returns.</td></tr>
+                <tr><td>Equity ↔ REIT correlation</td><td>0.60</td><td>How equity and REIT returns move together.</td></tr>
+                <tr><td>Debt ↔ REIT correlation</td><td>0.20</td><td>How debt and REIT returns move together.</td></tr>
+                <tr><td>Arbitrage ↔ REIT correlation</td><td>0.10</td><td>How arbitrage and REIT returns move together.</td></tr>
+                <tr><td>REIT taxable gain fraction</td><td>50%</td><td>Fraction of REIT withdrawal treated as taxable gain (the rest is return of capital).</td></tr>
+            </tbody>
+        </table>
+<h3>Tax and pension assumptions</h3>
+        <table>
+            <thead><tr><th>Setting</th><th>Default</th><th>What it means</th></tr></thead>
+            <tbody>
+                <tr><td>Equity LTCG split</td><td>70%</td><td>Portion of equity returns treated as long-term capital gains.</td></tr>
+                <tr><td>Equity STCG split</td><td>30%</td><td>Portion of equity returns treated as short-term capital gains.</td></tr>
+                <tr><td>LTCG tax rate</td><td>12.5%</td><td>Tax rate applied to long-term capital gains.</td></tr>
+                <tr><td>STCG tax rate</td><td>20.0%</td><td>Tax rate applied to short-term capital gains.</td></tr>
+                <tr><td>Debt tax rate</td><td>20.0%</td><td>Tax rate applied to debt returns.</td></tr>
+                <tr><td>Arbitrage tax rate</td><td>20.0%</td><td>Tax rate applied to arbitrage returns.</td></tr>
+                <tr><td>LTCG exemption</td><td>₹125,000</td><td>Annual exemption amount subtracted from taxable LTCG before applying the LTCG rate.</td></tr>
+                <tr><td>Stress scenario</td><td>Normal</td><td>Choose Normal, Mild Crash, or Severe Crash to override the first two retirement-year returns.</td></tr>
+                <tr><td>Include pension</td><td>Off</td><td>Enable if you expect regular pension income after a chosen start age.</td></tr>
+                <tr><td>Pension start age</td><td>60</td><td>Age from which gross pension begins. It can be before or after retirement.</td></tr>
+                <tr><td>Annual pension</td><td>₹600,000</td><td>Gross annual pension at the start age. It grows each year by the pension increase rate. Disabled by default.</td></tr>
+                <tr><td>Pension increase</td><td>5.0%</td><td>Annual growth rate applied to the pension amount.</td></tr>
+                <tr><td>Pension tax rate</td><td>20.0%</td><td>Tax deducted from gross pension to arrive at net pension.</td></tr>
+                <tr><td>Reinvest pension surplus</td><td>On</td><td>When enabled, any pension amount not needed for expenses is reinvested into the corpus.</td></tr>
+            </tbody>
+        </table>
+    </details>
+<!-- 3. Money & Inflation -->
+    <details class="sec acc" id="money">
+        <summary><span class="sec-num"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 6 L16.5 18"/><circle cx="8.3" cy="6.4" r="2.1"/><circle cx="15.7" cy="17.6" r="2.1"/></svg></span><span class="sec-no">3</span><strong>Money &amp; Inflation</strong><span class="chev">▾</span></summary>
 
-        <details open>
-<summary><strong>📊 Deterministic projection</strong></summary>
-<section id="projection">
-            <h2>Deterministic projection</h2>
-            <p>The retirement projection applies the selected asset-level returns each year. It adds contributions before retirement, inflates expenses, applies pension income and withdrawal taxes (including REIT taxation), then updates the corpus. It is useful for understanding the cash-flow mechanics of one scenario, but it does not show the range of possible market outcomes.</p>
-            <h3>Stress scenarios</h3>
-            <p>Mild and severe stress scenarios replace the first two retirement-year returns with fixed negative returns. They are designed to show the effect of a poor start to retirement.</p>
-            <h3>Pension and tax treatment</h3>
-            <p>Net pension first funds recurring expenses. A pension surplus is reinvested only when that option is selected. Withdrawal taxes use a simplified blended allocation approach and an annual LTCG exemption; they do not track individual tax lots or cost basis. REIT withdrawals are partially taxable: only the estimated gain portion (based on the REIT taxable gain fraction) is treated as taxable and taxed at the LTCG rate.</p>
-        </section>
-</details>
+        <div class="callout">
+            <strong>Amounts are in today's money unless stated otherwise.</strong> Enter your expenses and future costs as their value today; the planner adjusts them over time using inflation.
+        </div>
 
-        <details open>
-<summary><strong>🎲 Monte Carlo simulation</strong></summary>
-<section id="monte-carlo">
-            <h2>Monte Carlo simulation</h2>
-            <p>Monte Carlo runs 100 to 50,000 simulated annual-return paths. Every path follows the same contributions, expenses, pension, tax, and withdrawal rules, but its market returns differ. The success rate is the share of paths that fund all required expenses through life expectancy.</p>
-            <p>The simulation uses either a normal or lognormal return distribution. Lognormal is the default because it cannot produce a return below −100%. A random seed makes a run reproducible; leaving it blank produces a new random set of paths.</p>
-<h3>Monte Carlo parameters</h3>
-             <table>
-                 <thead><tr><th>Setting</th><th>Default</th><th>What it means</th></tr></thead>
-                 <tbody>
-                     <tr><td>Number of simulations</td><td>1,000</td><td>How many random market paths to simulate. More paths reduce sampling noise but take longer.</td></tr>
-                     <tr><td>Return distribution</td><td>Lognormal</td><td>Lognormal keeps returns above −100%. Normal is simpler but can produce unrealistic negative portfolio values at high volatility.</td></tr>
-                     <tr><td>Equity volatility</td><td>18.0%</td><td>Annual standard deviation of equity returns.</td></tr>
-                     <tr><td>Debt volatility</td><td>6.0%</td><td>Annual standard deviation of debt returns.</td></tr>
-                     <tr><td>Arbitrage volatility</td><td>8.0%</td><td>Annual standard deviation of arbitrage returns.</td></tr>
-                     <tr><td>REIT volatility</td><td>15.0%</td><td>Annual standard deviation of REIT returns.</td></tr>
-                     <tr><td>Equity ↔ Debt correlation</td><td>-0.10</td><td>How equity and debt returns move together. Negative values mean they tend to offset each other.</td></tr>
-                     <tr><td>Equity ↔ Arbitrage correlation</td><td>0.05</td><td>How equity and arbitrage returns move together. Near-zero values mean they are largely independent.</td></tr>
-                     <tr><td>Debt ↔ Arbitrage correlation</td><td>0.20</td><td>How debt and arbitrage returns move together. Positive values mean they tend to rise and fall together.</td></tr>
-                     <tr><td>Equity ↔ REIT correlation</td><td>0.60</td><td>How equity and REIT returns move together.</td></tr>
-                     <tr><td>Debt ↔ REIT correlation</td><td>0.20</td><td>How debt and REIT returns move together.</td></tr>
-                     <tr><td>Arbitrage ↔ REIT correlation</td><td>0.10</td><td>How arbitrage and REIT returns move together.</td></tr>
-                     <tr><td>Random seed</td><td>None</td><td>Optional fixed seed for reproducible results. Same inputs + same seed = identical output.</td></tr>
-                     <tr><td>Retirement age sensitivity</td><td>None</td><td>Comma-separated alternative retirement ages to compare success rates. Useful for "how much longer should I work?" analysis.</td></tr>
-                 </tbody>
-             </table>
-             <h3>Allocation and volatility</h3>
-             <p>Equity, debt, arbitrage, and REIT weights, volatilities, and correlations are combined into one covariance-based portfolio volatility. The current model draws one return for the total portfolio; it does not simulate separate asset-class balances or rebalancing.</p>
-        </section>
-</details>
+        <div class="how">
+            <div class="hm">
+                <span class="h-label">What it means</span>
+                <p>Inflation is the annual increase in the cost of goods and services. An expense of ₹10 lakh today will cost more in the future — for example, at 6% inflation it becomes approximately ₹13.4 lakh after 5 years.</p>
+            </div>
+            <div class="hm">
+                <span class="h-label">How the planner handles it</span>
+                <p>Your recurring expenses are inflated each year in retirement at the average inflation rate you enter. Contributions stop at retirement; expenses continue to be inflated for as long as the plan runs.</p>
+            </div>
+        </div>
 
-        <details open>
-<summary><strong>🤖 AI Insights</strong></summary>
-<section id="ai-insights">
-            <h2>AI Insights</h2>
+        <h3 id="future-expense">Future one-time expenses (ad-hoc expenses)</h3>
+        <div class="callout">
+            <strong>Enter the cost today. Future cost is adjusted for inflation.</strong>
+        </div>
+        <p>Each ad-hoc expense is defined by the age at which it occurs, its <strong>cost today</strong>, and its category. The percentage you associate with a future one-time expense represents <strong>its annual inflation rate</strong> — the rate at which that cost is inflated from today until the year it is paid (8% is the suggested default for healthcare and education, 5–6% for most other categories). You may use the general inflation rate or a custom rate.</p>
+        <p class="muted">This is the only place a custom inflation rate applies. Recurring expenses always use the single average inflation rate entered on the main form.</p>
+    </details>
+<!-- 4. Investment Returns -->
+    <details class="sec acc" id="returns">
+        <summary><span class="sec-num"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18 L8 15 L12 16 L16 9 L20 6"/><path d="M18 6 L20 3 L22 6 Z" fill="currentColor" stroke="none"/></svg></span><span class="sec-no">4</span><strong>Investment Returns</strong><span class="chev">▾</span></summary>
+        <div class="how">
+            <div class="hm">
+                <span class="h-label">What it means</span>
+                <p>Your portfolio return is the growth your savings earn each year. Because your money is split across asset classes, the overall return depends on each part's expected return and its share of the portfolio.</p>
+            </div>
+            <div class="hm">
+                <span class="h-label">How the planner handles it</span>
+                <p>The planner uses asset-level returns (equity, debt, arbitrage, and REIT) weighted by your allocation, rather than a single fixed return. The pre/post-retirement return fields are kept only for compatibility. In the deterministic projection the same expected returns apply each year; in Monte Carlo the returns vary by simulation.</p>
+            </div>
+        </div>
+        <h3>Asset return assumptions</h3>
+        <table>
+            <thead><tr><th>Asset class</th><th>Default return</th><th>Role in the plan</th></tr></thead>
+            <tbody>
+                <tr><td>Equity</td><td>12.0%</td><td>Growth engine of the portfolio.</td></tr>
+                <tr><td>Debt</td><td>6.0%</td><td>Stability and lower volatility.</td></tr>
+                <tr><td>Arbitrage</td><td>8.0%</td><td>Moderate return with low sensitivity to equity markets.</td></tr>
+                <tr><td>REIT</td><td>8.0%</td><td>Real-estate exposure; defaults to 0% allocation.</td></tr>
+            </tbody>
+        </table>
+        <h3>Real vs nominal returns</h3>
+        <p><strong>Use nominal returns when possible.</strong> For example, if you expect 10% nominal returns and 6% inflation, your real return is roughly 4%. The planner inflates expenses automatically, so nominal returns are usually easier to reason about.</p>
+        <h3>Choosing a return rate</h3>
+        <p>Use a return rate you believe is realistic for your portfolio mix over the long run. Historical Indian equity returns are around 10–12% nominal, but future returns may be lower. A conservative blended assumption of 8–10% pre-retirement and 7–9% post-retirement is common. The planner's default is 10% pre and 8% post.</p>
+    </details>
+<!-- 5. Retirement Projection (Deterministic) -->
+    <details class="sec acc" id="projection">
+        <summary><span class="sec-num"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7.5"/><path d="M12 13 L12 6.5 M12 12.4 L17 12"/></svg></span><span class="sec-no">5</span><strong>Retirement Projection</strong><span class="chev">▾</span></summary>
+        <div class="how">
+            <div class="hm">
+                <span class="h-label">What it means</span>
+                <p>The deterministic projection traces one expected-case path for your money, based on the fixed assumptions you entered. It shows the mechanics of how your corpus grows before retirement and depletes during it.</p>
+            </div>
+            <div class="hm">
+                <span class="h-label">How the planner handles it</span>
+                <p>Each year the planner applies the selected asset-level returns, adds contributions before retirement, inflates expenses, applies pension income and withdrawal taxes (including REIT taxation), then updates the corpus. Expenses are treated as an annuity due because they are incurred throughout the year.</p>
+            </div>
+        </div>
+        <p class="muted">This path is useful for understanding cash-flow mechanics, but it does not show the range of possible market outcomes. Use the deterministic projection for one assumed return path; use Monte Carlo to assess many possible market paths.</p>
+
+        <h3>Stress scenarios</h3>
+        <p>Mild and severe stress scenarios replace the first two retirement-year returns with fixed negative returns. They are designed to show the effect of a poor start to retirement.</p>
+
+        <h3>Pension and tax treatment</h3>
+        <p>Net pension first funds recurring expenses. A pension surplus is reinvested only when that option is selected. Withdrawal taxes use a simplified blended allocation approach and an annual LTCG exemption; they do not track individual tax lots or cost basis. REIT withdrawals are partially taxable: only the estimated gain portion (based on the REIT taxable gain fraction) is treated as taxable and taxed at the LTCG rate.</p>
+    </details>
+<!-- 6. Taxes -->
+    <details class="sec acc" id="taxes">
+        <summary><span class="sec-num"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 7 L18 7 L18 18 L6 18 Z"/><path d="M9 10 L15 10 M8 13 L16 13"/></svg></span><span class="sec-no">6</span><strong>Taxes</strong><span class="chev">▾</span></summary>
+        <div class="how">
+            <div class="hm">
+                <span class="h-label">What it means</span>
+                <p>Your returns and withdrawals are not fully yours — tax reduces what you can actually spend. The planner estimates this so your retirement income requirements reflect it.</p>
+            </div>
+            <div class="hm">
+                <span class="h-label">How the planner handles it</span>
+                <p>The planner estimates tax each year by blending your asset-class tax rates according to your allocation, and applies the annual LTCG exemption. This is a simplification — it does not track individual cost basis or tax lots — but it is sufficient for projection purposes.</p>
+            </div>
+        </div>
+        <h3>How rates are blended</h3>
+        <p>The portfolio's withdrawal tax is a weighted average of the LTCG, STCG, debt, arbitrage, and REIT tax rates, based on your allocation and your equity LTCG/STCG split. REIT taxable gains are taxed at the LTCG rate.</p>
+        <h3>What LTCG and STCG mean</h3>
+        <ul>
+            <li><strong>LTCG</strong> = Long-Term Capital Gains, taxed at 12.5% for Indian equities above the ₹1.25 lakh exemption.</li>
+            <li><strong>STCG</strong> = Short-Term Capital Gains, taxed at 20% for Indian equities.</li>
+            <li><strong>Debt fund gains</strong> are taxed as per your income slab (after 3 years).</li>
+        </ul>
+        <p class="muted">The planner blends these based on your equity/debt/arbitrage allocation and equity LTCG/STCG split. It assumes an annual LTCG exemption; it does not track individual tax lots or cost basis.</p>
+    </details>
+<!-- 7. Deterministic vs Stochastic -->
+    <details class="sec acc" id="simulation">
+        <summary><span class="sec-num"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4 L12 11 M12 11 L7 19 M12 11 L17 19"/></svg></span><span class="sec-no">7</span><strong>Deterministic vs Stochastic</strong><span class="chev">▾</span></summary>
+        <p class="sec-sub">Two ways to look at the same plan.</p>
+        <div class="cards">
+            <div class="example-card">
+                <h4>Deterministic Projection</h4>
+                <p>Projects the retirement plan using fixed assumptions to illustrate an expected-case path.</p>
+                <p class="muted">One path, one set of returns. Good for understanding cash-flow mechanics.</p>
+                <span class="chip">Expected case</span>
+            </div>
+            <div class="example-card">
+                <h4>Stochastic Simulation</h4>
+                <p>Tests multiple possible market paths to illustrate how market volatility can affect retirement outcomes.</p>
+                <p class="muted">Many paths, varying returns. Good for understanding the range of outcomes and the probability of success.</p>
+                <span class="chip">Range of outcomes</span>
+            </div>
+        </div>
+    </details>
+
+    <!-- 8. Stochastic Simulation (Monte Carlo) -->
+    <details class="sec acc" id="monte-carlo">
+        <summary><span class="sec-num"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7 H17 V17 H7 Z"/><circle cx="10" cy="10" r="1.5"/><circle cx="14" cy="10" r="1.5"/><circle cx="12" cy="12" r="1.5"/><circle cx="10" cy="14" r="1.5"/><circle cx="14" cy="14" r="1.5"/></svg></span><span class="sec-no">8</span><strong>Stochastic Simulation (Monte Carlo)</strong><span class="chev">▾</span></summary>
+        <div class="how">
+            <div class="hm">
+                <span class="h-label">What it means</span>
+                <p>Monte Carlo runs many simulated return paths instead of one. Each path follows the same contributions, expenses, pension, tax, and withdrawal rules, but its market returns differ. The success rate is the share of paths that fund all required expenses through life expectancy.</p>
+            </div>
+            <div class="hm">
+                <span class="h-label">How the planner handles it</span>
+                <p>The simulation uses either a normal or lognormal return distribution. Lognormal is the default because it cannot produce a return below −100%. A random seed makes a run reproducible; leaving it blank produces a new random set of paths.</p>
+            </div>
+        </div>
+        <h3>Monte Carlo parameters</h3>
+        <table>
+            <thead><tr><th>Setting</th><th>Default</th><th>What it means</th></tr></thead>
+            <tbody>
+                <tr><td>Number of simulations</td><td>1,000</td><td>How many random market paths to simulate. More paths reduce sampling noise but take longer.</td></tr>
+                <tr><td>Return distribution</td><td>Lognormal</td><td>Lognormal keeps returns above −100%. Normal is simpler but can produce unrealistic negative portfolio values at high volatility.</td></tr>
+                <tr><td>Equity volatility</td><td>18.0%</td><td>Annual standard deviation of equity returns.</td></tr>
+                <tr><td>Debt volatility</td><td>6.0%</td><td>Annual standard deviation of debt returns.</td></tr>
+                <tr><td>Arbitrage volatility</td><td>8.0%</td><td>Annual standard deviation of arbitrage returns.</td></tr>
+                <tr><td>REIT volatility</td><td>15.0%</td><td>Annual standard deviation of REIT returns.</td></tr>
+                <tr><td>Equity ↔ Debt correlation</td><td>-0.10</td><td>How equity and debt returns move together. Negative values mean they tend to offset each other.</td></tr>
+                <tr><td>Equity ↔ Arbitrage correlation</td><td>0.05</td><td>How equity and arbitrage returns move together. Near-zero values mean they are largely independent.</td></tr>
+                <tr><td>Debt ↔ Arbitrage correlation</td><td>0.20</td><td>How debt and arbitrage returns move together. Positive values mean they tend to rise and fall together.</td></tr>
+                <tr><td>Equity ↔ REIT correlation</td><td>0.60</td><td>How equity and REIT returns move together.</td></tr>
+                <tr><td>Debt ↔ REIT correlation</td><td>0.20</td><td>How debt and REIT returns move together.</td></tr>
+                <tr><td>Arbitrage ↔ REIT correlation</td><td>0.10</td><td>How arbitrage and REIT returns move together.</td></tr>
+                <tr><td>Random seed</td><td>None</td><td>Optional fixed seed for reproducible results. Same inputs + same seed = identical output.</td></tr>
+                <tr><td>Retirement age sensitivity</td><td>None</td><td>Comma-separated alternative retirement ages to compare success rates. Useful for "how much longer should I work?" analysis.</td></tr>
+            </tbody>
+        </table>
+        <h3>Allocation and volatility</h3>
+        <p>Equity, debt, arbitrage, and REIT weights, volatilities, and correlations are combined into one covariance-based portfolio volatility. The current model draws one return for the total portfolio; it does not simulate separate asset-class balances or rebalancing.</p>
+    </details>
+<!-- 9. Results & Charts -->
+    <details class="sec acc" id="results">
+        <summary><span class="sec-num"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19 L5 10 L8 10 L8 19"/><path d="M10.5 19 L10.5 7 L13.5 7 L13.5 19"/><path d="M16 19 L16 4 L19 4 L19 19"/></svg></span><span class="sec-no">9</span><strong>Results &amp; Charts</strong><span class="chev">▾</span></summary>
+        <div class="how">
+            <div class="hm">
+                <span class="h-label">What it means</span>
+                <p>The results translate your inputs and assumptions into a small set of key numbers and charts that tell you how your plan is likely to perform.</p>
+            </div>
+            <div class="hm">
+                <span class="h-label">How the planner handles it</span>
+                <p>Deterministic results give a single expected-case path and coverage indicators. Monte Carlo results give probabilities and percentile ranges across many simulated paths. Each metric below is described in plain English.</p>
+            </div>
+        </div>
+
+        <h3>Key metrics</h3>
+        <table>
+            <thead><tr><th>Metric</th><th>Meaning</th></tr></thead>
+            <tbody>
+                <tr><td>Retirement readiness</td><td>Projected corpus at retirement divided by the estimated minimum corpus required. It is a deterministic coverage indicator, not a probability.</td></tr>
+                <tr><td>Probability of success</td><td>Percentage of Monte Carlo paths with no unfunded expenses through life expectancy. Choose an acceptable target based on your risk tolerance and flexibility; no single threshold fits everyone.</td></tr>
+                <tr><td>Median final corpus</td><td>The middle final outcome: half of paths finish above it and half below it.</td></tr>
+                <tr><td>5th and 95th percentiles</td><td>Respectively difficult and favourable outcomes. The 5th percentile is exceeded by 95% of paths; only 5% exceed the 95th percentile.</td></tr>
+                <tr><td>Funding probability by age</td><td>The chance that expenses are fully funded in a particular year. It helps show the timing of failure risk.</td></tr>
+                <tr><td>Failure-age percentiles</td><td>For paths that fail, these show when the first unfunded expense occurs. They do not describe paths that remain funded.</td></tr>
+                <tr><td>Recommendations</td><td>Rule-based prompts generated from the results. Treat them as ideas to investigate, not personalised advice.</td></tr>
+            </tbody>
+        </table>
+
+        <h3>Charts and visualisations</h3>
+        <table>
+            <thead><tr><th>Chart</th><th>What it shows</th><th>Why it matters</th></tr></thead>
+            <tbody>
+                <tr><td>Wealth Growth &amp; Depletion</td><td>The deterministic corpus path by age.</td><td>Shows when the corpus peaks, declines, or exhausts under your selected assumptions.</td></tr>
+                <tr><td>Cash Flow, Expenses, Returns, and Balance</td><td>Annual contributions, withdrawals, taxes, ad-hoc costs, returns, and closing corpus.</td><td>Locates the years that create the largest pressure on the plan.</td></tr>
+                <tr><td>Portfolio Allocation and Effective Tax Contribution</td><td>Input allocation and the simplified tax-rate contribution of each asset class.</td><td>Explains model inputs; they are not a record of holdings or realised tax lots.</td></tr>
+                <tr><td>Corpus Distribution Over Time</td><td>The 5th, 25th, 50th, 75th, and 95th percentile corpus paths across Monte Carlo simulations.</td><td>A widening band means outcomes are more sensitive to market returns. Lower bands approaching zero indicate vulnerability to poor early returns.</td></tr>
+                <tr><td>Probability of Funding by Age</td><td>The percentage of simulations that fully fund expenses at each age.</td><td>Identifies when the plan becomes fragile. This is not the same as the final success rate.</td></tr>
+                <tr><td>Final Corpus Distribution</td><td>A histogram of final corpus values across simulations.</td><td>Shows clustering, skew, and the chance of ending with a very low balance.</td></tr>
+                <tr><td>Retirement Age Sensitivity</td><td>Success rates for the retirement ages you enter for comparison.</td><td>Evaluates whether postponing retirement materially improves resilience.</td></tr>
+            </tbody>
+        </table>
+
+        <h3>Interpreting the numbers</h3>
+        <ul>
+            <li><strong>Readiness below 100%</strong> means your projected corpus is below the deterministic minimum required. It does not mean retirement is impossible — it means the plan is fragile and likely to fail under adverse markets. Use Monte Carlo to see the actual success probability and identify specific actions to close the gap.</li>
+            <li><strong>Good success rate</strong> — there is no universal threshold. Many planners target 80–90% for a moderate risk tolerance and 90–95% for a conservative one. If your success rate is below 70%, the plan is fragile; below 50%, it is high risk.</li>
+        </ul>
+    </details>
+<!-- 10. Advisory / Strategies -->
+    <details class="sec acc" id="advisory">
+        <summary><span class="sec-num"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="6.5"/><path d="M9 15.5 L15 15.5 L15 19.5 L9 19.5 Z"/><path d="M11 8 V5 M13 8 V5"/></svg></span><span class="sec-no">10</span><strong>Advisory / Strategies</strong><span class="chev">▾</span></summary>
+        <div class="how">
+            <div class="hm">
+                <span class="h-label">What it means</span>
+                <p>The Advisory section helps you see, at a glance, whether your plan is on track and what you could adjust. It is guidance to investigate, not guaranteed financial advice.</p>
+            </div>
+            <div class="hm">
+                <span class="h-label">How the planner handles it</span>
+                <p>Based on your projected situation, the planner produces a readiness score and solves for the required returns needed to close any gap. It also generates rule-based recommendations (for example, adjusting contributions, expenses, or retirement timing) that you can test by re-running the analysis.</p>
+            </div>
+        </div>
+        <div class="callout">
+            <strong>Not financial advice.</strong> The advisory output identifies potential strategies and actions that may improve your retirement outcome based on your projected situation. It is not a guarantee and does not replace review with a qualified professional.
+        </div>
+        <h3>Advisory outputs</h3>
+        <ul>
+            <li><strong>Retirement readiness score</strong> — a deterministic coverage indicator of projected corpus versus minimum required.</li>
+            <li><strong>Required return for 100%</strong> — the pre- and post-retirement return rates needed to reach 100% readiness (goal-seek analysis).</li>
+            <li><strong>Target annual contribution</strong> — the additional annual contribution that would close the retirement gap.</li>
+            <li><strong>Recommendations</strong> — rule-based prompts generated from the results. Treat them as ideas to investigate, not personalised advice.</li>
+        </ul>
+    </details>
+<!-- 11. Limitations / Disclaimer -->
+    <details class="sec acc" id="limits">
+        <summary><span class="sec-num"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4 L18 19 L6 19 Z"/>
+               <path d="M12 9.5 V14.2"/>
+               <circle cx="12" cy="17" r="1.3"/></svg></span><span class="sec-no">11</span><strong>Limitations &amp; Disclaimer</strong><span class="chev">▾</span></summary>
+        <div class="how">
+            <div class="hm">
+                <span class="h-label">What it means</span>
+                <p>This is a planning and education tool. Projections depend on the assumptions you enter, and actual outcomes can differ from any single projection or simulation.</p>
+            </div>
+            <div class="hm">
+                <span class="h-label">How the planner handles it</span>
+                <p>The model is a simplified, fixed-assumption projection. It does not represent every real-world behaviour, and it does not provide personalised financial, tax, or investment advice.</p>
+            </div>
+        </div>
+        <ul>
+            <li>Returns are independently sampled each year; the model does not represent momentum, mean reversion, or changing market regimes.</li>
+            <li>Inflation, pension growth, and tax rates remain fixed at the values entered.</li>
+            <li>Monte Carlo paths model sequence-of-returns risk because withdrawals continue while return order varies.</li>
+            <li>Asset-class paths, rebalancing, changing allocations, individual tax lots, and changes in spending or health costs are not separately modelled.</li>
+            <li>Correlation inputs must be realistic as a group. Some individually valid combinations are not mathematically valid together and can understate calculated risk.</li>
+            <li>More simulations reduce random sampling noise but do not make uncertain assumptions certain.</li>
+        </ul>
+        <p class="muted">This planner is designed for Indian investors and reflects common asset classes, tax rules, and retirement income sources. It does not provide personalised financial, tax, or investment advice. Always review major decisions with a qualified professional.</p>
+    </details>
+<!-- ADDITIONAL RESOURCES group -->
+        <p class="group-label">Additional Resources</p>
+<!-- Reference: AI Insights -->
+    <details class="acc" id="ref-ai-insights">
+        <summary><strong>AI Insights</strong><span class="chev">▾</span></summary>
+        <div>
             <p>After running both a Predictive Analysis and a Monte Carlo simulation, you can generate an AI-powered interpretation of your results. The AI acts as an interpreter of the engine's outputs — it does not recalculate your plan or invent new numbers.</p>
             <h3>How to use</h3>
             <p>Run a Predictive Analysis, then run a Monte Carlo simulation. Once both results are available, the <strong>✨ Get AI Insight</strong> button becomes enabled. Click it to send your inputs and analysis summaries to the AI provider for interpretation. The insight opens in a new browser tab, so you can keep the planner results visible alongside the AI analysis.</p>
@@ -282,51 +627,12 @@
                 <li>The AI respects Indian currency units (rupees, lakhs, crores) and does not invent intervention amounts.</li>
                 <li>If the AI provider is unavailable, the request will fail gracefully without affecting your calculation results.</li>
             </ul>
-        </section>
-</details>
-
-        <details open>
-<summary><strong>📈 Charts and visualisations</strong></summary>
-<section id="charts">
-            <h2>Charts and visualisations</h2>
-            <table>
-                <thead><tr><th>Chart</th><th>What it shows</th><th>How to use it</th></tr></thead>
-                <tbody>
-                    <tr><td>Wealth Growth &amp; Depletion</td><td>The deterministic corpus path by age.</td><td>Use it to see when the corpus peaks, declines, or exhausts under your selected assumptions.</td></tr>
-                    <tr><td>Cash Flow, Expenses, Returns, and Balance</td><td>Annual contributions, withdrawals, taxes, ad-hoc costs, returns, and closing corpus.</td><td>Use these charts to locate the years that create the largest pressure on the plan.</td></tr>
-                    <tr><td>Portfolio Allocation and Effective Tax Contribution</td><td>Input allocation and the simplified tax-rate contribution of each asset class.</td><td>They explain model inputs; they are not a record of holdings or realised tax lots.</td></tr>
-                    <tr><td>Corpus Distribution Over Time</td><td>The 5th, 25th, 50th, 75th, and 95th percentile corpus paths across Monte Carlo simulations.</td><td>A widening band means outcomes are more sensitive to market returns. Lower bands approaching zero indicate vulnerability to poor early returns.</td></tr>
-                    <tr><td>Probability of Funding by Age</td><td>The percentage of simulations that fully fund expenses at each age.</td><td>Use it to identify when the plan becomes fragile. This is not the same as the final success rate.</td></tr>
-                    <tr><td>Final Corpus Distribution</td><td>A histogram of final corpus values across simulations.</td><td>Use it to see clustering, skew, and the chance of ending with a very low balance.</td></tr>
-                    <tr><td>Retirement Age Sensitivity</td><td>Success rates for the retirement ages you enter for comparison.</td><td>Use it to evaluate whether postponing retirement materially improves resilience.</td></tr>
-                </tbody>
-            </table>
-        </section>
-</details>
-
-        <details open>
-<summary><strong>📏 Metrics and interpretation</strong></summary>
-<section id="metrics">
-            <h2>Metrics and interpretation</h2>
-            <table>
-                <thead><tr><th>Metric</th><th>Meaning</th></tr></thead>
-                <tbody>
-                    <tr><td>Retirement readiness</td><td>Projected corpus at retirement divided by the estimated minimum corpus required. It is a deterministic coverage indicator, not a probability.</td></tr>
-                    <tr><td>Probability of success</td><td>Percentage of Monte Carlo paths with no unfunded expenses through life expectancy. Choose an acceptable target based on your risk tolerance and flexibility; no single threshold fits everyone.</td></tr>
-                    <tr><td>Median final corpus</td><td>The middle final outcome: half of paths finish above it and half below it.</td></tr>
-                    <tr><td>5th and 95th percentiles</td><td>Respectively difficult and favourable outcomes. The 5th percentile is exceeded by 95% of paths; only 5% exceed the 95th percentile.</td></tr>
-                    <tr><td>Funding probability by age</td><td>The chance that expenses are fully funded in a particular year. It helps show the timing of failure risk.</td></tr>
-                    <tr><td>Failure-age percentiles</td><td>For paths that fail, these show when the first unfunded expense occurs. They do not describe paths that remain funded.</td></tr>
-                    <tr><td>Recommendations</td><td>Rule-based prompts generated from the results. Treat them as ideas to investigate, not personalised advice.</td></tr>
-                </tbody>
-            </table>
-        </section>
-</details>
-
-        <details open>
-<summary><strong>💡 Example scenarios</strong></summary>
-<section id="examples">
-            <h2>Example scenarios</h2>
+        </div>
+    </details>
+<!-- Reference: Example scenarios -->
+    <details class="acc" id="ref-examples">
+        <summary><strong>Example scenarios</strong><span class="chev">▾</span></summary>
+        <div>
             <p class="muted">These walkthroughs show how the planner behaves with common Indian retirement profiles. Use them as sanity checks for your own inputs.</p>
             <div class="example-grid">
                 <div class="example-card">
@@ -383,13 +689,12 @@
                     <span class="tag">Multi-source income</span>
                 </div>
             </div>
-        </section>
-</details>
-
-        <details open>
-<summary><strong>✅ Best practices</strong></summary>
-<section id="best-practices">
-            <h2>Best practices</h2>
+        </div>
+    </details>
+<!-- Reference: Best practices -->
+    <details class="acc" id="ref-best-practices">
+        <summary><strong>Best practices</strong><span class="chev">▾</span></summary>
+        <div>
             <ul>
                 <li><strong>Use real returns when possible:</strong> If you expect 10% nominal returns and 6% inflation, your real return is roughly 4%. The planner inflates expenses automatically, so nominal returns are usually easier to reason about.</li>
                 <li><strong>Test stress scenarios early:</strong> Run Normal, Mild Crash, and Severe Crash before locking in your plan. If a mild crash breaks your plan, you are running too close to the edge.</li>
@@ -399,13 +704,12 @@
                 <li><strong>Check the funding probability curve:</strong> The final success rate is a summary. The year-by-year funding probability shows exactly when your plan becomes fragile.</li>
                 <li><strong>Use sensitivity analysis:</strong> Try retiring 1–3 years earlier and later. A small change in retirement age often has a large impact on success probability.</li>
             </ul>
-        </section>
-</details>
-
-        <details open>
-<summary><strong>❓ Frequently asked questions</strong></summary>
-<section id="faq">
-            <h2>Frequently asked questions</h2>
+        </div>
+    </details>
+<!-- Reference: FAQ -->
+    <details class="acc" id="ref-faq">
+        <summary><strong>Frequently asked questions</strong><span class="chev">▾</span></summary>
+        <div>
             <div class="faq-item">
                 <details>
                     <summary>What return rate should I use — 6%, 8%, 10%?</summary>
@@ -454,13 +758,12 @@
                     <p>A large corpus can still fall short if expenses are high, inflation is long, returns are lower than expected, or you live longer than planned. The planner compares your corpus against the minimum required to fund your specific expense and longevity assumptions. A gap means the plan is sensitive to bad luck or assumptions.</p>
                 </details>
             </div>
-        </section>
-</details>
-
-        <details open>
-<summary><strong>📖 Glossary</strong></summary>
-<section id="glossary">
-            <h2>Glossary</h2>
+        </div>
+    </details>
+<!-- Reference: Glossary -->
+    <details class="acc" id="ref-glossary">
+        <summary><strong>Glossary</strong><span class="chev">▾</span></summary>
+        <div>
             <dl class="glossary">
                 <dt>Corpus</dt>
                 <dd>The total investible wealth available to fund retirement. It grows with returns and contributions, and shrinks with withdrawals and expenses.</dd>
@@ -468,8 +771,8 @@
                 <dd>Deterministic coverage ratio: projected corpus at retirement divided by minimum corpus required. 100% means the deterministic projection breaks even.</dd>
                 <dt>Success rate</dt>
                 <dd>In Monte Carlo, the percentage of simulated paths where expenses are fully funded through life expectancy.</dd>
-<dt>Blended tax rate</dt>
-                 <dd>A weighted average of LTCG, STCG, debt, arbitrage, and REIT tax rates based on your portfolio allocation and equity split. REIT taxable gains are taxed at the LTCG rate.</dd>
+                <dt>Blended tax rate</dt>
+                <dd>A weighted average of LTCG, STCG, debt, arbitrage, and REIT tax rates based on your portfolio allocation and equity split. REIT taxable gains are taxed at the LTCG rate.</dd>
                 <dt>Annuity due</dt>
                 <dd>A payment stream where cash flows occur at the beginning of each period. In this planner, expenses are treated as an annuity due because they are incurred throughout the year.</dd>
                 <dt>Sequence-of-returns risk</dt>
@@ -483,38 +786,12 @@
                 <dt>Percentile bands</dt>
                 <dd>In Monte Carlo output, the 5th, 25th, 50th, 75th, and 95th percentile corpus values at each age, showing the spread of outcomes.</dd>
             </dl>
-        </section>
-</details>
-            <h2>Assumptions and limitations</h2>
-            <ul>
-                <li>Returns are independently sampled each year; the model does not represent momentum, mean reversion, or changing market regimes.</li>
-                <li>Inflation, pension growth, and tax rates remain fixed at the values entered.</li>
-                <li>Monte Carlo paths model sequence-of-returns risk because withdrawals continue while return order varies.</li>
-                <li>Asset-class paths, rebalancing, changing allocations, individual tax lots, and changes in spending or health costs are not separately modelled.</li>
-                <li>Correlation inputs must be realistic as a group. Some individually valid combinations are not mathematically valid together and can understate calculated risk.</li>
-                <li>More simulations reduce random sampling noise but do not make uncertain assumptions certain.</li>
-            </ul>
-        </section>
-</details>
-
-        <details open>
-<summary><strong>ℹ️ About</strong></summary>
-<section id="about">
-            <h2>About</h2>
-            <p><strong>Dynamic Retirement Corpus Planner</strong> is built to help individuals and families in India plan for a financially secure retirement. It combines deterministic projection with Monte Carlo simulation to answer two core questions:</p>
-            <ul>
-                <li>Will my current savings and investments be enough?</li>
-                <li>What is the range of possible outcomes, not just a single estimate?</li>
-            </ul>
-            <p>The tool models contributions, expenses, inflation, pension income, ad-hoc costs, withdrawal taxes, and market stress scenarios. It is designed for Indian investors and reflects common asset classes, tax rules, and retirement income sources.</p>
-            <p class="muted">This is a planning and education tool. It does not provide personalised financial, tax, or investment advice. Always review major decisions with a qualified professional.</p>
-        </section>
-</details>
-
-        <details open>
-<summary><strong>🔗 References and data sources</strong></summary>
-<section id="references">
-            <h2>References and data sources</h2>
+        </div>
+    </details>
+<!-- Reference: References -->
+    <details class="acc" id="ref-references">
+        <summary><strong>References and data sources</strong><span class="chev">▾</span></summary>
+        <div>
             <p class="muted">Use these links to check current market levels, inflation, interest rates, and historical return data when setting your assumptions.</p>
             <table>
                 <thead><tr><th>Category</th><th>Source</th><th>What to look for</th></tr></thead>
@@ -530,26 +807,37 @@
                     <tr><td>Tax rules</td><td><a href="https://www.incometax.gov.in/" target="_blank">Income Tax India</a>, <a href="https://www.rbi.org.in/" target="_blank">RBI</a></td><td>Current LTCG, STCG, debt taxation, and exemption limits.</td></tr>
                 </tbody>
             </table>
-        </section>
-</details>
-
-        <details open>
-<summary><strong>📧 Contact</strong></summary>
-<section id="contact">
-            <h2>Contact</h2>
+        </div>
+    </details>
+<!-- Reference: About -->
+    <details class="acc" id="ref-about">
+        <summary><strong>About</strong><span class="chev">▾</span></summary>
+        <div id="about">
+            <p><strong>Dynamic Retirement Corpus Planner</strong> is built to help individuals and families in India plan for a financially secure retirement. It combines deterministic projection with Monte Carlo simulation to answer two core questions:</p>
+            <ul>
+                <li>Will my current savings and investments be enough?</li>
+                <li>What is the range of possible outcomes, not just a single estimate?</li>
+            </ul>
+            <p>The tool models contributions, expenses, inflation, pension income, ad-hoc costs, withdrawal taxes, and market stress scenarios. It is designed for Indian investors and reflects common asset classes, tax rules, and retirement income sources.</p>
+            <p class="muted">This is a planning and education tool. It does not provide personalised financial, tax, or investment advice. Always review major decisions with a qualified professional.</p>
+        </div>
+    </details>
+<!-- Reference: Contact -->
+    <details class="acc" id="ref-contact">
+        <summary><strong>Contact</strong><span class="chev">▾</span></summary>
+        <div id="contact">
             <p>For questions, feedback, bug reports, or feature requests, reach out directly:</p>
             <ul>
                 <li><strong>Email:</strong> <a href="mailto:abmullick@gmail.com">abmullick@gmail.com</a></li>
-                <li><strong>Feedback form:</strong> <a href="/methodology#feedback">Use the feedback form below ↗</a></li>
+                <li><strong>Feedback form:</strong> <a href="#feedback">Use the feedback form below ↗</a></li>
             </ul>
             <p class="muted">I read every message. Response times vary, but I usually reply within a few days.</p>
-        </section>
-</details>
-
-        <details open>
-<summary><strong>💬 Feedback</strong></summary>
-<section id="feedback">
-            <h2>Feedback</h2>
+        </div>
+    </details>
+<!-- Reference: Feedback -->
+    <details class="acc" id="feedback">
+        <summary><strong>Feedback</strong><span class="chev">▾</span></summary>
+        <div>
             <p class="muted">Found a bug, have a suggestion, or want to share how the planner helped you? Use the form below. It opens your email client with a pre-filled message to <a href="mailto:abmullick@gmail.com">abmullick@gmail.com</a>.</p>
             <form id="feedback-form" style="margin-top: 14px; display: grid; gap: 12px; max-width: 560px;">
                 <div>
@@ -576,55 +864,33 @@
                 <button type="submit" style="justify-self: start; padding: 10px 16px; border: 0; border-radius: 10px; background: var(--accent); color: white; font-weight: 600; cursor: pointer;">Send feedback</button>
                 <p id="fb-status" class="muted" style="margin: 0;"></p>
             </form>
-        </section>
-</details>
-
-        <p class="muted" style="text-align: center; margin-top: 32px; font-size: .9rem;">© 2026 Abhisek Basu Mullick. All rights reserved.</p>
-
-        <div class="scroll-indicator" aria-hidden="true">
-            <span>Scroll</span>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
-            </svg>
         </div>
+    </details>
+
+        <p class="muted foot" style="margin-top: 28px; font-size: .9rem;">© 2026 Abhisek Basu Mullick. All rights reserved.</p>
     </main>
 
     <script>
-        (function() {
-            const indicator = document.querySelector('.scroll-indicator');
-            if (!indicator) return;
-
-            function updateScrollIndicator() {
-                const scrollTop = window.scrollY || document.documentElement.scrollTop;
-                const scrollHeight = document.documentElement.scrollHeight;
-                const clientHeight = document.documentElement.clientHeight;
-                const nearBottom = scrollTop + clientHeight >= scrollHeight - 20;
-
-                const label = indicator.querySelector('span');
-                if (nearBottom) {
-                    indicator.classList.add('scroll-up');
-                    if (label) label.textContent = 'Up';
-                } else {
-                    indicator.classList.remove('scroll-up');
-                    if (label) label.textContent = 'Scroll';
+        // Highlight the active section in the sticky nav as the user scrolls
+        (function () {
+            const links = Array.prototype.slice.call(document.querySelectorAll('.secnav a.secnav-link'));
+            const sections = links.map(l => document.getElementById(l.getAttribute('href').substring(1)))
+                .filter(Boolean);
+            function highlight() {
+                const pos = (window.scrollY || document.documentElement.scrollTop) + 140;
+                let current = null;
+                for (let i = 0; i < sections.length; i++) {
+                    if (sections[i] && sections[i].getBoundingClientRect().top <= 140) current = links[i] || current;
                 }
+                links.forEach(l => l.classList.remove('active'));
+                if (current) current.classList.add('active');
             }
-
-            window.addEventListener('scroll', updateScrollIndicator, { passive: true });
-            window.addEventListener('resize', updateScrollIndicator);
-            updateScrollIndicator();
-
-            indicator.addEventListener('click', () => {
-                const isUp = indicator.classList.contains('scroll-up');
-                if (isUp) {
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                } else {
-                    window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'smooth' });
-                }
-            });
+            window.addEventListener('scroll', highlight, { passive: true });
+            window.addEventListener('resize', highlight, { passive: true });
+            highlight();
         })();
 
-        (function() {
+        (function () {
             const form = document.getElementById('feedback-form');
             const status = document.getElementById('fb-status');
             const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
@@ -679,7 +945,7 @@ ${message || '(no message)'}`
             btn.textContent = isDark ? '☀️ Light mode' : '🌙 Dark mode';
         }
 
-        (function() {
+        (function () {
             const saved = localStorage.getItem('methodology-theme');
             if (saved === 'dark') {
                 document.body.classList.add('dark-mode');
@@ -688,5 +954,246 @@ ${message || '(no message)'}`
             }
         })();
     </script>
+    <script>
+    (function () {
+        'use strict';
+        var input = document.getElementById('help-search-input');
+        if (!input) return;
+        var clearBtn = document.getElementById('help-search-clear');
+        var resultsBox = document.getElementById('help-results');
+        var resultsList = document.getElementById('help-results-list');
+        var suggestBox = document.getElementById('help-suggest');
+
+        var STOP = {};
+        ['the','a','an','is','are','was','were','be','been','what','whats','how','why','when','which','who','does','do','did','my','me','i','in','on','of','for','to','from','with','and','or','it','its','this','that','these','those','can','will','would','should','if','at','as','by','about','mean','means','work','works','there','have','has'].forEach(function (w) { STOP[w] = 1; });
+
+        function norm(s) { return (s || '').toLowerCase().replace(/[\u2018\u2019]/g, "'").replace(/[^a-z0-9'\s-]/g, ' ').replace(/\s+/g, ' ').trim(); }
+        function toks(s) { return norm(s).split(' ').filter(function (t) { return t && t.length > 1 && !STOP[t]; }); }
+        function uniq(a) { var o = {}, r = []; a.forEach(function (x) { if (!o[x]) { o[x] = 1; r.push(x); } }); return r; }
+
+        /* ---------- Level 2 metadata: built from existing page content ---------- */
+        var META = {
+            'getting-started': { title: 'Getting Started', category: 'Guide', keywords: ['getting started', 'start', 'begin', 'first steps', 'overview', 'quick start'], related: ['inputs', 'workflow'], questions: ['How do I start using the planner?', 'Where do I begin?'] },
+            'inputs': { title: 'Inputs & Assumptions', category: 'Methodology', keywords: ['inputs', 'assumptions', 'current age', 'retirement age', 'life expectancy', 'corpus', 'annual expenses', 'contribution', 'return assumptions', 'profile'], related: ['projection', 'returns'], questions: ['What inputs does the planner need?', 'Which assumptions can I change?'] },
+            'money': { title: "Money & Inflation", category: 'Methodology', keywords: ['inflation', 'inflation rate', "today's money", 'todays money', 'real terms', 'nominal', 'purchasing power', 'rising expenses', 'future cost', 'cost today', 'value of money'], related: ['future-expense', 'projection'], questions: ["How is inflation applied?", "What does today's money mean?", 'How does inflation affect my expenses?', 'Why does the cost of things increase in the future?'] },
+            'future-expense': { title: 'Future One-Time Expenses', category: 'Methodology', anchor: 'future-expense', keywords: ['future expense', 'one-time expense', 'one time expense', 'lump sum', 'major expense', 'ad-hoc expense', 'adhoc expense', 'future cost', 'cost today', 'education cost', 'child education', 'house purchase', 'medical expense', 'down payment', 'big purchase'], related: ["today's money", 'inflation', 'future value', 'education', 'wedding', 'medical'], questions: ['How should I enter a future expense?', 'Why is my future expense higher than what I entered?', 'Why is my future expense increasing?', 'What amount should I enter for a future expense?', "Is the expense entered in today's money?", "Why does my child's education cost increase in the future?"] },
+            'returns': { title: 'Investment Returns', category: 'Methodology', keywords: ['returns', 'return rate', 'investment returns', 'expected return', 'growth rate', 'compounding', 'portfolio growth', 'asset allocation', 'equity', 'debt'], related: ['monte-carlo', 'simulation'], questions: ['What return rate should I use?', 'How are investment returns applied?'] },
+            'projection': { title: 'Retirement Projection', category: 'Methodology', keywords: ['projection', 'project', 'retirement projection', 'corpus projection', 'cash flow', 'year by year', 'drawdown', 'longevity', 'life expectancy'], related: ['simulation', 'results'], questions: ['How is my retirement projected?', 'How long will my corpus last?'] },
+            'taxes': { title: 'Taxes', category: 'Methodology', keywords: ['tax', 'taxes', 'taxation', 'tax rate', 'income tax', 'capital gains', 'LTCG', 'STCG', 'tax slab', 'taxation of withdrawals'], related: ['projection', 'withdrawals'], questions: ['How are taxes handled?', 'How are taxes calculated?', 'Are withdrawals taxed?'] },
+            'simulation': { title: 'Deterministic vs Stochastic', category: 'Methodology', keywords: ['deterministic', 'stochastic', 'fixed assumptions', 'expected case', 'single path', 'difference between'], related: ['monte-carlo', 'returns'], questions: ['What is the difference between deterministic and stochastic?', 'Which projection should I trust?'] },
+            'monte-carlo': { title: 'Stochastic Simulation (Monte Carlo)', category: 'Methodology', keywords: ['monte carlo', 'monte-carlo', 'stochastic', 'simulation', 'random', 'market paths', 'market volatility', 'volatility', 'sequence of returns', 'success rate', 'percentile', 'iterations', 'scenarios'], related: ['volatility', 'sequence of returns risk', 'results', 'probability'], questions: ['How does stochastic simulation work?', 'What is a Monte Carlo simulation?', 'How does market volatility affect my retirement?', 'What is a success rate?'] },
+            'results': { title: 'Results & Charts', category: 'Methodology', keywords: ['results', 'charts', 'readiness', 'success rate', 'median', 'percentile', 'funding', 'shortfall', 'surplus', 'interpret results', 'dashboard'], related: ['monte-carlo', 'advisory'], questions: ['How do I read the results?', 'What do the charts show?', 'What does readiness score mean?'] },
+            'advisory': { title: 'Advisory / Strategies', category: 'Methodology', keywords: ['advisory', 'advice', 'strategies', 'suggestions', 'recommendations', 'improve outcome', 'actions', 'insights'], related: ['results', 'ai-insights'], questions: ['How can I improve my retirement outcome?', 'What does the advisory section suggest?'] },
+            'limits': { title: 'Limitations & Disclaimer', category: 'Methodology', keywords: ['limitations', 'disclaimer', 'not advice', 'assumptions may differ', 'accuracy', 'risks', 'caveats'], related: ['simulation', 'results'], questions: ['Can I rely on these projections?', 'What are the limitations?'] },
+            'ref-ai-insights': { title: 'AI Insights', category: 'Reference', keywords: ['ai insights', 'ai', 'explanations', 'generated insights'], related: ['advisory'], questions: ['What are AI Insights?'] },
+            'ref-examples': { title: 'Example scenarios', category: 'Reference', keywords: ['example', 'examples', 'scenario', 'scenarios', 'sample'], related: ['getting-started'], questions: ['Are there example scenarios?'] },
+            'ref-best-practices': { title: 'Best practices', category: 'Reference', keywords: ['best practices', 'tips', 'guidance'], related: ['getting-started'], questions: ['Any tips for using the planner?'] },
+            'ref-faq': { title: 'Frequently Asked Questions', category: 'Reference', keywords: ['faq', 'questions', 'answers'], related: ['getting-started'], questions: ['Where are the FAQs?'] },
+            'ref-glossary': { title: 'Glossary', category: 'Reference', keywords: ['glossary', 'definitions', 'terms', 'terminology', 'corpus meaning', 'what does corpus mean'], related: ['getting-started'], questions: ['What do the terms mean?'] },
+            'ref-references': { title: 'References & Data Sources', category: 'Reference', keywords: ['references', 'data sources', 'sources', 'citations'], related: ['returns'], questions: ['Where does the data come from?'] },
+            'ref-about': { title: 'About', category: 'Reference', keywords: ['about', 'planner info'], related: [], questions: ['What is this planner?'] },
+            'ref-contact': { title: 'Contact', category: 'Reference', keywords: ['contact', 'support', 'email'], related: ['feedback'], questions: ['How do I contact support?'] },
+            'feedback': { title: 'Feedback', category: 'Reference', keywords: ['feedback', 'report issue', 'suggest'], related: ['ref-contact'], questions: ['How do I give feedback?'] }
+        };
+
+        var SECTION_IDS = ['getting-started', 'inputs', 'money', 'future-expense', 'returns', 'projection', 'taxes', 'simulation', 'monte-carlo', 'results', 'advisory', 'limits', 'ref-ai-insights', 'ref-examples', 'ref-best-practices', 'ref-faq', 'ref-glossary', 'ref-references', 'ref-about', 'ref-contact', 'feedback'];
+
+        var INDEX = [];
+        function extractText(el) {
+            var clone = el.cloneNode(true);
+            var s = clone.querySelector('summary'); if (s) s.remove();
+            return (clone.textContent || '').replace(/\s+/g, ' ').trim();
+        }
+        function sentences(text) { return text.split(/(?<=[.!?])\s+/); }
+
+        SECTION_IDS.forEach(function (id) {
+            var m = META[id] || {};
+            var el = document.getElementById(id);
+            if (!el) return;
+            var strong = el.querySelector('summary strong');
+            var title = m.title || (strong ? strong.textContent.trim() : id);
+            var body = extractText(el);
+            var sents = sentences(body);
+            INDEX.push({
+                id: id, el: el, title: title, cat: m.category || 'Reference',
+                anchor: m.anchor || null,
+                titleNorm: norm(title),
+                kw: (m.keywords || []).map(norm),
+                rel: (m.related || []).map(norm),
+                qs: (m.questions || []).map(norm),
+                sents: sents,
+                bodyNorm: norm(body)
+            });
+        });
+
+        function excerptFor(entry, qToks, qNorm) {
+            var i, j, s, sl;
+            for (i = 0; i < entry.sents.length; i++) {
+                s = norm(entry.sents[i]);
+                if (qNorm.length > 3 && s.indexOf(qNorm) !== -1) return trimEx(entry.sents[i]);
+            }
+            for (j = 0; j < qToks.length; j++) {
+                for (i = 0; i < entry.sents.length; i++) {
+                    sl = norm(entry.sents[i]);
+                    if (sl.indexOf(qToks[j]) !== -1) return trimEx(entry.sents[i]);
+                }
+            }
+            for (i = 0; i < entry.sents.length; i++) { if (entry.sents[i].trim().length > 25) return trimEx(entry.sents[i]); }
+            return trimEx(entry.sents[0] || '');
+        }
+        function trimEx(s) { s = s.trim(); return s.length > 160 ? s.slice(0, 157) + '\u2026' : s; }
+
+        function score(entry, qNorm, qToks) {
+            var sc = 0, i, j;
+            if (entry.titleNorm === qNorm) sc += 120;
+            else if (entry.titleNorm.indexOf(qNorm) !== -1 && qNorm.length > 2) sc += 70;
+            for (i = 0; i < entry.kw.length; i++) {
+                if (qNorm.indexOf(entry.kw[i]) !== -1 || entry.kw[i].indexOf(qNorm) !== -1 && entry.kw[i].length > 3 && qNorm.length > 3) sc += 30;
+            }
+            var titleToks = toks(entry.titleNorm);
+            for (i = 0; i < qToks.length; i++) {
+                var qt = qToks[i], matched = false;
+                for (j = 0; j < titleToks.length; j++) {
+                    if (titleToks[j] === qt) { sc += 25; matched = true; }
+                    else if (titleToks[j].indexOf(qt) === 0 || qt.indexOf(titleToks[j]) === 0) { sc += 10; matched = true; }
+                }
+                for (j = 0; j < entry.kw.length; j++) {
+                    var kwToks = toks(entry.kw[j]);
+                    for (var k = 0; k < kwToks.length; k++) {
+                        if (kwToks[k] === qt) { sc += 8; matched = true; }
+                        else if (kwToks[k].indexOf(qt) === 0) { sc += 4; matched = true; }
+                    }
+                }
+                for (j = 0; j < entry.rel.length; j++) {
+                    if (entry.rel[j].indexOf(qt) !== -1) { sc += 5; matched = true; }
+                }
+                for (j = 0; j < entry.qs.length; j++) {
+                    if (toks(entry.qs[j]).indexOf(qt) !== -1) { sc += 6; matched = true; }
+                }
+                if (entry.bodyNorm.indexOf(qt) !== -1) { sc += matched ? 2 : 3; }
+            }
+            if (qNorm.length > 3 && entry.bodyNorm.indexOf(qNorm) !== -1) sc += 40;
+            if (qNorm.length > 3) {
+                for (i = 0; i < entry.qs.length; i++) {
+                    if (entry.qs[i].indexOf(qNorm) !== -1) sc += 18;
+                }
+                for (i = 0; i < entry.kw.length; i++) { if (entry.kw[i].indexOf(qNorm) !== -1) sc += 12; }
+            }
+            return sc;
+        }
+
+        var activeIdx = -1, currentResults = [];
+
+        function runSearch() {
+            var raw = input.value;
+            var qNorm = norm(raw);
+            var qToks = uniq(toks(raw));
+            clearBtn.hidden = !raw;
+            if (!qNorm) {
+                resultsBox.hidden = true; resultsList.innerHTML = '';
+                suggestBox.hidden = false;
+                input.setAttribute('aria-expanded', 'false');
+                currentResults = []; activeIdx = -1;
+                return;
+            }
+            var scored = [];
+            INDEX.forEach(function (e) {
+                var s = score(e, qNorm, qToks);
+                if (s > 0) scored.push({ e: e, s: s });
+            });
+            scored.sort(function (a, b) { return b.s - a.s; });
+            currentResults = scored.slice(0, 6);
+            renderResults(qNorm, qToks);
+        }
+
+        function renderResults(qNorm, qToks) {
+            resultsList.innerHTML = '';
+            activeIdx = -1;
+            if (!currentResults.length) {
+                var li = document.createElement('li');
+                li.className = 'help-result noresult';
+                li.textContent = 'No matching help topics found.';
+                resultsList.appendChild(li);
+            } else {
+                currentResults.forEach(function (r, idx) {
+                    var li = document.createElement('li');
+                    li.id = 'help-result-' + idx;
+                    li.className = 'help-result';
+                    li.setAttribute('role', 'option');
+                    li.dataset.target = r.e.id;
+                    var cat = document.createElement('span'); cat.className = 'cat'; cat.textContent = r.e.cat;
+                    var t = document.createElement('span'); t.className = 't'; t.textContent = r.e.title;
+                    var x = document.createElement('span'); x.className = 'x'; x.textContent = excerptFor(r.e, qToks, qNorm);
+                    li.appendChild(cat); li.appendChild(t); li.appendChild(x);
+                    li.addEventListener('click', function () { goTo(r.e.id); });
+                    resultsList.appendChild(li);
+                });
+            }
+            resultsBox.hidden = false;
+            suggestBox.hidden = true;
+            input.setAttribute('aria-expanded', 'true');
+        }
+
+        function goTo(id) {
+            var entry = null;
+            INDEX.forEach(function (e) { if (e.id === id) entry = e; });
+            if (!entry) return;
+            var target = entry.anchor ? document.getElementById(entry.anchor) : entry.el;
+            var det = target.closest('details');
+            while (det) { det.open = true; det = det.parentElement ? det.parentElement.closest('details') : null; }
+            try { target.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (err) { target.scrollIntoView(); }
+            target.classList.remove('search-hit');
+            void target.offsetWidth;
+            target.classList.add('search-hit');
+            setTimeout(function () { target.classList.remove('search-hit'); }, 1800);
+        }
+
+        function setActive(i) {
+            var items = resultsList.querySelectorAll('.help-result:not(.noresult)');
+            if (!items.length) return;
+            if (activeIdx >= 0 && items[activeIdx]) items[activeIdx].classList.remove('active');
+            activeIdx = (i + items.length) % items.length;
+            items[activeIdx].classList.add('active');
+            items[activeIdx].scrollIntoView({ block: 'nearest' });
+            input.setAttribute('aria-activedescendant', items[activeIdx].id);
+        }
+
+        var debounceT = null;
+        input.addEventListener('input', function () {
+            clearTimeout(debounceT);
+            debounceT = setTimeout(runSearch, 90);
+        });
+        input.addEventListener('keydown', function (ev) {
+            var open = !resultsBox.hidden;
+            if (ev.key === 'ArrowDown' && open) { ev.preventDefault(); setActive(activeIdx + 1); }
+            else if (ev.key === 'ArrowUp' && open) { ev.preventDefault(); setActive(activeIdx - 1); }
+            else if (ev.key === 'Enter') {
+                ev.preventDefault();
+                if (open && activeIdx >= 0 && currentResults[activeIdx]) goTo(currentResults[activeIdx].e.id);
+                else if (open && currentResults.length) goTo(currentResults[0].e.id);
+            } else if (ev.key === 'Escape') {
+                input.value = ''; runSearch(); input.blur();
+            }
+        });
+        clearBtn.addEventListener('click', function () {
+            input.value = ''; runSearch(); input.focus();
+        });
+        document.addEventListener('click', function (ev) {
+            if (!resultsBox.hidden && !resultsBox.contains(ev.target) && ev.target !== input && !clearBtn.contains(ev.target)) {
+                resultsBox.hidden = true;
+                input.setAttribute('aria-expanded', 'false');
+            }
+        });
+        Array.prototype.forEach.call(suggestBox.querySelectorAll('a[data-q]'), function (a) {
+            a.addEventListener('click', function (ev) {
+                ev.preventDefault();
+                input.value = a.getAttribute('data-q');
+                runSearch();
+                input.focus();
+            });
+        });
+    })();
+    </script>
+
 </body>
 </html>
