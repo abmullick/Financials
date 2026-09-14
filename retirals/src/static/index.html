@@ -1761,18 +1761,18 @@
                 </div>
 
                 <div class="pt-4 mt-4" style="border-top: 1px solid var(--stroke);">
-                    <div class="space-y-2">
-                        <div>
-                            <h3 class="text-sm font-semibold" style="color: var(--text-1);">Future One-Time Expenses</h3>
-                            <p class="text-xs" style="color: var(--text-3);">Optional — add any major future expenses.</p>
-                            <p class="text-xs" style="color: var(--text-3);">Enter costs in today’s money. Future costs are adjusted for inflation.</p>
+                    <div class="p-4 rounded-xl" style="background: linear-gradient(180deg, rgba(255,248,235,0.14), rgba(255,248,235,0.10)); border: 1px solid rgba(211,175,96,0.30);">
+                        <div class="space-y-2">
+                            <div>
+                                <h3 class="text-sm font-semibold" style="color: var(--text-1);">Future One-Time Expenses</h3>
+                                <p class="text-xs" style="color: var(--text-3);">Optional — add any major future expenses.</p>
+                                <p class="text-xs" style="color: var(--text-3);">Enter costs in today’s money. Future costs are adjusted for inflation.</p>
+                            </div>
+                            <div id="adhocExpenseRows" class="space-y-3 pt-1"></div>
+                            <button id="addAdHocBtn" type="button" class="secondary-button w-full font-semibold py-2 rounded-xl text-sm mt-2">+ Add Expense</button>
                         </div>
-                        <div id="adhocExpenseRows" class="space-y-3 pt-1"></div>
-                        <button id="addAdHocBtn" type="button" class="secondary-button w-full font-semibold py-2 rounded-xl text-sm mt-2">+ Add Expense</button>
-                    </div>
 
-                    <div class="pt-3 mt-3">
-                        <div class="p-3 rounded-lg border space-y-2" style="border-color: var(--stroke); background: var(--glass);">
+                        <div class="pt-3 mt-3">
                             <div>
                                 <h3 class="text-sm font-semibold" style="color: var(--text-1);">Future One-Time Incomes</h3>
                                 <p class="text-xs" style="color: var(--text-3);">Optional — add any major future one-time incomes.</p>
@@ -1877,6 +1877,11 @@
                             <div class="kpi-3d p-4 rounded-2xl">
                                 <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Retirement Readiness</p>
                                 <p id="kpi_readiness_percent" class="kpi-value mt-2 font-black">0%</p>
+                            </div>
+                            <div class="kpi-3d p-4 rounded-2xl">
+                                <p class="text-[11px] font-medium uppercase tracking-[0.14em] text-slate-400">Plan Sustainability</p>
+                                <p id="kpi_plan_sustainability_status" class="kpi-value mt-2 font-black">✓ Sustainable</p>
+                                <p id="kpi_plan_sustainability_detail" class="text-xs mt-1" style="color: var(--text-3);">Corpus lasts through age 0</p>
                             </div>
                         </div>
                     </div>
@@ -3028,8 +3033,23 @@
                 document.getElementById('kpi_retirement_corpus').innerText = fmt(data.metrics.corpus_at_retirement);
                 document.getElementById('kpi_peak_age').innerText = data.metrics.peak_age;
                 document.getElementById('kpi_retirement_span').innerHTML = `${data.metrics.years_in_retirement} yrs <span style="font-size: 0.6em; color: var(--text-3); display: block; margin-top: 4px;">(${data.metrics.retirement_projection_points} data points)</span>`;
-                document.getElementById('kpi_req_pre_ret_return').innerText = `${data.metrics.required_pre_retirement_return.toFixed(2)}%`;
+                                document.getElementById('kpi_req_pre_ret_return').innerText = `${data.metrics.required_pre_retirement_return.toFixed(2)}%`;
                 document.getElementById('kpi_req_post_ret_return').innerText = `${data.metrics.required_post_retirement_return.toFixed(2)}%`;
+
+                // --- Update Plan Sustainability KPIs ---
+                const sustainabilityStatusEl = document.getElementById('kpi_plan_sustainability_status');
+                const sustainabilityDetailEl = document.getElementById('kpi_plan_sustainability_detail');
+                if (data.metrics.plan_sustainable) {
+                    sustainabilityStatusEl.textContent = '✓ Sustainable';
+                    sustainabilityStatusEl.classList.remove('text-danger');
+                    sustainabilityStatusEl.classList.add('text-success');
+                    sustainabilityDetailEl.textContent = `Corpus lasts through age ${payload.life_expectancy}`;
+                } else {
+                    sustainabilityStatusEl.textContent = '⚠ Not Sustainable';
+                    sustainabilityStatusEl.classList.remove('text-success');
+                    sustainabilityStatusEl.classList.add('text-danger');
+                    sustainabilityDetailEl.textContent = `Corpus exhausted at age ${data.metrics.corpus_exhaustion_age}`;
+                }
 
                 // --- Update Pension KPIs ---
                 const pensionKpiSection = document.getElementById('pensionKpiSection');

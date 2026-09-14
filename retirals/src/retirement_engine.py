@@ -593,6 +593,9 @@ def _run_single_mc_path(inputs: PlannerInputs, rng: random.Random) -> dict:
     corpus = inputs.current_corpus
     total_contributions = 0.0
     ad_hoc_map = {item.age: item for item in inputs.adhoc_expenses or []}
+    one_time_income_map = {
+        item.age: item for item in inputs.one_time_incomes or []
+    }
     success = True
     first_unfunded_age = None
 
@@ -646,13 +649,25 @@ def _run_single_mc_path(inputs: PlannerInputs, rng: random.Random) -> dict:
             applicable_inflation = ad_hoc_item.inflation_rate if ad_hoc_item.inflation_rate is not None else inputs.avg_inflation_rate
             ad_hoc = ad_hoc_item.amount * ((1 + applicable_inflation) ** elapsed_years)
 
+        one_time_income = 0.0
+        one_time_income_item = one_time_income_map.get(age)
+        if one_time_income_item:
+            applicable_income_inflation = (
+                one_time_income_item.inflation_rate
+                if one_time_income_item.inflation_rate is not None
+                else inputs.avg_inflation_rate
+            )
+            one_time_income = one_time_income_item.amount * (
+                (1 + applicable_income_inflation) ** elapsed_years
+            )
+
         portfolio_net_withdrawal_needed = max(0, net_expense_after_pension) + ad_hoc
 
         gross_withdrawal = 0.0
         total_tax = 0.0
         unfunded_expense = 0.0
 
-        available_for_withdrawal = corpus + contribution + lumpsum_addition + pension_surplus_reinvested
+        available_for_withdrawal = corpus + contribution + lumpsum_addition + pension_surplus_reinvested + one_time_income
 
         if is_retired and portfolio_net_withdrawal_needed > 0:
             gross_withdrawal, total_tax = _calculate_gross_withdrawal(portfolio_net_withdrawal_needed, inputs, tax_portions)
