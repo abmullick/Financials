@@ -42,10 +42,10 @@ class PlannerInputs(BaseModel):
     adhoc_expenses: list[AdHocExpense] = Field(default_factory=lambda: [
         AdHocExpense(age=58, amount=2500000.00),
         AdHocExpense(age=75, amount=1000000.00)
-    ], max_items=50)
+    ], max_length=50)
     one_time_incomes: list[OneTimeIncome] = Field(
         default_factory=list,
-        max_items=50
+        max_length=50
     )
     # Portfolio Allocation
     allocation_equity: float = Field(0.60, ge=0, le=1.0)
