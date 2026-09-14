@@ -431,6 +431,25 @@ class TestRecommendations(unittest.TestCase):
         recs = _generate_recommendations(inputs, mc_summary)
         self.assertTrue(any("high risk" in r.lower() for r in recs))
 
+    def test_one_time_income_changes_mc_outcome(self):
+        baseline = run_monte_carlo(self.base_inputs.model_copy(update={
+            "num_simulations": 100,
+            "monte_carlo_seed": 42,
+        }))
+        with_income = run_monte_carlo(self.base_inputs.model_copy(update={
+            "num_simulations": 100,
+            "monte_carlo_seed": 42,
+            "one_time_incomes": [OneTimeIncome(age=70, amount=10000000)],
+        }))
+        self.assertGreaterEqual(
+            with_income["metrics"]["success_rate"],
+            baseline["metrics"]["success_rate"],
+        )
+        self.assertGreater(
+            with_income["metrics"]["median_final_corpus"],
+            baseline["metrics"]["median_final_corpus"],
+        )
+
 
 class TestBoundaryValidations(unittest.TestCase):
     def test_retirement_age_greater_than_current(self):

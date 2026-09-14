@@ -486,6 +486,10 @@ def _build_compact_prompt(request: AIInsightRequest) -> str:
             {"age": e.age, "amount": e.amount}
             for e in user_inputs.adhoc_expenses
         ],
+        "one_time_incomes": [
+            {"age": i.age, "amount": i.amount}
+            for i in user_inputs.one_time_incomes
+        ],
         "num_simulations": user_inputs.num_simulations,
         "volatility_equity": user_inputs.volatility_equity,
         "volatility_debt": user_inputs.volatility_debt,
