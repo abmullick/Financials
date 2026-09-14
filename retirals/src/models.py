@@ -7,6 +7,11 @@ class AdHocExpense(BaseModel):
     amount: float = Field(..., ge=0, description="Amount of the ad-hoc expense")
     inflation_rate: Optional[float] = Field(None, ge=0, le=0.5, description="Specific inflation rate for this expense, if different from the general rate.")
 
+class OneTimeIncome(BaseModel):
+    age: int = Field(..., gt=0, le=120, description="Age for the one-time income")
+    amount: float = Field(..., ge=0, description="Today's value of the one-time income")
+    inflation_rate: Optional[float] = Field(None, ge=0, le=0.5, description="Specific inflation rate for this income, if different from the general rate.")
+
 class StressScenario(str, Enum):
     NORMAL = "Normal"
     MILD_CRASH = "Mild Crash (-10% for 2 yrs)"
@@ -38,6 +43,10 @@ class PlannerInputs(BaseModel):
         AdHocExpense(age=58, amount=2500000.00),
         AdHocExpense(age=75, amount=1000000.00)
     ], max_items=50)
+    one_time_incomes: list[OneTimeIncome] = Field(
+        default_factory=list,
+        max_items=50
+    )
     # Portfolio Allocation
     allocation_equity: float = Field(0.60, ge=0, le=1.0)
     allocation_debt: float = Field(0.30, ge=0, le=1.0)
@@ -94,6 +103,14 @@ class PlannerInputs(BaseModel):
             if expense.age in adhoc_ages:
                 raise ValueError(f"Duplicate ad-hoc expense age found: {expense.age}.")
             adhoc_ages.append(expense.age)
+
+        income_ages = []
+        for income in self.one_time_incomes:
+            if not (self.current_age <= income.age <= self.life_expectancy):
+                raise ValueError(f"One-time income age ({income.age}) must be between current age ({self.current_age}) and life expectancy ({self.life_expectancy}).")
+            if income.age in income_ages:
+                raise ValueError(f"Duplicate one-time income age found: {income.age}.")
+            income_ages.append(income.age)
 
         allocation_total = self.allocation_equity + self.allocation_debt + self.allocation_arbitrage + self.allocation_reit
         if abs(allocation_total - 1.0) > 0.01:

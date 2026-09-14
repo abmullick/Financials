@@ -83,6 +83,9 @@ def run_projection(inputs: PlannerInputs):
     total_contributions = 0.0
 
     ad_hoc_map = {item.age: item for item in inputs.adhoc_expenses or []}
+    one_time_income_map = {
+        item.age: item for item in inputs.one_time_incomes or []
+    }
 
     # Pre-calculate portfolio portions for tax calculation
     equity_ltcg_portion = inputs.allocation_equity * inputs.equity_ltcg_split
@@ -163,6 +166,15 @@ def run_projection(inputs: PlannerInputs):
             applicable_inflation = ad_hoc_item.inflation_rate if ad_hoc_item.inflation_rate is not None else inputs.avg_inflation_rate
             ad_hoc = ad_hoc_item.amount * ((1 + applicable_inflation) ** elapsed_years)
 
+        # One-time income occurs exactly ONCE at this age. The amount is defined
+        # in today's money and is inflated to the current age, using the
+        # event-specific inflation rate when supplied, otherwise the general rate.
+        one_time_income = 0.0
+        one_time_income_item = one_time_income_map.get(age)
+        if one_time_income_item:
+            applicable_inflation = one_time_income_item.inflation_rate if one_time_income_item.inflation_rate is not None else inputs.avg_inflation_rate
+            one_time_income = one_time_income_item.amount * ((1 + applicable_inflation) ** elapsed_years)
+
         # The amount that must be withdrawn from the portfolio
         portfolio_net_withdrawal_needed = max(0, net_expense_after_pension) + ad_hoc
 
@@ -170,8 +182,11 @@ def run_projection(inputs: PlannerInputs):
         gross_withdrawal = 0.0
         total_tax = 0.0
         
-        # Available funds for withdrawal at the start of the year
-        available_for_withdrawal = opening_corpus + contribution + lumpsum_addition + pension_surplus_reinvested
+        # Available funds for withdrawal at the start of the year.
+        # One-time income is a beginning-of-year corpus inflow, included
+        # alongside contribution, retirement lump sum and pension surplus,
+        # so it is available before the year's withdrawal is determined.
+        available_for_withdrawal = opening_corpus + contribution + lumpsum_addition + pension_surplus_reinvested + one_time_income
 
         if is_retired and portfolio_net_withdrawal_needed > 0 and not is_exhausted:
             gross_withdrawal, total_tax = _calculate_gross_withdrawal(portfolio_net_withdrawal_needed, inputs, tax_portions)
@@ -217,13 +232,42 @@ def run_projection(inputs: PlannerInputs):
             # The portfolio is gone, so withdrawals are zero.
             # The unfunded amount is the recurring expense not covered by pension.
             unfunded_expense = max(0, net_expense_after_pension)
+
+        # If the corpus was exhausted in a previous year but a future one-time
+        # income is due at this age, it must still flow in as a beginning-of-year
+        # corpus inflow so it can fund the current year's expense and seed the
+        # post-income portfolio. This keeps the income available even when
+        # `opening_corpus` is zero.
+        if is_exhausted and one_time_income > 0:
+            # Re-open the year as if the income were part of the available pool
+            # from the start of the projection year.
+            available_for_withdrawal = opening_corpus + contribution + lumpsum_addition + pension_surplus_reinvested + one_time_income
+
+            # Actual net amount funded by the portfolio (after the income is
+            # applied against the required net amount).
+            actual_net_withdrawal = min(portfolio_net_withdrawal_needed, available_for_withdrawal)
+
+            # Record the shortfall occurring in the income year.
+            unfunded_expense = max(0, portfolio_net_withdrawal_needed - actual_net_withdrawal)
+
+            # Store the actual net withdrawal so downstream accounting reflects
+            # what was actually funded from the portfolio/income pool.
+            portfolio_net_withdrawal_needed = actual_net_withdrawal
+
+            # Do not mark the corpus exhausted again in this reopened year.
+            is_exhausted = False
+
+            # With an income there is no market withdrawal, so set gross to zero
+            # for this exhausted-then-reopened year.
+            gross_withdrawal = 0.0
+
         return_rate = get_return_rate(age, inputs)
 
         # This is an "Annuity Due" model (beginning-of-period contributions)
         # Contributions made at the start of the year get a full year's return.
         # Pension surplus is also added at the beginning of the period.
         net_for_return = available_for_withdrawal - gross_withdrawal
-        if is_exhausted or net_for_return < 0:
+        if (is_exhausted and one_time_income == 0) or net_for_return < 0:
             net_for_return = 0 # Corpus is exhausted, no base for returns.
 
         returns = net_for_return * return_rate
@@ -241,6 +285,7 @@ def run_projection(inputs: PlannerInputs):
             "pension_tax": round(pension_tax, 2),
             "pension_surplus_reinvested": round(pension_surplus_reinvested, 2),
             "ad_hoc": round(ad_hoc, 2),
+            "one_time_income": round(one_time_income, 2),
             "unfunded_expense": round(unfunded_expense, 2),
             "return": round(returns, 2),
             "closing": round(closing_corpus, 2)
@@ -259,8 +304,12 @@ def run_projection(inputs: PlannerInputs):
         # Find the row with the maximum closing corpus to determine the true peak age
         peak_age = max(projections, key=lambda row: row["closing"])["age"]
 
-    minimum_corpus_required = _calculate_minimum_corpus(inputs, ad_hoc_map)
-    
+    one_time_income_map = {
+        item.age: item for item in inputs.one_time_incomes or []
+    }
+
+    minimum_corpus_required = _calculate_minimum_corpus(inputs, ad_hoc_map, one_time_income_map)
+
     gap_analysis = _calculate_gap_analysis(inputs, corpus_at_retirement, minimum_corpus_required)
 
     # Calculate the final pension coverage metric
@@ -286,12 +335,12 @@ def run_projection(inputs: PlannerInputs):
             "corpus_exhaustion_age": corpus_exhaustion_age,
             **gap_analysis,  # Merge gap analysis metrics
             # Merge goal-seek return metrics
-            **_solve_for_required_returns(inputs, corpus_at_retirement, minimum_corpus_required, ad_hoc_map),
+            **_solve_for_required_returns(inputs, corpus_at_retirement, minimum_corpus_required, ad_hoc_map, one_time_income_map),
         },
         "projections": projections
     }
 
-def _calculate_minimum_corpus(inputs: PlannerInputs, ad_hoc_map: dict) -> float:
+def _calculate_minimum_corpus(inputs: PlannerInputs, ad_hoc_map: dict, one_time_income_map: dict | None = None) -> float:
     """
     Calculates the minimum corpus required at retirement by working backwards
     from life expectancy.
@@ -338,8 +387,19 @@ def _calculate_minimum_corpus(inputs: PlannerInputs, ad_hoc_map: dict) -> float:
             applicable_inflation = ad_hoc_item.inflation_rate if ad_hoc_item.inflation_rate is not None else inputs.avg_inflation_rate
             ad_hoc = ad_hoc_item.amount * ((1 + applicable_inflation) ** elapsed_years)
 
+        one_time_income = 0.0
+        if one_time_income_map:
+            one_time_income_item = one_time_income_map.get(age)
+            if one_time_income_item:
+                applicable_income_inflation = (
+                    one_time_income_item.inflation_rate
+                    if one_time_income_item.inflation_rate is not None
+                    else inputs.avg_inflation_rate
+                )
+                one_time_income = one_time_income_item.amount * ((1 + applicable_income_inflation) ** elapsed_years)
+
         # Total after-tax outflow needed from the portfolio
-        portfolio_net_withdrawal_needed = max(0, net_expense_after_pension) + ad_hoc
+        portfolio_net_withdrawal_needed = max(0, net_expense_after_pension) + ad_hoc - one_time_income
 
         # Calculate the gross (pre-tax) outflow required to generate the net outflow
         total_gross_outflow = 0.0
@@ -399,7 +459,7 @@ def _calculate_gap_analysis(inputs: PlannerInputs, corpus_at_retirement: float, 
         "target_annual_contribution_for_gap": round(target_annual_contribution, 2)
     }
 
-def _solve_for_required_returns(inputs: PlannerInputs, corpus_at_retirement: float, minimum_corpus_required: float, ad_hoc_map: dict) -> dict:
+def _solve_for_required_returns(inputs: PlannerInputs, corpus_at_retirement: float, minimum_corpus_required: float, ad_hoc_map: dict, one_time_income_map: dict | None = None) -> dict:
     """
     Performs a goal-seek analysis to find the pre- and post-retirement returns
     required to achieve 100% retirement readiness.
@@ -453,7 +513,7 @@ def _solve_for_required_returns(inputs: PlannerInputs, corpus_at_retirement: flo
                 "return_debt": rate,
                 "return_arbitrage": rate,
                 "return_reit": rate,
-            }), ad_hoc_map)
+            }), ad_hoc_map, one_time_income_map)
 
         # Bisection method to find the rate
         low, high = calculate_portfolio_expected_return(inputs), 0.50 # Search up to 50%

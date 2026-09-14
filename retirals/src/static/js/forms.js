@@ -109,6 +109,68 @@ function getAdHocExpenses() {
     }).filter(Boolean);
 }
 
+function buildOneTimeIncomeRow(age = '', amount = '', source = '') {
+    const row = document.createElement('div');
+    row.className = 'one-time-income-row p-3 rounded-lg border';
+    row.style.borderColor = 'var(--stroke)';
+    row.style.background = 'var(--glass)';
+
+    row.innerHTML = `
+        <div class="grid grid-cols-[1fr_1fr_40px] gap-x-3 gap-y-1 items-start">
+            <div class="flex flex-col">
+                <label class="block text-xs font-medium text-slate-300 mb-0.5">Age</label>
+                <input class="oti-age input-shell w-full rounded-lg p-2 text-sm" type="number" min="1" placeholder=" " value="${age}">
+            </div>
+            <div class="relative flex flex-col">
+                <div class="flex items-center gap-1 mb-0.5">
+                    <label class="block text-xs font-medium text-slate-300">Amount Today</label>
+                    <div class="tooltip-container">
+                        <span class="tooltip-icon">ⓘ</span>
+                        <div class="tooltip-content">Amount as of today.</div>
+                    </div>
+                </div>
+                <input class="oti-amount input-shell w-full rounded-lg p-2 text-sm" type="text" placeholder=" " value="${formatCurrency(amount)}">
+            </div>
+            <button type="button" class="remove-oti-btn row-span-2 self-start mt-4 inline-flex h-8 w-8 items-center justify-center rounded-full bg-rose-100 text-lg font-bold text-rose-700 hover:bg-rose-200">×</button>
+
+            <div class="flex flex-col">
+                <label class="block text-xs font-medium text-slate-300 mb-0.5">Source / Description</label>
+                <input class="oti-source input-shell w-full rounded-lg p-2 text-sm mt-0.5" type="text" placeholder=" ">
+            </div>
+        </div>
+    `;
+
+    const sourceInput = row.querySelector('.oti-source');
+    if (source) {
+        sourceInput.value = source;
+    }
+
+    row.querySelector('.remove-oti-btn').addEventListener('click', () => row.remove());
+    setupCurrencyInputs(row); // Apply currency formatting to the new amount input
+    return row;
+}
+
+function seedOneTimeIncomeRows() {
+    const container = document.getElementById('oneTimeIncomeRows');
+    container.innerHTML = '';
+}
+
+function getOneTimeIncomes() {
+    return Array.from(document.querySelectorAll('.one-time-income-row')).map(row => {
+        const age = parseInt(row.querySelector('.oti-age').value || '0', 10);
+        const amount = parseCurrency(row.querySelector('.oti-amount').value);
+        // Source / description is UI-only (like the ad-hoc category is), matching
+        // the OneTimeIncome backend model which holds age, amount, inflation_rate.
+
+        const income = { age, amount };
+
+        if ((!Number.isNaN(age) && age > 0) && (!Number.isNaN(amount) && amount >= 0)) {
+            return income;
+        }
+        return null;
+    }).filter(Boolean);
+}
+
 function setupStepper() {
     const stepperContainer = document.getElementById('stepper');
     const steps = document.querySelectorAll('.form-step');
@@ -230,7 +292,7 @@ function setupCurrencyInputs(container = document) {
     const currencyInputs = container.querySelectorAll(
         '#current_annual_expenses, #current_corpus, #annual_contribution, ' +
         '#ltcg_exemption, #one_time_lumpsum, #annual_pension, ' +
-        '.adhoc-amount' // Include ad-hoc amounts by class
+        '.adhoc-amount, .oti-amount' // Include ad-hoc amounts and one-time income amounts by class
     );
 
     currencyInputs.forEach(input => {

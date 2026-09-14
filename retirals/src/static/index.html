@@ -1770,6 +1770,18 @@
                         <div id="adhocExpenseRows" class="space-y-3 pt-1"></div>
                         <button id="addAdHocBtn" type="button" class="secondary-button w-full font-semibold py-2 rounded-xl text-sm mt-2">+ Add Expense</button>
                     </div>
+
+                    <div class="pt-3 mt-3">
+                        <div class="p-3 rounded-lg border space-y-2" style="border-color: var(--stroke); background: var(--glass);">
+                            <div>
+                                <h3 class="text-sm font-semibold" style="color: var(--text-1);">Future One-Time Incomes</h3>
+                                <p class="text-xs" style="color: var(--text-3);">Optional — add any major future one-time incomes.</p>
+                                <p class="text-xs" style="color: var(--text-3);">Enter amounts in today’s money. Future incomes are adjusted for inflation.</p>
+                            </div>
+                            <div id="oneTimeIncomeRows" class="space-y-3 pt-1"></div>
+                            <button id="addOneTimeIncomeBtn" type="button" class="secondary-button w-full font-semibold py-2 rounded-xl text-sm mt-2">+ Add Income</button>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="text-center pt-2">
@@ -2035,6 +2047,7 @@
                                     <th class="py-2 px-3 text-right text-xs font-medium uppercase">Opening</th>
                                     <th class="py-2 px-3 text-right text-xs font-medium uppercase">Contribution</th>
                                     <th class="py-2 px-3 text-right text-xs font-medium uppercase">Lumpsum</th>
+                                    <th class="py-2 px-3 text-right text-xs font-medium uppercase">One-Time Income</th>
                                     <th class="py-2 px-3 text-right text-xs font-medium uppercase">Pension</th>
                                     <th class="py-2 px-3 text-right text-xs font-medium uppercase">Pension Tax</th>
                                     <th class="py-2 px-3 text-right text-xs font-medium uppercase">Reinvested</th>
@@ -2714,6 +2727,7 @@
             const ages = data.projections.map(row => row.age);
             const contribution = data.projections.map(row => row.contribution);
             const lumpsumData = data.projections.map(row => row.lumpsum);
+            const oneTimeIncome = data.projections.map(row => Number(row.one_time_income) || 0);
             const withdrawal = data.projections.map(row => row.withdrawal);
             const withdrawalAfterTax = data.projections.map(row => row.withdrawal_after_tax);
             const withdrawalTax = data.projections.map(row => row.withdrawal_tax);
@@ -2743,6 +2757,7 @@
                     <td class="py-2 px-3 text-right">${fmt(row.opening)}</td>
                     <td class="py-2 px-3 text-right text-emerald-600 dark:text-emerald-400">+${fmt(row.contribution)}</td>
                     <td class="py-2 px-3 text-right text-emerald-600 dark:text-emerald-400">+${fmt(row.lumpsum)}</td>
+                    <td class="py-2 px-3 text-right text-emerald-600 dark:text-emerald-400">+${fmt(row.one_time_income)}</td>
                     <td class="py-2 px-3 text-right text-emerald-600 dark:text-emerald-400">+${fmt(row.pension)}</td>
                     <td class="py-2 px-3 text-right text-rose-600 dark:text-rose-400">-${fmt(row.pension_tax)}</td>
                     <td class="py-2 px-3 text-right text-emerald-600 dark:text-emerald-400">+${fmt(row.pension_surplus_reinvested)}</td>
@@ -2827,6 +2842,7 @@
             const cashFlowDatasets = [
                 { label: 'Contribution', data: contribution, backgroundColor: 'rgba(16, 185, 129, 0.78)', borderColor: 'rgba(16, 185, 129, 1)', borderWidth: 1 },
                 { label: 'Lumpsum', data: lumpsumData, backgroundColor: 'rgba(37, 99, 235, 0.78)', borderColor: 'rgba(37, 99, 235, 1)', borderWidth: 1 },
+                { label: 'One-Time Income', data: oneTimeIncome, backgroundColor: 'rgba(250, 204, 21, 0.78)', borderColor: 'rgba(250, 204, 21, 1)', borderWidth: 1 },
                 { label: 'Portfolio Withdrawal', data: withdrawal, backgroundColor: 'rgba(239, 68, 68, 0.78)', borderColor: 'rgba(239, 68, 68, 1)', borderWidth: 1 }
             ];
             if (payload.include_pension) {
@@ -2903,6 +2919,7 @@
 
                 stress_scenario: document.getElementById('stress_scenario').value,
                 adhoc_expenses: getAdHocExpenses(),
+                one_time_incomes: getOneTimeIncomes(),
                 // Portfolio Allocation
                 allocation_equity: parseFloat(document.getElementById('allocation_equity').value) / 100,
                 allocation_debt: parseFloat(document.getElementById('allocation_debt').value) / 100,
@@ -3065,6 +3082,7 @@
                 reinvest_pension_surplus: document.getElementById('reinvest_pension_surplus').checked,
                 stress_scenario: document.getElementById('stress_scenario').value,
                 adhoc_expenses: getAdHocExpenses(),
+                one_time_incomes: getOneTimeIncomes(),
                 allocation_equity: parseFloat(document.getElementById('allocation_equity').value) / 100,
                 allocation_debt: parseFloat(document.getElementById('allocation_debt').value) / 100,
                 allocation_arbitrage: parseFloat(document.getElementById('allocation_arbitrage').value) / 100,
@@ -3352,6 +3370,10 @@
             document.getElementById('adhocExpenseRows').appendChild(buildAdHocRow());
         });
 
+        document.getElementById('addOneTimeIncomeBtn').addEventListener('click', () => {
+            document.getElementById('oneTimeIncomeRows').appendChild(buildOneTimeIncomeRow());
+        });
+
         document.getElementById('include_pension').addEventListener('change', (e) => {
             const pensionInputs = document.getElementById('pensionInputs');
             const pensionSection = document.getElementById('pensionSection');
@@ -3366,6 +3388,7 @@
 
 
         seedAdHocRows();
+        seedOneTimeIncomeRows();
         initializeTheme();
         window.addEventListener('resize', fitAllKpiValues);
         setupEquitySplitValidator();

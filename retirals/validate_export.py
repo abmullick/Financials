@@ -16,7 +16,7 @@ from pathlib import Path
 # Ensure src/ is importable
 sys.path.insert(0, str(Path(__file__).resolve().parent / "src"))
 
-from models import PlannerInputs, AdHocExpense
+from models import PlannerInputs, AdHocExpense, OneTimeIncome
 from retirement_engine import run_projection, run_monte_carlo
 
 
@@ -49,6 +49,11 @@ def main():
     ad_hoc = inputs_dict.get("adhoc_expenses", [])
     if ad_hoc:
         inputs_dict["adhoc_expenses"] = [AdHocExpense(**item) for item in ad_hoc]
+
+    # Convert one-time income dicts to model instances if present
+    one_time_incomes = inputs_dict.get("one_time_incomes", [])
+    if one_time_incomes:
+        inputs_dict["one_time_incomes"] = [OneTimeIncome(**item) for item in one_time_incomes]
 
     try:
         inputs = PlannerInputs(**inputs_dict)
