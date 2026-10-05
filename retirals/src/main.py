@@ -27,36 +27,23 @@ from auth import (
     set_session_cookie,
 )
 
-# Start the FastAPI application
 app = FastAPI()
 
 
 def get_client_ip(request: Request) -> str:
-    """
-    Returns the client's real IP address, considering reverse proxies
-    and load balancers (specifically Cloudflare's `CF-Connecting-IP`).
-    Falls back to the direct client host if the header is not present.
-    """
     return request.headers.get("cf-connecting-ip", request.client.host)
 
 
-# Configure rate limiting
 limiter = Limiter(key_func=get_client_ip)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-# Configure logging to capture detailed errors on the server
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 
 @app.middleware("http")
 async def add_security_headers(request: Request, call_next):
-    """
-    Add security headers and inject the authentication UI into HTML pages.
-    The overlay is only the user experience; API authorization is enforced
-    separately on the server.
-    """
     response = await call_next(request)
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
@@ -85,15 +72,6 @@ async def add_security_headers(request: Request, call_next):
                     status_code=response.status_code,
                     headers=headers,
                     media_type=response.media_type,
-                )
-                response.headers["X-Content-Type-Options"] = "nosniff"
-                response.headers["X-Frame-Options"] = "DENY"
-                response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-                response.headers["Content-Security-Policy"] = (
-                    "default-src 'self'; "
-                    "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net/npm/chart.js; "
-                    "style-src 'self' 'unsafe-inline'; "
-                    "img-src 'self' data:;"
                 )
         except Exception:
             logger.exception("Failed to inject authentication UI into HTML response")
@@ -174,40 +152,25 @@ def ai_insight(request: Request, payload: AIInsightRequest):
         raise HTTPException(status_code=500, detail="The AI service is temporarily unavailable. Please try again later.")
 
 
-# Private application pages. If unauthenticated, return a minimal public
-# authentication shell rather than leaking the protected page HTML or a raw 401
-# JSON response. After login, auth.js reloads the original URL and the real page
-# is served because the session is now valid.
-def auth_gate_response(request: Request):
-    if get_session(request) is None:
-        static_file = os.path.join(os.path.dirname(__file__), 'static', 'auth-gate.html')
-        return FileResponse(static_file)
-    return None
-
-
+# Page HTML is served so the existing floating login overlay can render even
+# when a user enters a deep link directly. The sensitive operations and all
+# financial/AI data endpoints remain server-side protected by require_auth().
+# Until a session exists, auth.js keeps the entire page covered and prevents
+# interaction; after login it is revealed normally.
 @app.get("/")
-async def read_index(request: Request):
-    gate = auth_gate_response(request)
-    if gate:
-        return gate
+async def read_index():
     static_file = os.path.join(os.path.dirname(__file__), 'static', 'index.html')
     return FileResponse(static_file)
 
 
 @app.get("/ai-insights")
-async def read_ai_insights(request: Request):
-    gate = auth_gate_response(request)
-    if gate:
-        return gate
+async def read_ai_insights():
     static_file = os.path.join(os.path.dirname(__file__), 'static', 'ai-insights.html')
     return FileResponse(static_file)
 
 
 @app.get("/methodology")
-async def read_methodology(request: Request):
-    gate = auth_gate_response(request)
-    if gate:
-        return gate
+async def read_methodology():
     static_file = os.path.join(os.path.dirname(__file__), 'static', 'methodology.html')
     return FileResponse(static_file)
 
