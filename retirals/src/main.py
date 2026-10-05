@@ -175,19 +175,22 @@ def ai_insight(request: Request, payload: AIInsightRequest):
 
 
 @app.get("/")
-async def read_index():
+async def read_index(request: Request):
+    require_auth(request)
     static_file = os.path.join(os.path.dirname(__file__), 'static', 'index.html')
     return FileResponse(static_file)
 
 
 @app.get("/ai-insights")
-async def read_ai_insights():
+async def read_ai_insights(request: Request):
+    require_auth(request)
     static_file = os.path.join(os.path.dirname(__file__), 'static', 'ai-insights.html')
     return FileResponse(static_file)
 
 
 @app.get("/methodology")
-async def read_methodology():
+async def read_methodology(request: Request):
+    require_auth(request)
     static_file = os.path.join(os.path.dirname(__file__), 'static', 'methodology.html')
     return FileResponse(static_file)
 
