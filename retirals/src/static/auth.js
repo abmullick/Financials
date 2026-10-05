@@ -250,12 +250,18 @@
                 throw new Error(message);
             }
             document.getElementById('auth-password').value = '';
+            if (document.body.dataset.authGate === 'true') {
+                window.location.reload();
+                return;
+            }
             setLocked(false);
         } catch (error) {
             showError(error.message || 'Unable to sign in.');
         } finally {
-            button.disabled = false;
-            button.textContent = 'Sign in securely';
+            if (document.body.dataset.authGate !== 'true') {
+                button.disabled = false;
+                button.textContent = 'Sign in securely';
+            }
         }
     }
 
