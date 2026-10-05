@@ -174,23 +174,40 @@ def ai_insight(request: Request, payload: AIInsightRequest):
         raise HTTPException(status_code=500, detail="The AI service is temporarily unavailable. Please try again later.")
 
 
+# Private application pages. If unauthenticated, return a minimal public
+# authentication shell rather than leaking the protected page HTML or a raw 401
+# JSON response. After login, auth.js reloads the original URL and the real page
+# is served because the session is now valid.
+def auth_gate_response(request: Request):
+    if get_session(request) is None:
+        static_file = os.path.join(os.path.dirname(__file__), 'static', 'auth-gate.html')
+        return FileResponse(static_file)
+    return None
+
+
 @app.get("/")
 async def read_index(request: Request):
-    require_auth(request)
+    gate = auth_gate_response(request)
+    if gate:
+        return gate
     static_file = os.path.join(os.path.dirname(__file__), 'static', 'index.html')
     return FileResponse(static_file)
 
 
 @app.get("/ai-insights")
 async def read_ai_insights(request: Request):
-    require_auth(request)
+    gate = auth_gate_response(request)
+    if gate:
+        return gate
     static_file = os.path.join(os.path.dirname(__file__), 'static', 'ai-insights.html')
     return FileResponse(static_file)
 
 
 @app.get("/methodology")
 async def read_methodology(request: Request):
-    require_auth(request)
+    gate = auth_gate_response(request)
+    if gate:
+        return gate
     static_file = os.path.join(os.path.dirname(__file__), 'static', 'methodology.html')
     return FileResponse(static_file)
 
