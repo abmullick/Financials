@@ -8,9 +8,16 @@ import os
 import secrets
 import time
 from dataclasses import dataclass
+from pathlib import Path
 from threading import Lock
 
+from dotenv import load_dotenv
 from fastapi import HTTPException, Request
+
+# Load the local development .env without overriding environment variables.
+# Render and other production environments provide APP_USERNAME/APP_PASSWORD
+# directly as environment variables.
+load_dotenv(Path(__file__).resolve().parent.parent / ".env", override=False)
 
 SESSION_COOKIE = "retirement_session"
 SESSION_TTL_SECONDS = 8 * 60 * 60
