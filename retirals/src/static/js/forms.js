@@ -224,7 +224,8 @@ function setupAllocationSliders() {
         equity: { slider: document.getElementById('equity_slider'), valueDisplay: document.getElementById('equity_slider_value'), hiddenInput: document.getElementById('allocation_equity') },
         debt: { slider: document.getElementById('debt_slider'), valueDisplay: document.getElementById('debt_slider_value'), hiddenInput: document.getElementById('allocation_debt') },
         arbitrage: { slider: document.getElementById('arbitrage_slider'), valueDisplay: document.getElementById('arbitrage_slider_value'), hiddenInput: document.getElementById('allocation_arbitrage') },
-        reit: { slider: document.getElementById('reit_slider'), valueDisplay: document.getElementById('reit_slider_value'), hiddenInput: document.getElementById('allocation_reit') }
+        reit: { slider: document.getElementById('reit_slider'), valueDisplay: document.getElementById('reit_slider_value'), hiddenInput: document.getElementById('allocation_reit') },
+        gold: { slider: document.getElementById('gold_slider'), valueDisplay: document.getElementById('gold_slider_value'), hiddenInput: document.getElementById('allocation_gold') }
     };
     const sliderKeys = Object.keys(sliders);
     const totalDisplay = document.getElementById('allocationTotalDisplay');

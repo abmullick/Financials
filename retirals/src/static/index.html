@@ -1449,6 +1449,20 @@
                              </div>
                              <p class="text-xs mt-1.5" style="color: var(--text-3);">Expected annual return from REIT investments.</p>
                          </div>
+                         <div>
+                             <div class="flex items-center gap-1.5 mb-1">
+                                 <label class="block text-xs font-medium text-slate-300" for="return_gold">Gold Return</label>
+                                 <div class="tooltip-container">
+                                     <span class="tooltip-icon">ⓘ</span>
+                                     <div class="tooltip-content">Illustrative expected nominal annual return for gold; adjust to your own long-term assumption.</div>
+                                 </div>
+                             </div>
+                             <div class="relative">
+                                 <input type="number" step="0.1" id="return_gold" aria-label="Gold return" value="7.0" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
+                                 <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">%</span>
+                             </div>
+                             <p class="text-xs mt-1.5" style="color: var(--text-3);">Illustrative annual return from gold investments.</p>
+                         </div>
                         </div>
                          <div class="grid grid-cols-2 gap-3 pt-2">
                             <button type="button" class="prev-step-btn secondary-button w-full font-semibold py-2 rounded-xl text-sm">← Back</button>
@@ -1475,11 +1489,17 @@
                                      <input type="range" id="reit_slider" min="0" max="100" value="0" class="allocation-slider">
                                      <span id="reit_slider_value" class="slider-value">0%</span>
                                  </div>
+                                 <div class="slider-container">
+                                     <label for="gold_slider" class="slider-label">Gold</label>
+                                     <input type="range" id="gold_slider" min="0" max="100" value="0" class="allocation-slider">
+                                     <span id="gold_slider_value" class="slider-value">0%</span>
+                                 </div>
                             <div class="space-y-2">
 <input type="hidden" id="allocation_equity" value="60" class="allocation-input">
                                  <input type="hidden" id="allocation_debt" value="30" class="allocation-input">
                                  <input type="hidden" id="allocation_arbitrage" value="10" class="allocation-input">
                                  <input type="hidden" id="allocation_reit" value="0" class="allocation-input">
+                                 <input type="hidden" id="allocation_gold" value="0" class="allocation-input">
                                 <div class="slider-container">
                                     <label for="equity_slider" class="slider-label">Equity</label>
                                     <input type="range" id="equity_slider" min="0" max="100" value="60" class="allocation-slider">
@@ -1571,6 +1591,19 @@
                                     </div>
                                     <div class="relative">
                                         <input type="number" step="0.1" id="tax_arbitrage" value="20.0" class="input-shell w-full rounded-lg p-1.5 text-slate-700 pr-7">
+                                        <span class="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-400">%</span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="flex items-center gap-1.5 mb-1">
+                                        <label class="block font-medium text-slate-300" for="tax_gold">Gold Effective Tax Rate (%)</label>
+                                        <div class="tooltip-container">
+                                            <span class="tooltip-icon">ⓘ</span>
+                                            <div class="tooltip-content">A simplified effective tax-rate proxy for gold withdrawals, not instrument-specific Indian tax advice. Actual tax depends on the gold product and holding period.</div>
+                                        </div>
+                                    </div>
+                                    <div class="relative">
+                                        <input type="number" step="0.1" id="tax_gold" value="20.0" min="0" max="100" class="input-shell w-full rounded-lg p-1.5 text-slate-700 pr-7">
                                         <span class="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-400">%</span>
                                     </div>
                                 </div>
@@ -1740,6 +1773,11 @@
                                 <label class="block text-xs font-medium text-slate-300">Arbitrage Volatility (%)</label>
                                 <input type="number" step="0.1" id="volatility_arbitrage" value="8.0" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
                                 <p class="text-xs mt-1.5" style="color: var(--text-3);">Annual std dev.</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300" for="volatility_gold">Gold Volatility (%)</label>
+                                <input type="number" step="0.1" id="volatility_gold" value="14.0" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
+                                <p class="text-xs mt-1.5" style="color: var(--text-3);">Illustrative annual standard deviation.</p>
                             </div>
                         </div>
                         <div class="grid grid-cols-3 gap-3">
@@ -2886,28 +2924,31 @@
             ]);
             makeLineChart('projectedBalanceChart', ages, [{ label: 'Projected Corpus Balance', data: closing, borderColor: '#34d399', backgroundColor: withGradient(document.getElementById('projectedBalanceChart').getContext('2d'), 'rgba(52, 211, 153, 0.2)', 'rgba(52, 211, 153, 0.01)'), fill: true, pointRadius: 0, pointHoverRadius: 5 }]);
 
-            makeDoughnutChart('allocationChart', ['Equity', 'Debt', 'Arbitrage', 'REIT'], [payload.allocation_equity * 100, payload.allocation_debt * 100, payload.allocation_arbitrage * 100, payload.allocation_reit * 100]);
+            makeDoughnutChart('allocationChart', ['Equity', 'Debt', 'Arbitrage', 'REIT', 'Gold'], [payload.allocation_equity * 100, payload.allocation_debt * 100, payload.allocation_arbitrage * 100, payload.allocation_reit * 100, payload.allocation_gold * 100]);
 
             const taxEquityLTCG = payload.allocation_equity * payload.equity_ltcg_split * payload.tax_ltcg;
             const taxEquitySTCG = payload.allocation_equity * payload.equity_stcg_split * payload.tax_stcg;
             const taxDebt = payload.allocation_debt * payload.tax_debt;
             const taxArbitrage = payload.allocation_arbitrage * payload.tax_arbitrage;
             const taxReitLTCG = payload.allocation_reit * payload.reit_gain_fraction * payload.tax_ltcg;
-            const totalTaxRate = taxEquityLTCG + taxEquitySTCG + taxDebt + taxArbitrage + taxReitLTCG;
+            const taxGold = payload.allocation_gold * payload.tax_gold;
+            const totalTaxRate = taxEquityLTCG + taxEquitySTCG + taxDebt + taxArbitrage + taxReitLTCG + taxGold;
 
-            makeDoughnutChart('taxAllocationChart', ['Equity LTCG', 'Equity STCG', 'Debt', 'Arbitrage', 'REIT LTCG'], totalTaxRate > 0 ? [
+            makeDoughnutChart('taxAllocationChart', ['Equity LTCG', 'Equity STCG', 'Debt', 'Arbitrage', 'REIT LTCG', 'Gold'], totalTaxRate > 0 ? [
                 (taxEquityLTCG / totalTaxRate) * 100,
                 (taxEquitySTCG / totalTaxRate) * 100,
                 (taxDebt / totalTaxRate) * 100,
                 (taxArbitrage / totalTaxRate) * 100,
-                (taxReitLTCG / totalTaxRate) * 100
-            ] : [0, 0, 0, 0, 0], {
+                (taxReitLTCG / totalTaxRate) * 100,
+                (taxGold / totalTaxRate) * 100
+            ] : [0, 0, 0, 0, 0, 0], {
                 colors: [
                     'rgba(59, 130, 246, 0.8)',
                     'rgba(96, 165, 250, 0.8)',
                     'rgba(16, 185, 129, 0.8)',
                     'rgba(245, 158, 11, 0.8)',
-                    'rgba(250, 204, 21, 0.8)'
+                    'rgba(250, 204, 21, 0.8)',
+                    'rgba(234, 179, 8, 0.85)'
                 ]
             });
         }
@@ -2929,6 +2970,7 @@
                 return_debt: parseFloat(document.getElementById('return_debt').value) / 100.0,
                 return_arbitrage: parseFloat(document.getElementById('return_arbitrage').value) / 100.0,
                 return_reit: parseFloat(document.getElementById('return_reit').value) / 100.0,
+                return_gold: parseFloat(document.getElementById('return_gold').value) / 100.0,
                 contribution_increase: parseFloat(document.getElementById('contribution_increase').value) / 100.0,
                 ltcg_exemption: parseCurrency(document.getElementById('ltcg_exemption').value),
                 one_time_lumpsum: parseCurrency(document.getElementById('one_time_lumpsum').value),
@@ -2948,6 +2990,7 @@
                 allocation_debt: parseFloat(document.getElementById('allocation_debt').value) / 100,
                 allocation_arbitrage: parseFloat(document.getElementById('allocation_arbitrage').value) / 100,
                 allocation_reit: parseFloat(document.getElementById('allocation_reit').value) / 100,
+                allocation_gold: parseFloat(document.getElementById('allocation_gold').value) / 100,
                 // Equity sub-allocation
                 equity_ltcg_split: parseFloat(document.getElementById('equity_ltcg_split').value) / 100,
                 equity_stcg_split: parseFloat(document.getElementById('equity_stcg_split').value) / 100,
@@ -2956,6 +2999,7 @@
                 tax_stcg: parseFloat(document.getElementById('tax_stcg').value) / 100.0,
                 tax_debt: parseFloat(document.getElementById('tax_debt').value) / 100.0,
                 tax_arbitrage: parseFloat(document.getElementById('tax_arbitrage').value) / 100.0,
+                tax_gold: parseFloat(document.getElementById('tax_gold').value) / 100.0,
                 reit_gain_fraction: parseFloat(document.getElementById('reit_gain_fraction').value) / 100.0
             };
 
@@ -2975,7 +3019,7 @@
             }
 
             // Validate allocation sums to 100%
-            const totalAlloc = payload.allocation_equity + payload.allocation_debt + payload.allocation_arbitrage + payload.allocation_reit;
+            const totalAlloc = payload.allocation_equity + payload.allocation_debt + payload.allocation_arbitrage + payload.allocation_reit + payload.allocation_gold;
             if (totalAlloc < 0.995 || totalAlloc > 1.005) {
                 showCalculationError('Portfolio allocation must sum to 100%.');
                 return;
@@ -3125,21 +3169,25 @@
                 allocation_debt: parseFloat(document.getElementById('allocation_debt').value) / 100,
                 allocation_arbitrage: parseFloat(document.getElementById('allocation_arbitrage').value) / 100,
                 allocation_reit: parseFloat(document.getElementById("allocation_reit").value) / 100,
+                allocation_gold: parseFloat(document.getElementById("allocation_gold").value) / 100,
                 equity_ltcg_split: parseFloat(document.getElementById('equity_ltcg_split').value) / 100,
                 equity_stcg_split: parseFloat(document.getElementById('equity_stcg_split').value) / 100,
                 tax_ltcg: parseFloat(document.getElementById('tax_ltcg').value) / 100,
                 tax_stcg: parseFloat(document.getElementById('tax_stcg').value) / 100,
                 tax_debt: parseFloat(document.getElementById('tax_debt').value) / 100,
                 tax_arbitrage: parseFloat(document.getElementById('tax_arbitrage').value) / 100,
+                tax_gold: parseFloat(document.getElementById('tax_gold').value) / 100,
                 reit_gain_fraction: parseFloat(document.getElementById('reit_gain_fraction').value) / 100.0,
                 return_equity: parseFloat(document.getElementById('return_equity').value) / 100.0,
                 return_debt: parseFloat(document.getElementById('return_debt').value) / 100.0,
                 return_arbitrage: parseFloat(document.getElementById('return_arbitrage').value) / 100.0,
                 return_reit: parseFloat(document.getElementById('return_reit').value) / 100.0,
+                return_gold: parseFloat(document.getElementById('return_gold').value) / 100.0,
                 num_simulations: parseInt(document.getElementById('num_simulations').value),
                 volatility_equity: parseFloat(document.getElementById('volatility_equity').value) / 100,
                 volatility_debt: parseFloat(document.getElementById('volatility_debt').value) / 100,
                 volatility_arbitrage: parseFloat(document.getElementById('volatility_arbitrage').value) / 100,
+                volatility_gold: parseFloat(document.getElementById('volatility_gold').value) / 100,
                 equity_debt_correlation: parseFloat(document.getElementById('equity_debt_correlation').value),
                 equity_arbitrage_correlation: parseFloat(document.getElementById('equity_arbitrage_correlation').value),
                 debt_arbitrage_correlation: parseFloat(document.getElementById('debt_arbitrage_correlation').value),
@@ -3180,7 +3228,7 @@
             }
 
             // Validate allocation sums to 100%
-            const totalAlloc = payload.allocation_equity + payload.allocation_debt + payload.allocation_arbitrage + payload.allocation_reit;
+            const totalAlloc = payload.allocation_equity + payload.allocation_debt + payload.allocation_arbitrage + payload.allocation_reit + payload.allocation_gold;
             if (totalAlloc < 0.995 || totalAlloc > 1.005) {
                 showCalculationError('Portfolio allocation must sum to 100%.');
                 overlay.classList.remove('active');
