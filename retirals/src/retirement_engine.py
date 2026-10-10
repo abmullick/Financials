@@ -474,23 +474,36 @@ def _solve_for_required_returns(inputs: PlannerInputs, corpus_at_retirement: flo
     else:
         # --- 1. Solve for Required Pre-Retirement Return ---
         def get_future_corpus(rate):
-            # Calculates corpus at retirement for a given pre-retirement return rate
-            n = inputs.retirement_age - inputs.current_age
-            g = inputs.contribution_increase
-            
-            fv_current_corpus = inputs.current_corpus * ((1 + rate) ** n)
-            
-            if abs(rate - g) < 1e-9:
-                fv_factor = n * ((1 + rate) ** n)
-            else:
-                fv_factor = (1 + rate) * ((((1 + rate) ** n) - ((1 + g) ** n)) / (rate - g))
-            
-            fv_contributions = inputs.annual_contribution * fv_factor
-            return (
-                fv_current_corpus
-                + fv_contributions
-                + inputs.one_time_lumpsum
-            )
+            # Mirror the pre-retirement cash-flow timing in run_projection.
+            # Contributions and one-time income enter at the beginning of
+            # each year and receive that year's return. The retirement
+            # lump sum is added at the beginning of the retirement year.
+            trial_inputs = inputs.model_copy(update={
+                "return_equity": rate,
+                "return_debt": rate,
+                "return_arbitrage": rate,
+                "return_reit": rate,
+                "return_gold": rate,
+            })
+            corpus = inputs.current_corpus
+            for age in range(inputs.current_age, inputs.retirement_age):
+                elapsed_years = age - inputs.current_age
+                contribution = inputs.annual_contribution * (
+                    (1 + inputs.contribution_increase) ** elapsed_years
+                )
+                income = 0.0
+                income_item = one_time_income_map.get(age) if one_time_income_map else None
+                if income_item:
+                    inflation = (
+                        income_item.inflation_rate
+                        if income_item.inflation_rate is not None
+                        else inputs.avg_inflation_rate
+                    )
+                    income = income_item.amount * ((1 + inflation) ** elapsed_years)
+                corpus = (corpus + contribution + income) * (
+                    1 + calculate_portfolio_expected_return(trial_inputs)
+                )
+            return corpus + inputs.one_time_lumpsum
 
         # Bisection method to find the rate
         low, high = calculate_portfolio_expected_return(inputs), 0.50  # Search up to 50%
