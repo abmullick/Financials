@@ -985,6 +985,38 @@ class TestOneTimeIncomes(unittest.TestCase):
         )
 
 
+class TestPreRetirementGoalSeekCashflows(unittest.TestCase):
+    def test_pre_retirement_one_time_income_is_included_in_required_return_solver(self):
+        """The goal-seek projection must include pre-retirement income just like run_projection."""
+        base = PlannerInputs(
+            current_age=40,
+            retirement_age=60,
+            life_expectancy=85,
+            current_annual_expenses=2500000,
+            avg_inflation_rate=0.06,
+            current_corpus=5000000,
+            annual_contribution=100000,
+            contribution_increase=0.01,
+            allocation_equity=0.60,
+            allocation_debt=0.30,
+            allocation_arbitrage=0.10,
+            allocation_reit=0.0,
+            allocation_gold=0.0,
+            adhoc_expenses=[],
+            one_time_incomes=[],
+        )
+        without_income = run_projection(base)
+        with_income = run_projection(base.model_copy(update={
+            "one_time_incomes": [OneTimeIncome(age=50, amount=5000000)],
+        }))
+
+        self.assertLess(
+            with_income["metrics"]["required_pre_retirement_return"],
+            without_income["metrics"]["required_pre_retirement_return"],
+            "Pre-retirement one-time income should reduce the required pre-retirement return.",
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
 
