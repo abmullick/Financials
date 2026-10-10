@@ -20,6 +20,5 @@ def calculate_portfolio_expected_return(inputs: PlannerInputs) -> float:
         inputs.allocation_equity * inputs.return_equity +
         inputs.allocation_debt * inputs.return_debt +
         inputs.allocation_arbitrage * inputs.return_arbitrage +
-        inputs.allocation_reit * inputs.return_reit +
-        inputs.allocation_gold * inputs.return_gold
+        inputs.allocation_reit * inputs.return_reit
     )
