@@ -97,8 +97,8 @@ def run_projection(inputs: PlannerInputs):
 
     tax_portions = {
         "equity_ltcg_portion": total_ltcg_portion,
-        "blended_rate_no_exemption": (total_ltcg_portion * inputs.tax_ltcg) + (equity_stcg_portion * inputs.tax_stcg) + (debt_portion * inputs.tax_debt) + (arbitrage_portion * inputs.tax_arbitrage),
-        "other_blended_rate": (equity_stcg_portion * inputs.tax_stcg) + (debt_portion * inputs.tax_debt) + (arbitrage_portion * inputs.tax_arbitrage)
+        "blended_rate_no_exemption": (total_ltcg_portion * inputs.tax_ltcg) + (equity_stcg_portion * inputs.tax_stcg) + (debt_portion * inputs.tax_debt) + (arbitrage_portion * inputs.tax_arbitrage) + (inputs.allocation_gold * inputs.tax_gold),
+        "other_blended_rate": (equity_stcg_portion * inputs.tax_stcg) + (debt_portion * inputs.tax_debt) + (arbitrage_portion * inputs.tax_arbitrage) + (inputs.allocation_gold * inputs.tax_gold)
     }
 
     # Metrics for pension
@@ -357,8 +357,8 @@ def _calculate_minimum_corpus(inputs: PlannerInputs, ad_hoc_map: dict, one_time_
 
     tax_portions = {
         "equity_ltcg_portion": total_ltcg_portion,
-        "blended_rate_no_exemption": (total_ltcg_portion * inputs.tax_ltcg) + (equity_stcg_portion * inputs.tax_stcg) + (debt_portion * inputs.tax_debt) + (arbitrage_portion * inputs.tax_arbitrage),
-        "other_blended_rate": (equity_stcg_portion * inputs.tax_stcg) + (debt_portion * inputs.tax_debt) + (arbitrage_portion * inputs.tax_arbitrage)
+        "blended_rate_no_exemption": (total_ltcg_portion * inputs.tax_ltcg) + (equity_stcg_portion * inputs.tax_stcg) + (debt_portion * inputs.tax_debt) + (arbitrage_portion * inputs.tax_arbitrage) + (inputs.allocation_gold * inputs.tax_gold),
+        "other_blended_rate": (equity_stcg_portion * inputs.tax_stcg) + (debt_portion * inputs.tax_debt) + (arbitrage_portion * inputs.tax_arbitrage) + (inputs.allocation_gold * inputs.tax_gold)
     }
 
     for age in reversed(range(inputs.retirement_age, inputs.life_expectancy + 1)):
@@ -513,6 +513,7 @@ def _solve_for_required_returns(inputs: PlannerInputs, corpus_at_retirement: flo
                 "return_debt": rate,
                 "return_arbitrage": rate,
                 "return_reit": rate,
+                "return_gold": rate,
             }), ad_hoc_map, one_time_income_map)
 
         # Bisection method to find the rate
@@ -537,28 +538,39 @@ def _get_mc_volatility(inputs: PlannerInputs, is_retired: bool) -> float:
     wd = inputs.allocation_debt
     wa = inputs.allocation_arbitrage
     wr = inputs.allocation_reit
+    wg = inputs.allocation_gold
     se = inputs.volatility_equity
     sd = inputs.volatility_debt
     sa = inputs.volatility_arbitrage
     sr = inputs.volatility_reit
+    sg = inputs.volatility_gold
     rho_ed = inputs.equity_debt_correlation
     rho_ea = inputs.equity_arbitrage_correlation
     rho_da = inputs.debt_arbitrage_correlation
     rho_er = inputs.equity_reit_correlation
     rho_dr = inputs.debt_reit_correlation
     rho_ar = inputs.arbitrage_reit_correlation
+    rho_eg = inputs.equity_gold_correlation
+    rho_dg = inputs.debt_gold_correlation
+    rho_ag = inputs.arbitrage_gold_correlation
+    rho_rg = inputs.reit_gold_correlation
 
     variance = (
         (we ** 2) * (se ** 2) +
         (wd ** 2) * (sd ** 2) +
         (wa ** 2) * (sa ** 2) +
         (wr ** 2) * (sr ** 2) +
+        (wg ** 2) * (sg ** 2) +
         2 * we * wd * se * sd * rho_ed +
         2 * we * wa * se * sa * rho_ea +
         2 * we * wr * se * sr * rho_er +
         2 * wd * wa * sd * sa * rho_da +
         2 * wd * wr * sd * sr * rho_dr +
-        2 * wa * wr * sa * sr * rho_ar
+        2 * wa * wr * sa * sr * rho_ar +
+        2 * we * wg * se * sg * rho_eg +
+        2 * wd * wg * sd * sg * rho_dg +
+        2 * wa * wg * sa * sg * rho_ag +
+        2 * wr * wg * sr * sg * rho_rg
     )
 
     return math.sqrt(max(variance, 0.0))
@@ -609,8 +621,8 @@ def _run_single_mc_path(inputs: PlannerInputs, rng: random.Random) -> dict:
 
     tax_portions = {
         "equity_ltcg_portion": total_ltcg_portion,
-        "blended_rate_no_exemption": (total_ltcg_portion * inputs.tax_ltcg) + (equity_stcg_portion * inputs.tax_stcg) + (debt_portion * inputs.tax_debt) + (arbitrage_portion * inputs.tax_arbitrage),
-        "other_blended_rate": (equity_stcg_portion * inputs.tax_stcg) + (debt_portion * inputs.tax_debt) + (arbitrage_portion * inputs.tax_arbitrage)
+        "blended_rate_no_exemption": (total_ltcg_portion * inputs.tax_ltcg) + (equity_stcg_portion * inputs.tax_stcg) + (debt_portion * inputs.tax_debt) + (arbitrage_portion * inputs.tax_arbitrage) + (inputs.allocation_gold * inputs.tax_gold),
+        "other_blended_rate": (equity_stcg_portion * inputs.tax_stcg) + (debt_portion * inputs.tax_debt) + (arbitrage_portion * inputs.tax_arbitrage) + (inputs.allocation_gold * inputs.tax_gold)
     }
 
     annual_values = []

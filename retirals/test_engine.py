@@ -987,3 +987,41 @@ class TestOneTimeIncomes(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TestGoldAssetClass(unittest.TestCase):
+    def test_gold_defaults_preserve_existing_portfolio_return(self):
+        from src.return_model import calculate_portfolio_expected_return
+        inputs = PlannerInputs()
+        self.assertEqual(inputs.allocation_gold, 0.0)
+        self.assertAlmostEqual(calculate_portfolio_expected_return(inputs), 0.098)
+
+    def test_gold_is_included_in_weighted_portfolio_return(self):
+        from src.return_model import calculate_portfolio_expected_return
+        inputs = PlannerInputs(
+            allocation_equity=0.55,
+            allocation_debt=0.25,
+            allocation_arbitrage=0.10,
+            allocation_reit=0.0,
+            allocation_gold=0.10,
+        )
+        expected = (0.55 * 0.12) + (0.25 * 0.06) + (0.10 * 0.08) + (0.10 * 0.07)
+        self.assertAlmostEqual(calculate_portfolio_expected_return(inputs), expected)
+
+    def test_allocation_validation_includes_gold(self):
+        from pydantic import ValidationError
+        with self.assertRaises(ValidationError):
+            PlannerInputs(allocation_gold=0.10)
+
+    def test_gold_volatility_is_zero_when_gold_allocation_is_zero(self):
+        from src.retirement_engine import _get_mc_volatility
+        inputs = PlannerInputs()
+        baseline = _get_mc_volatility(inputs, is_retired=False)
+        changed_gold_risk = inputs.model_copy(update={
+            "volatility_gold": 0.80,
+            "equity_gold_correlation": 0.90,
+            "debt_gold_correlation": 0.90,
+            "arbitrage_gold_correlation": 0.90,
+            "reit_gold_correlation": 0.90,
+        })
+        self.assertAlmostEqual(_get_mc_volatility(changed_gold_risk, is_retired=False), baseline)
