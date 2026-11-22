@@ -1,4 +1,8 @@
-# Parity Retirement Planner
+# ABMAssets Financial Planner
+
+An independent financial-planning project and brand founded and developed by **Abhisek Basu Mullick**. ABMAssets is currently a project/brand identity and is not represented as an incorporated company.
+
+© 2026 ABMAssets. All rights reserved.
 
 A web-based retirement planning tool that combines deterministic projection with Monte Carlo simulation to estimate retirement readiness and corpus sustainability. Supports four asset classes: Equity, Debt, Arbitrage, and REIT.
 
