@@ -27,7 +27,11 @@ from auth import (
     set_session_cookie,
 )
 
-app = FastAPI()
+app = FastAPI(
+    title="ABMAssets Financial Planner",
+    description="Personal financial planning and retirement projection tools by ABMAssets. Founded and developed by Abhisek Basu Mullick.",
+    contact={"name": "Abhisek Basu Mullick", "email": "abmullick@gmail.com"},
+)
 
 
 def get_client_ip(request: Request) -> str:
@@ -177,6 +181,6 @@ async def read_methodology():
 
 if __name__ == "__main__":
     port = int(getenv("PORT", 20080))
-    print("Starting Parity Retirement Planner Server...")
+    print("Starting ABMAssets Financial Planner Server...")
     print(f"  - Access the planner at http://localhost:{port}/")
     uvicorn.run("main:app", host="0.0.0.0", port=port, reload=True)
