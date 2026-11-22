@@ -160,6 +160,23 @@
                 </p>
             </div>
 
+            <div class="flex flex-wrap items-center justify-center gap-2" role="group" aria-label="Insight audio controls">
+                <button id="readInsightButton" type="button" class="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-45" style="background: var(--accent); color: #071521;" aria-label="Read AI insight aloud">
+                    <span aria-hidden="true">▶</span><span>Read aloud</span>
+                </button>
+                <button id="pauseInsightButton" type="button" class="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-45" style="background: var(--glass); border: 1px solid var(--stroke); color: var(--text-2);" disabled>
+                    <span aria-hidden="true">Ⅱ</span><span>Pause</span>
+                </button>
+                <button id="stopInsightButton" type="button" class="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-45" style="background: var(--glass); border: 1px solid var(--stroke); color: var(--text-2);" disabled>
+                    <span aria-hidden="true">■</span><span>Stop</span>
+                </button>
+                <label class="sr-only" for="insightVoiceSelect">Voice</label>
+                <select id="insightVoiceSelect" class="rounded-xl px-3 py-2.5 text-sm" style="background: var(--glass); border: 1px solid var(--stroke); color: var(--text-2);" aria-label="Spoken voice">
+                    <option value="">Default voice</option>
+                </select>
+            </div>
+            <p id="insightSpeechStatus" class="text-center text-xs" style="color: var(--text-3);" role="status" aria-live="polite">Listen to the complete analysis using your browser's speech voice.</p>
+
             <div id="aiInsightContainer" class="space-y-5"></div>
 
             <div class="text-center">
@@ -402,6 +419,160 @@
                 bottomContent.appendChild(text);
                 container.appendChild(bottomContent);
             }
+
+            // Browser-native text-to-speech: no audio is uploaded and no API key is needed.
+            const readButton = document.getElementById('readInsightButton');
+            const pauseButton = document.getElementById('pauseInsightButton');
+            const stopButton = document.getElementById('stopInsightButton');
+            const voiceSelect = document.getElementById('insightVoiceSelect');
+            const speechStatus = document.getElementById('insightSpeechStatus');
+
+            if (!('speechSynthesis' in window) || !('SpeechSynthesisUtterance' in window)) {
+                readButton.disabled = true;
+                pauseButton.disabled = true;
+                stopButton.disabled = true;
+                speechStatus.textContent = 'Read aloud is not supported by this browser. Try a recent version of Chrome, Edge, or Safari.';
+                return;
+            }
+
+            let availableVoices = [];
+            let speechChunks = [];
+            let currentChunk = 0;
+            let isSpeaking = false;
+
+            function loadVoices() {
+                availableVoices = window.speechSynthesis.getVoices();
+                const previousVoice = voiceSelect.value;
+                voiceSelect.innerHTML = '<option value="">Default voice</option>';
+                availableVoices.forEach(function(voice, index) {
+                    const option = document.createElement('option');
+                    option.value = String(index);
+                    option.textContent = voice.name + (voice.lang ? ' (' + voice.lang + ')' : '');
+                    voiceSelect.appendChild(option);
+                });
+                if (previousVoice && Number(previousVoice) < availableVoices.length) {
+                    voiceSelect.value = previousVoice;
+                }
+            }
+
+            function setSpeechControls(state) {
+                const speaking = state === 'speaking';
+                const paused = state === 'paused';
+                readButton.disabled = speaking || paused;
+                pauseButton.disabled = !speaking && !paused;
+                stopButton.disabled = state === 'idle';
+                pauseButton.querySelector('span:last-child').textContent = paused ? 'Resume' : 'Pause';
+                pauseButton.querySelector('span:first-child').textContent = paused ? '▶' : 'Ⅱ';
+            }
+
+            function stopSpeaking(message) {
+                window.speechSynthesis.cancel();
+                speechChunks = [];
+                currentChunk = 0;
+                isSpeaking = false;
+                setSpeechControls('idle');
+                if (message) speechStatus.textContent = message;
+            }
+
+            // Split long insight text into manageable utterances at sentence boundaries.
+            function splitSpeechText(text, maxLength) {
+                const sentences = text.match(/[^.!?]+[.!?]*/g) || [text];
+                const chunks = [];
+                let current = '';
+                sentences.forEach(function(sentence) {
+                    const part = sentence.trim();
+                    if (!part) return;
+                    if (current && (current.length + part.length + 1) > maxLength) {
+                        chunks.push(current);
+                        current = '';
+                    }
+                    if (part.length > maxLength) {
+                        for (let i = 0; i < part.length; i += maxLength) {
+                            if (current) chunks.push(current);
+                            current = part.slice(i, i + maxLength);
+                            if (current.length === maxLength) {
+                                chunks.push(current);
+                                current = '';
+                            }
+                        }
+                    } else {
+                        current += (current ? ' ' : '') + part;
+                    }
+                });
+                if (current) chunks.push(current);
+                return chunks;
+            }
+
+            function speakNextChunk() {
+                if (!isSpeaking || currentChunk >= speechChunks.length) {
+                    if (isSpeaking) {
+                        isSpeaking = false;
+                        setSpeechControls('idle');
+                        speechStatus.textContent = 'Finished reading the AI insight.';
+                    }
+                    return;
+                }
+
+                const utterance = new SpeechSynthesisUtterance(speechChunks[currentChunk]);
+                const selectedVoice = voiceSelect.value;
+                if (selectedVoice !== '' && availableVoices[Number(selectedVoice)]) {
+                    utterance.voice = availableVoices[Number(selectedVoice)];
+                }
+                utterance.rate = 1;
+                utterance.pitch = 1;
+                utterance.onend = function() {
+                    currentChunk += 1;
+                    speakNextChunk();
+                };
+                utterance.onerror = function(event) {
+                    if (event.error !== 'canceled' && event.error !== 'interrupted') {
+                        stopSpeaking('Audio playback could not continue. Please try again.');
+                    }
+                };
+                window.speechSynthesis.speak(utterance);
+            }
+
+            readButton.addEventListener('click', function() {
+                const textToRead = container.innerText
+                    .replace(/[ \t]+\n/g, '\n')
+                    .replace(/\n{2,}/g, '. ')
+                    .trim();
+                if (!textToRead) {
+                    speechStatus.textContent = 'There is no AI insight text available to read.';
+                    return;
+                }
+
+                stopSpeaking('');
+                speechChunks = splitSpeechText(textToRead, 220);
+                currentChunk = 0;
+                isSpeaking = true;
+                setSpeechControls('speaking');
+                speechStatus.textContent = 'Reading the AI insight aloud…';
+                speakNextChunk();
+            });
+
+            pauseButton.addEventListener('click', function() {
+                if (window.speechSynthesis.paused) {
+                    window.speechSynthesis.resume();
+                    setSpeechControls('speaking');
+                    speechStatus.textContent = 'Reading the AI insight aloud…';
+                } else if (window.speechSynthesis.speaking) {
+                    window.speechSynthesis.pause();
+                    setSpeechControls('paused');
+                    speechStatus.textContent = 'Reading paused.';
+                }
+            });
+
+            stopButton.addEventListener('click', function() {
+                stopSpeaking('Reading stopped.');
+            });
+
+            window.speechSynthesis.onvoiceschanged = loadVoices;
+            loadVoices();
+            window.addEventListener('pagehide', function() {
+                window.speechSynthesis.cancel();
+            });
+            setSpeechControls('idle');
         })();
     </script>
 </body>
