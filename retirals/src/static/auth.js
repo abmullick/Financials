@@ -174,8 +174,8 @@
             <div class="auth-orbit" aria-hidden="true"></div>
             <div class="auth-card" role="dialog" aria-modal="true" aria-labelledby="auth-title">
                 <div class="auth-brand">
-                    <div class="auth-kicker">Private Financial Planning</div>
-                    <h1 id="auth-title" class="auth-title">Parity Retirement Planner</h1>
+                    <div class="auth-kicker">ABMAssets · Private Financial Planning</div>
+                    <h1 id="auth-title" class="auth-title">ABMAssets Financial Planner</h1>
                     <p class="auth-subtitle">Sign in to access your retirement projections, simulations and insights.</p>
                 </div>
                 <form id="auth-form" autocomplete="on">
