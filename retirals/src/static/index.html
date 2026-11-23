@@ -3194,7 +3194,7 @@
                 const outV=document.getElementById('mcPortfolioVolatility');
                 const status=document.getElementById('mcCorrelationStatus');
                 if(ids.some(id=>!Number.isFinite(v[id]))) { outR.textContent='—'; outV.textContent='—'; status.textContent='Enter valid numbers for all portfolio assumptions.'; return; }
-                const w=[v.allocation_equity,v.allocation_debt,v.allocation_arbitrage,v.allocation_reit,v.allocation_gold];
+                const w=[v.allocation_equity,v.allocation_debt,v.allocation_arbitrage,v.allocation_reit,v.allocation_gold].map(x=>x/100);
                 const r=['equity','debt','arbitrage','reit','gold'].map(k=>v['return_'+k]/100);
                 const sd=['equity','debt','arbitrage','reit','gold'].map(k=>v['volatility_'+k]/100);
                 const matrix=Array.from({length:5},(_,i)=>Array.from({length:5},(_,j)=>i===j?1:0));
