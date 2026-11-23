@@ -3,6 +3,21 @@ from src.retirement_engine import run_projection, run_monte_carlo, _generate_rec
 from src.models import PlannerInputs, StressScenario, ReturnDistribution, AdHocExpense, OneTimeIncome
 
 
+class TestMonteCarloAssumptionValidation(unittest.TestCase):
+    def test_default_correlation_matrix_is_valid(self):
+        inputs = PlannerInputs()
+        self.assertAlmostEqual(inputs.equity_reit_correlation, 0.60)
+        self.assertAlmostEqual(inputs.volatility_reit, 0.15)
+
+    def test_rejects_inconsistent_correlation_matrix(self):
+        with self.assertRaisesRegex(ValueError, "positive semidefinite"):
+            PlannerInputs(
+                equity_debt_correlation=0.90,
+                equity_arbitrage_correlation=0.90,
+                debt_arbitrage_correlation=-0.90,
+            )
+
+
 class TestDeterministicProjections(unittest.TestCase):
     def setUp(self):
         self.base_inputs = PlannerInputs(
