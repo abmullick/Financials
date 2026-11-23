@@ -120,6 +120,37 @@ class PlannerInputs(BaseModel):
                 raise ValueError(f"Duplicate one-time income age found: {income.age}.")
             income_ages.append(income.age)
 
+        # A correlation matrix must be positive semidefinite, not merely
+        # have each pairwise coefficient between -1 and +1.
+        correlation_matrix = [
+            [1.0, self.equity_debt_correlation, self.equity_arbitrage_correlation, self.equity_reit_correlation, self.equity_gold_correlation],
+            [self.equity_debt_correlation, 1.0, self.debt_arbitrage_correlation, self.debt_reit_correlation, self.debt_gold_correlation],
+            [self.equity_arbitrage_correlation, self.debt_arbitrage_correlation, 1.0, self.arbitrage_reit_correlation, self.arbitrage_gold_correlation],
+            [self.equity_reit_correlation, self.debt_reit_correlation, self.arbitrage_reit_correlation, 1.0, self.reit_gold_correlation],
+            [self.equity_gold_correlation, self.debt_gold_correlation, self.arbitrage_gold_correlation, self.reit_gold_correlation, 1.0],
+        ]
+        lower = [[0.0] * 5 for _ in range(5)]
+        tolerance = 1e-10
+        for i in range(5):
+            for j in range(i + 1):
+                residual = correlation_matrix[i][j] - sum(
+                    lower[i][k] * lower[j][k] for k in range(j)
+                )
+                if i == j:
+                    if residual < -tolerance:
+                        raise ValueError(
+                            "Asset correlations are mathematically inconsistent. "
+                            "Please adjust the correlation assumptions so the full matrix is positive semidefinite."
+                        )
+                    lower[i][j] = max(residual, 0.0) ** 0.5
+                elif lower[j][j] > tolerance:
+                    lower[i][j] = residual / lower[j][j]
+                elif abs(residual) > tolerance:
+                    raise ValueError(
+                        "Asset correlations are mathematically inconsistent. "
+                        "Please adjust the correlation assumptions so the full matrix is positive semidefinite."
+                    )
+
         allocation_total = self.allocation_equity + self.allocation_debt + self.allocation_arbitrage + self.allocation_reit + self.allocation_gold
         if abs(allocation_total - 1.0) > 0.01:
             raise ValueError(f"Portfolio allocation (equity + debt + arbitrage + REIT + gold) must sum to approximately 100%. Current total: {(allocation_total * 100):.1f}%.")
