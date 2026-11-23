@@ -1,6 +1,8 @@
 # ABMAssets Financial Planner
 
-An independent financial-planning project and brand founded and developed by **Abhisek Basu Mullick**. ABMAssets is currently a project/brand identity and is not represented as an incorporated company.
+![ABMAssets brand logo](../assets/branding/abmassets-logo.png)
+
+An independent financial-planning product under the **ABMAssets** brand, founded and developed by **Abhisek Basu Mullick**. ABMAssets is currently a project/brand identity and is not represented as an incorporated company. The application retains its own separate Financial Planner logo.
 
 © 2026 ABMAssets. All rights reserved.
 
