@@ -1776,6 +1776,11 @@
                                 <p class="text-xs mt-1.5" style="color: var(--text-3);">Annual std dev.</p>
                             </div>
                             <div>
+                                <label class="block text-xs font-medium text-slate-300" for="volatility_reit">REIT Volatility (%)</label>
+                                <input type="number" step="0.1" id="volatility_reit" value="15.0" min="0" max="100" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
+                                <p class="text-xs mt-1.5" style="color: var(--text-3);">Annual standard deviation.</p>
+                            </div>
+                            <div>
                                 <label class="block text-xs font-medium text-slate-300" for="volatility_gold">Gold Volatility (%)</label>
                                 <input type="number" step="0.1" id="volatility_gold" value="14.0" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
                                 <p class="text-xs mt-1.5" style="color: var(--text-3);">Illustrative annual standard deviation.</p>
@@ -1797,6 +1802,45 @@
                                 <input type="number" step="0.05" id="debt_arbitrage_correlation" value="0.20" min="-1" max="1" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
                                 <p class="text-xs mt-1.5" style="color: var(--text-3);">-1 to +1</p>
                             </div>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300">Equity ↔ REIT Correlation</label>
+                                <input type="number" step="0.05" id="equity_reit_correlation" value="0.60" min="-1" max="1" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300">Debt ↔ REIT Correlation</label>
+                                <input type="number" step="0.05" id="debt_reit_correlation" value="0.20" min="-1" max="1" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300">Arbitrage ↔ REIT Correlation</label>
+                                <input type="number" step="0.05" id="arbitrage_reit_correlation" value="0.10" min="-1" max="1" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300">Equity ↔ Gold Correlation</label>
+                                <input type="number" step="0.05" id="equity_gold_correlation" value="0.00" min="-1" max="1" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300">Debt ↔ Gold Correlation</label>
+                                <input type="number" step="0.05" id="debt_gold_correlation" value="0.10" min="-1" max="1" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300">Arbitrage ↔ Gold Correlation</label>
+                                <input type="number" step="0.05" id="arbitrage_gold_correlation" value="0.05" min="-1" max="1" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-slate-300">REIT ↔ Gold Correlation</label>
+                                <input type="number" step="0.05" id="reit_gold_correlation" value="0.10" min="-1" max="1" class="input-shell w-full rounded-xl p-2.5 text-sm text-slate-700 pr-8">
+                            </div>
+                        </div>
+                        <p class="text-xs" style="color: var(--text-3);">Correlations range from -1 (move in opposite directions) to +1 (move together). Values must form a mathematically valid correlation matrix.</p>
+                        <div class="rounded-xl border p-3 space-y-2" style="border-color: var(--stroke); background: var(--glass);">
+                            <div class="text-sm font-semibold" style="color: var(--text-1);">Calculated Portfolio Assumptions</div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div><div class="text-xs" style="color: var(--text-3);">Expected annual return</div><div id="mcExpectedPortfolioReturn" class="text-xl font-semibold tabular-nums" style="color: var(--text-1);">—</div></div>
+                                <div><div class="text-xs" style="color: var(--text-3);">Annual portfolio volatility</div><div id="mcPortfolioVolatility" class="text-xl font-semibold tabular-nums" style="color: var(--text-1);">—</div></div>
+                            </div>
+                            <div id="mcCorrelationStatus" class="text-xs" role="status" style="color: var(--text-3);">Based on current allocations, expected returns, volatilities and correlations.</div>
                         </div>
                         <div>
                             <label class="block text-xs font-medium text-slate-300">Retirement Age Sensitivity (comma-separated)</label>
@@ -3137,7 +3181,38 @@
                 console.error('Calculation error:', error);
                 showCalculationError(error.message || 'Unexpected error while calculating retirement metrics.');
             }
-        }        async function calculateMonteCarlo() {
+        }        function updateMonteCarloRiskSummary() {
+                const read = id => {
+                    const el = document.getElementById(id);
+                    return el ? Number(el.value) : NaN;
+                };
+                const pct = ['return_equity','return_debt','return_arbitrage','return_reit','return_gold','volatility_equity','volatility_debt','volatility_arbitrage','volatility_reit','volatility_gold'];
+                const corrIds = ['equity_debt_correlation','equity_arbitrage_correlation','debt_arbitrage_correlation','equity_reit_correlation','debt_reit_correlation','arbitrage_reit_correlation','equity_gold_correlation','debt_gold_correlation','arbitrage_gold_correlation','reit_gold_correlation'];
+                const ids = [...pct,...corrIds,'allocation_equity','allocation_debt','allocation_arbitrage','allocation_reit','allocation_gold'];
+                const v = Object.fromEntries(ids.map(id=>[id,read(id)]));
+                const outR=document.getElementById('mcExpectedPortfolioReturn');
+                const outV=document.getElementById('mcPortfolioVolatility');
+                const status=document.getElementById('mcCorrelationStatus');
+                if(ids.some(id=>!Number.isFinite(v[id]))) { outR.textContent='—'; outV.textContent='—'; status.textContent='Enter valid numbers for all portfolio assumptions.'; return; }
+                const w=[v.allocation_equity,v.allocation_debt,v.allocation_arbitrage,v.allocation_reit,v.allocation_gold];
+                const r=['equity','debt','arbitrage','reit','gold'].map(k=>v['return_'+k]/100);
+                const sd=['equity','debt','arbitrage','reit','gold'].map(k=>v['volatility_'+k]/100);
+                const matrix=Array.from({length:5},(_,i)=>Array.from({length:5},(_,j)=>i===j?1:0));
+                const pairs=[['equity_debt',0,1],['equity_arbitrage',0,2],['equity_reit',0,3],['equity_gold',0,4],['debt_arbitrage',1,2],['debt_reit',1,3],['debt_gold',1,4],['arbitrage_reit',2,3],['arbitrage_gold',2,4],['reit_gold',3,4]];
+                pairs.forEach(([k,i,j])=>matrix[i][j]=matrix[j][i]=v[k+'_correlation']);
+                const mean=w.reduce((sum,x,i)=>sum+x*r[i],0);
+                let variance=0;
+                for(let i=0;i<5;i++) for(let j=0;j<5;j++) variance+=w[i]*w[j]*sd[i]*sd[j]*matrix[i][j];
+                outR.textContent=(mean*100).toFixed(2)+'%';
+                outV.textContent=(Math.sqrt(Math.max(variance,0))*100).toFixed(2)+'%';
+                const validCorr=pairs.every(([k])=>v[k+'_correlation']>=-1&&v[k+'_correlation']<=1);
+                status.textContent=Math.abs(w.reduce((a,b)=>a+b,0)-1)>0.01?'Portfolio allocations must total approximately 100%.':!validCorr?'Each correlation must be between -1 and +1.':'Calculated from current asset allocations, expected returns, volatilities and correlations. The server validates correlation-matrix consistency when the simulation runs.';
+            }
+            document.addEventListener('input',event=>{if(event.target&&/^(return_|volatility_|allocation_|.*_correlation$)/.test(event.target.id||'')) updateMonteCarloRiskSummary();});
+            document.addEventListener('change',event=>{if(event.target&&/^(return_|volatility_|allocation_|.*_correlation$)/.test(event.target.id||'')) updateMonteCarloRiskSummary();});
+            updateMonteCarloRiskSummary();
+
+            async function calculateMonteCarlo() {
             clearCalculationError();
 
             const btn = document.getElementById('mcRunBtn');
@@ -3189,10 +3264,18 @@
                 volatility_equity: parseFloat(document.getElementById('volatility_equity').value) / 100,
                 volatility_debt: parseFloat(document.getElementById('volatility_debt').value) / 100,
                 volatility_arbitrage: parseFloat(document.getElementById('volatility_arbitrage').value) / 100,
+                volatility_reit: parseFloat(document.getElementById('volatility_reit').value) / 100,
                 volatility_gold: parseFloat(document.getElementById('volatility_gold').value) / 100,
                 equity_debt_correlation: parseFloat(document.getElementById('equity_debt_correlation').value),
                 equity_arbitrage_correlation: parseFloat(document.getElementById('equity_arbitrage_correlation').value),
                 debt_arbitrage_correlation: parseFloat(document.getElementById('debt_arbitrage_correlation').value),
+                equity_reit_correlation: parseFloat(document.getElementById('equity_reit_correlation').value),
+                debt_reit_correlation: parseFloat(document.getElementById('debt_reit_correlation').value),
+                arbitrage_reit_correlation: parseFloat(document.getElementById('arbitrage_reit_correlation').value),
+                equity_gold_correlation: parseFloat(document.getElementById('equity_gold_correlation').value),
+                debt_gold_correlation: parseFloat(document.getElementById('debt_gold_correlation').value),
+                arbitrage_gold_correlation: parseFloat(document.getElementById('arbitrage_gold_correlation').value),
+                reit_gold_correlation: parseFloat(document.getElementById('reit_gold_correlation').value),
                 return_distribution: document.getElementById('return_distribution').value,
                 monte_carlo_seed: document.getElementById('monte_carlo_seed').value ? parseInt(document.getElementById('monte_carlo_seed').value) : null,
                 retirement_age_sensitivity: (() => {
