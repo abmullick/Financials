@@ -68,6 +68,20 @@
             position: relative;
             margin-bottom: 26px;
         }
+        #${OVERLAY_ID} .auth-brand-logo {
+            display: block;
+            width: 164px;
+            max-width: 52%;
+            max-height: 54px;
+            height: auto;
+            object-fit: contain;
+            margin: 0 auto 24px;
+            padding: 8px 14px;
+            border: 1px solid rgba(255,255,255,.24);
+            border-radius: 14px;
+            background: rgba(255,255,255,.96);
+            box-shadow: 0 8px 24px rgba(0,0,0,.2);
+        }
         #${OVERLAY_ID} .auth-kicker {
             font-size: 11px;
             font-weight: 800;
@@ -174,6 +188,7 @@
             <div class="auth-orbit" aria-hidden="true"></div>
             <div class="auth-card" role="dialog" aria-modal="true" aria-labelledby="auth-title">
                 <div class="auth-brand">
+                    <img class="auth-brand-logo" src="/assets/branding/abmassets-logo.png?v=20261125" alt="ABMAssets" width="164" loading="eager" decoding="async">
                     <div class="auth-kicker">ABMAssets · Private Financial Planning</div>
                     <h1 id="auth-title" class="auth-title">ABMAssets Financial Planner</h1>
                     <p class="auth-subtitle">Sign in to access your retirement projections, simulations and insights.</p>
