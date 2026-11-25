@@ -67,7 +67,7 @@ async def add_security_headers(request: Request, call_next):
                 body += chunk
             marker = b"</head>"
             if marker in body and b"/static/auth.js" not in body:
-                injection = b'<script src="/static/auth.js" defer></script>'
+                injection = b'<script src="/static/auth.js?v=20261125-branding" defer></script>'
                 body = body.replace(marker, injection + marker, 1)
                 headers = dict(response.headers)
                 headers.pop("content-length", None)
