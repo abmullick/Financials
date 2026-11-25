@@ -83,7 +83,7 @@ async def add_security_headers(request: Request, call_next):
     return response
 
 
-app.mount("/assets", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "..", "assets")), name="assets")
+app.mount("/assets", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "..", "..", "assets")), name="assets")
 app.mount("/static", StaticFiles(directory=os.path.join(os.path.dirname(__file__), "static")), name="static")
 
 
